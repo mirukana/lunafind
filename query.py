@@ -27,7 +27,7 @@ def auto(arg):
     if arg.isdigit():
         return _id(arg)
 
-    if re.match(r"^" + client.site_url + "/posts/(\d+)\?*.*$", str(arg)):
+    if re.match(r"^%s/posts/(\d+)\?*.*$" % client.site_url, str(arg)):
         return url_post(arg)
 
     if str(arg).startswith(client.site_url):
@@ -43,7 +43,7 @@ def url_post(url):
 
 def _id(_id):
     """Return one dict in a list for the found post on the booru."""
-    return client.post_list(tags="id:" + str(_id))
+    return client.post_list(tags="id:%s" % _id)
 
 
 def url_result(url):
@@ -53,7 +53,7 @@ def url_result(url):
 
 def md5(md5):
     """Call search() to find a post with a MD5 hash."""
-    return client.post_list(tags="md5:" + md5)
+    return client.post_list(tags="md5:%s" % md5)
 
 
 def search(tags="", page=1, limit=200, random=False, raw=False, **kwargs):
@@ -62,7 +62,7 @@ def search(tags="", page=1, limit=200, random=False, raw=False, **kwargs):
 
 
 for b in "danbooru", "safebooru":  # HTTPS for Danbooru, add safebooru
-    pybooru.resources.SITE_LIST[b] = {"url": "https://" + b + ".donmai.us"}
+    pybooru.resources.SITE_LIST[b] = {"url": "https://%s.donmai.us" % b}
 
 client = Danbooru("safebooru")
 
