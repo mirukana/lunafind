@@ -1,39 +1,78 @@
 #!/usr/bin/env python3
-import sys
 import re
 import pprint
+import argparse
+import json
 from urllib.parse import urlparse, parse_qs
 from pybooru import Danbooru
 import pybooru.resources
 import utils
 
 
-def merged_list(*args):
+def parse_args(args=None):
+    parser = argparse.ArgumentParser(
+            description="Fill me",
+            add_help=False,
+            formatter_class=utils.CapitalisedHelpFormatter
+    )
+
+    parser._positionals.title = "Positional arguments"
+    parser.add_argument(
+            "query",
+            action="append",
+            nargs="*",
+            metavar="QUERY",
+            help="Tag search, post ID, post URL or search results URL."
+    )
+
+    parser._optionals.title = "Optional arguments"
+    parser.add_argument(
+            "-j", "--json",
+            action="store_true",
+            help="Output post informations as JSON instead of Python dict."
+    )
+    parser.add_argument(
+            "-h", "--help",
+            action="help",
+            default=argparse.SUPPRESS,
+            help="Show this help message and exit."
+    )
+
+    # Defaults to the CLI arguments
+    return parser.parse_args(args if args else None)
+
+
+def merged_output(queries, toJson=False, indent=0):
     """Call auto() for every arguments, return a flattened list of results."""
     results = []
-    for arg in args:
-        results += auto(arg)
-    return utils.filter_duplicate_dicts(results)
+    for query in queries:
+        results += auto(query)
+    results = utils.filter_duplicate_dicts(results)
+
+    if toJson:
+        return json.dumps(results, ensure_ascii=False, indent=indent)
+
+    return results
 
 
-def auto(arg):
+def auto(query):
     """
     Detect what kind of query an argument is,
     return a list of post dicts from the appropriate function.
     """
-    if re.match(r"^[a-fA-F\d]{32}$", str(arg)):  # 32 chars alphanumeric
-        return md5(arg)
+    if re.match(r"^[a-fA-F\d]{32}$", str(query)):  # 32 chars alphanumeric
+        return md5(query)
 
-    if arg.isdigit():
-        return _id(arg)
+    if query.isdigit():
+        return _id(query)
 
-    if re.match(r"^%s/posts/(\d+)\?*.*$" % client.site_url, str(arg)):
-        return url_post(arg)
+    if re.match(r"^%s/posts/(\d+)\?*.*$" % client.site_url, str(query)):
+        return url_post(query)
 
-    if str(arg).startswith(client.site_url):
-        return url_result(arg)
+    if str(query).startswith(client.site_url):
+        return url_result(query)
 
-    return search(arg)
+    return search(query)
 
 
 def url_post(url):
@@ -67,6 +106,6 @@ for b in "danbooru", "safebooru":  # HTTPS for Danbooru, add safebooru
 client = Danbooru("safebooru")
 
 if __name__ == "__main__":
-    # Filter out duplicate args to avoid useless requests and [0] (script path)
-    queries = set(sys.argv[1:])
-    pprint.pprint(merged_list(*queries))
+    cliArgs = parse_args()
+
+    print(merged_output(cliArgs.query[0], toJson=cliArgs.json))
