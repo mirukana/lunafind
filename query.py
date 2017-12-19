@@ -12,7 +12,7 @@ import utils
 
 def parse_args(args=None):
     parser = argparse.ArgumentParser(
-            description="Fill me",
+            description="Output post informations from a booru's API.",
             add_help=False,
             formatter_class=utils.CapitalisedHelpFormatter
     )
@@ -20,17 +20,37 @@ def parse_args(args=None):
     parser._positionals.title = "Positional arguments"
     parser.add_argument(
             "query",
-            action="append",
-            nargs="*",
-            metavar="QUERY",
+            action="append", nargs="*", metavar="QUERY",
             help="Tag search, post ID, post URL or search results URL."
     )
 
-    parser._optionals.title = "Optional arguments"
+    searchOpts = parser.add_argument_group("Search queries options")
+    searchOpts.add_argument(
+            "-p", "--pages",
+            type=int, nargs="+", default=1,
+            help="Pages to fetch (default: %(default)d)"
+    )
+    searchOpts.add_argument(
+            "-l", "--limit",
+            type=int, default=limit_max,
+            help="Number of posts per page (default: %(default)d)"
+    )
+    searchOpts.add_argument(
+            "-r", "--random",
+            action="store_true",
+            help="Request random posts from the booru."
+    )
+    searchOpts.add_argument(
+            "-R", "--raw",
+            action="store_true",
+            help="Ask the booru to parse QUERY as a single literal tag."
+    )
+
+    parser._optionals.title = "General options"
     parser.add_argument(
             "-j", "--json",
             action="store_true",
-            help="Output post informations as JSON instead of Python dict."
+            help="Output post informations as JSON."
     )
     parser.add_argument(
             "-P", "--pretty-print",
@@ -39,8 +59,7 @@ def parse_args(args=None):
     )
     parser.add_argument(
             "-h", "--help",
-            action="help",
-            default=argparse.SUPPRESS,
+            action="help", default=argparse.SUPPRESS,
             help="Show this help message and exit."
     )
 
@@ -101,15 +120,19 @@ def md5(md5):
     return client.post_list(tags="md5:%s" % md5)
 
 
-def search(tags="", page=1, limit=200, random=False, raw=False, **kwargs):
+def search(tags="", pages=1, limit=200, random=False, raw=False, **kwargs):
     """Return a list of dicts containing informations for every post found."""
-    return client.post_list(**locals())
+    params = {k: vars(cliArgs)[k] or k for k, v in locals().items()
+              if k is not "tags" and k is not "kwargs"}
+    return client.post_list(**params)
 
 
 for b in "danbooru", "safebooru":  # HTTPS for Danbooru, add safebooru
     pybooru.resources.SITE_LIST[b] = {"url": "https://%s.donmai.us" % b}
 
 client = Danbooru("safebooru")
+# TODO: migrate this to config
+limit_max = 200
 
 if __name__ != "__main__":
     sys.exit()
