@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
+import sys
 import re
-import pprint
+from pprint import pprint
 import argparse
 import json
 from urllib.parse import urlparse, parse_qs
@@ -32,6 +33,11 @@ def parse_args(args=None):
             help="Output post informations as JSON instead of Python dict."
     )
     parser.add_argument(
+            "-P", "--pretty-print",
+            action="store_true",
+            help="Print the post infos in a human-readable way."
+    )
+    parser.add_argument(
             "-h", "--help",
             action="help",
             default=argparse.SUPPRESS,
@@ -42,7 +48,7 @@ def parse_args(args=None):
     return parser.parse_args(args if args else None)
 
 
-def merged_output(queries, toJson=False, indent=0):
+def merged_output(queries, toJson=False, jsonIndent=0):
     """Call auto() for every arguments, return a flattened list of results."""
     results = []
     for query in queries:
@@ -50,7 +56,7 @@ def merged_output(queries, toJson=False, indent=0):
     results = utils.filter_duplicate_dicts(results)
 
     if toJson:
-        return json.dumps(results, ensure_ascii=False, indent=indent)
+        return json.dumps(results, ensure_ascii=False, indent=jsonIndent)
 
     return results
 
@@ -105,7 +111,14 @@ for b in "danbooru", "safebooru":  # HTTPS for Danbooru, add safebooru
 
 client = Danbooru("safebooru")
 
-if __name__ == "__main__":
-    cliArgs = parse_args()
+if __name__ != "__main__":
+    sys.exit()
 
+cliArgs = parse_args()
+
+if cliArgs.pretty_print and cliArgs.json:
+    print(merged_output(cliArgs.query[0], toJson=True, jsonIndent=4))
+elif cliArgs.pretty_print and not cliArgs.json:
+    pprint(merged_output(cliArgs.query[0], toJson=False), indent=4)
+else:
     print(merged_output(cliArgs.query[0], toJson=cliArgs.json))
