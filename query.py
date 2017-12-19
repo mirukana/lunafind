@@ -11,6 +11,7 @@ import utils
 
 
 def parse_args(args=None):
+    """Define argument parser and return parsed CLI arguments."""
     parser = argparse.ArgumentParser(
             description="Output post informations from a booru's API.",
             add_help=False,
@@ -20,8 +21,9 @@ def parse_args(args=None):
     parser._positionals.title = "Positional arguments"
     parser.add_argument(
             "query",
-            action="append", nargs="*", metavar="QUERY",
-            help="Tag search, post ID, post URL or search results URL."
+            action="append", nargs="+", metavar="QUERY",
+            help="Tag search, post ID, post URL, search results URL or " +
+                 " '%%' for the home page."
     )
 
     searchOpts = parser.add_argument_group("Search queries options")
@@ -122,8 +124,14 @@ def md5(md5):
 
 def search(tags="", pages=1, limit=200, random=False, raw=False, **kwargs):
     """Return a list of dicts containing informations for every post found."""
+    # Override function parameters with defined CLI arguments.
     params = {k: vars(cliArgs)[k] or k for k, v in locals().items()
               if k is not "tags" and k is not "kwargs"}
+
+    # Query booru home page ("%" is used to have an actual QUERY CLI arg).
+    if tags == "%":
+        tags = None
+
     return client.post_list(**params)
 
 
