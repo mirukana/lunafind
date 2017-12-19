@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import sys
 import re
 from pprint import pprint
 import argparse
@@ -7,6 +6,7 @@ import json
 from urllib.parse import urlparse, parse_qs
 from pybooru import Danbooru
 import pybooru.resources
+import pybooru_ext
 import utils
 
 
@@ -142,14 +142,12 @@ client = Danbooru("safebooru")
 # TODO: migrate this to config
 limit_max = 200
 
-if __name__ != "__main__":
-    sys.exit()
+if __name__ == "__main__":
+    cliArgs = parse_args()
 
-cliArgs = parse_args()
-
-if cliArgs.pretty_print and cliArgs.json:
-    print(merged_output(cliArgs.query[0], toJson=True, jsonIndent=4))
-elif cliArgs.pretty_print and not cliArgs.json:
-    pprint(merged_output(cliArgs.query[0], toJson=False), indent=4)
-else:
-    print(merged_output(cliArgs.query[0], toJson=cliArgs.json))
+    if cliArgs.pretty_print and cliArgs.json:
+        print(merged_output(cliArgs.query[0], toJson=True, jsonIndent=4))
+    elif cliArgs.pretty_print and not cliArgs.json:
+        pprint(merged_output(cliArgs.query[0], toJson=False), indent=4)
+    else:
+        print(merged_output(cliArgs.query[0], toJson=cliArgs.json))
