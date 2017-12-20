@@ -4,9 +4,9 @@ from pprint import pprint
 import argparse
 import json
 from urllib.parse import urlparse, parse_qs
+from math import ceil
 from pybooru import Danbooru
 import pybooru.resources
-import pybooru_ext
 import utils
 
 
@@ -30,7 +30,8 @@ def parse_args(args=None):
     searchOpts.add_argument(
             "-p", "--page",
             nargs="+", default=1,
-            help="Pages to fetch (default: %(default)d)"
+            help="Pages to fetch (default: %(default)d)\n" +
+                 "Can be a single page or a range (e.g. 3-777, 1+ or +20)"
     )
     searchOpts.add_argument(
             "-l", "--limit",
@@ -141,22 +142,40 @@ def search(tags="", page=1, limit=200, random=False, raw=False, **kwargs):
     if type(params["page"]) != list:
         params["page"] = [params["page"]]
 
-    # Full list of pages as integers without duplicates.
-    tmp_pages = set()
+    # Generate full list of pages as integers without duplicates.
+    page_set = set()
+
     for page in params["page"]:
-        # Add pages in a range (e.g. "-p 3-10" used).
+        if str(page).isdigit():
+            page_set.add(int(page))
+            continue
+
+        # e.g. -p 3-10: All the pages in the range (3, 4, 5...).
         if re.match(r"^\d+-\d+$", str(page)):
             begin = int(page.split("-")[0])
-            end = int(page.split("-")[-1]) + 1
-            tmp_pages.update(range(begin, end))
-        else:
-            tmp_pages.add(int(page))
+            end = int(page.split("-")[-1])
+
+        # e.g. -p 2+: All the pages in a range from 2 to the last possible.
+        elif re.match(r"^\d+\+$", str(page)):
+            begin = int(page.split("+")[0])
+            end = ceil(count_posts(params["tags"]) / params["limit"])
+
+        # e.g. -p +5: All the pages in a range from 1 to 5.
+        elif re.match(r"^\+\d+$", str(page)):
+            begin = 1
+            end = int(page.split("+")[-1])
+
+        page_set.update(range(begin, end + 1))
 
     results = []
-    for page in tmp_pages:
+    for page in page_set:
         params["page"] = page
         results += client.post_list(**params)
     return results
+
+
+def count_posts(tags=None):
+    return client.count_posts(tags)["counts"]["posts"]
 
 
 for b in "danbooru", "safebooru":  # HTTPS for Danbooru, add safebooru
