@@ -76,6 +76,8 @@ def merged_output(queries, toJson=False, jsonIndent=0):
     for query in queries:
         results += auto(query)
     results = utils.filter_duplicate_dicts(results)
+    # Sort posts from newest to oldest, like a booru's results would show.
+    results = sorted(results, key=lambda post: post["id"], reverse=True)
 
     if toJson:
         return json.dumps(results, ensure_ascii=False, indent=jsonIndent)
