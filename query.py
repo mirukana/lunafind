@@ -28,8 +28,8 @@ def parse_args(args=None):
 
     searchOpts = parser.add_argument_group("Search queries options")
     searchOpts.add_argument(
-            "-p", "--pages",
-            type=int, nargs="+", default=1,
+            "-p", "--page",
+            nargs="+", default=1,
             help="Pages to fetch (default: %(default)d)"
     )
     searchOpts.add_argument(
@@ -99,7 +99,7 @@ def auto(query):
     if str(query).startswith(client.site_url):
         return url_result(query)
 
-    return search(query)
+    return search(tags=query)
 
 
 def url_post(url):
@@ -122,17 +122,41 @@ def md5(md5):
     return client.post_list(tags="md5:%s" % md5)
 
 
-def search(tags="", pages=1, limit=200, random=False, raw=False, **kwargs):
+def search(tags="", page=1, limit=200, random=False, raw=False, **kwargs):
     """Return a list of dicts containing informations for every post found."""
-    # Override function parameters with defined CLI arguments.
-    params = {k: vars(cliArgs)[k] or k for k, v in locals().items()
-              if k is not "tags" and k is not "kwargs"}
 
-    # Query booru home page ("%" is used to have an actual QUERY CLI arg).
-    if tags == "%":
-        tags = None
+    # Leave out False/empty keys; because if for example "random=False" is
+    # passed to Danbooru, it will behave like "random=true".
+    # Also leave out tags=%, no tags parameter means fetch the home page.
+    # % is used to have an actual QUERY CLI arg).
+    params = {k: v for k, v in locals().items() if v and v != "%"}
 
-    return client.post_list(**params)
+    # Try to override function parameters with defined CLI arguments.
+    for param, _ in params.items():
+        try:
+            params[param] = vars(cliArgs)[param]
+        except (AttributeError, KeyError):
+            pass
+
+    if type(params["page"]) != list:
+        params["page"] = [params["page"]]
+
+    # Full list of pages as integers without duplicates.
+    tmp_pages = set()
+    for page in params["page"]:
+        # Add pages in a range (e.g. "-p 3-10" used).
+        if re.match(r"^\d+-\d+$", str(page)):
+            begin = int(page.split("-")[0])
+            end = int(page.split("-")[-1]) + 1
+            tmp_pages.update(range(begin, end))
+        else:
+            tmp_pages.add(int(page))
+
+    results = []
+    for page in tmp_pages:
+        params["page"] = page
+        results += client.post_list(**params)
+    return results
 
 
 for b in "danbooru", "safebooru":  # HTTPS for Danbooru, add safebooru
