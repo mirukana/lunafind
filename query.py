@@ -3,11 +3,13 @@ import re
 from pprint import pprint
 import argparse
 import json
+import math
+import logging
 from urllib.parse import urlparse, parse_qs
-from math import ceil
 from pybooru import Danbooru
 import pybooru.resources
 import utils
+import exceptions
 
 
 def parse_args(args=None):
@@ -112,7 +114,7 @@ def url_post(url):
 
 def _id(_id):
     """Return one dict in a list for the found post on the booru."""
-    return client.post_list(tags="id:%s" % _id)
+    return exec_pybooru_call(client.post_list, tags="id:%s" % _id)
 
 
 def url_result(url):
@@ -122,7 +124,7 @@ def url_result(url):
 
 def md5(md5):
     """Call search() to find a post with a MD5 hash."""
-    return client.post_list(tags="md5:%s" % md5)
+    return exec_pybooru_call(client.post_list, tags="md5:%s" % md5)
 
 
 def search(tags="", page=1, limit=200, random=False, raw=False, **kwargs):
@@ -160,7 +162,7 @@ def search(tags="", page=1, limit=200, random=False, raw=False, **kwargs):
         # e.g. -p 2+: All the pages in a range from 2 to the last possible.
         elif re.match(r"^\d+\+$", str(page)):
             begin = int(page.split("+")[0])
-            end = ceil(count_posts(params["tags"]) / params["limit"])
+            end = math.ceil(count_posts(params["tags"]) / params["limit"])
 
         # e.g. -p +5: All the pages in a range from 1 to 5.
         elif re.match(r"^\+\d+$", str(page)):
@@ -172,13 +174,27 @@ def search(tags="", page=1, limit=200, random=False, raw=False, **kwargs):
     results = []
     for page in page_set:
         params["page"] = page
-        results += client.post_list(**params)
+        results += exec_pybooru_call(client.post_list, **params)
     return results
 
 
 def count_posts(tags=None):
-    return client.count_posts(tags)["counts"]["posts"]
+    return exec_pybooru_call(client.count_posts, tags)["counts"]["posts"]
 
+
+def exec_pybooru_call(function, **args):
+    for max_error_count in range(1, 10 + 1):
+        try:
+            return function(**args)
+        except (pybooru.exceptions.PybooruHTTPError, KeyError) as error:
+            code = re.search(r"In _request: ([0-9]+)", error._msg).group(1)
+            url = re.search(r"URL: (https://.+)", error._msg).group(1)
+            logging.warn("Error %s from booru (URL: %s)" % (code, url))
+
+    raise exceptions.QueryBooruError(code, url)
+
+
+logging.basicConfig(level=logging.INFO)
 
 for b in "danbooru", "safebooru":  # HTTPS for Danbooru, add safebooru
     pybooru.resources.SITE_LIST[b] = {"url": "https://%s.donmai.us" % b}
