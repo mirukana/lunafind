@@ -77,6 +77,8 @@ def merged_output(queries, toJson=False, jsonIndent=0):
     results = []
     for query in queries:
         results += auto(query)
+
+    results = filter_duplicates(results)
     # Sort posts from newest to oldest, like a booru's results would show.
     results = sorted(results, key=lambda post: post["id"], reverse=True)
 
@@ -84,6 +86,18 @@ def merged_output(queries, toJson=False, jsonIndent=0):
         return json.dumps(results, ensure_ascii=False, indent=jsonIndent)
 
     return results
+
+
+# TODO: Move this to filter.py
+def filter_duplicates(postsList):
+    """Return a list of unique posts, duplicates are detected by post id."""
+    idSeen = []
+    for i, postDict in enumerate(postsList):
+        if postDict["id"] in idSeen:
+            del postsList[i]
+        else:
+            idSeen.append(postDict["id"])
+    return postsList
 
 
 def auto(query):
