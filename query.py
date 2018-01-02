@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 import re
 from pprint import pprint
 import argparse
@@ -6,9 +7,12 @@ import json
 import math
 import logging
 from urllib.parse import urlparse, parse_qs
-from pybooru import Danbooru
-import pybooru.resources
+from colored import attr, fg
+from halo import Halo
+import pybooru
+import pybooru.resources as booruRes
 import utils
+import patches
 import exceptions
 
 
@@ -72,7 +76,7 @@ def parse_args(args=None):
     return parser.parse_args(args if args else None)
 
 
-def merged_output(queries, toJson=False, jsonIndent=0):
+def merged_output(queries, toJson=False, jsonIndent=None):
     """Call auto() for every arguments, return a flattened list of results."""
     results = []
     for query in queries:
@@ -127,7 +131,15 @@ def url_post(url):
 
 def _id(_id):
     """Return one dict in a list for the found post on the booru."""
-    return exec_pybooru_call(client.post_list, tags="id:%s" % _id)
+    spinner = Halo(
+            text="Querying post %s%s%s" % (fg(colors["info"]), _id, attr(0)),
+            spinner="arrow", stream=sys.stderr, color="yellow")
+    spinner.start()
+
+    result = exec_pybooru_call(client.post_list, tags="id:%s" % _id)
+
+    spinner.succeed("Fetched post %s%s%s" % (fg(colors["info"]), _id, attr(0)))
+    return result
 
 
 def url_result(url):
@@ -137,7 +149,15 @@ def url_result(url):
 
 def md5(md5):
     """Call search() to find a post with a MD5 hash."""
-    return exec_pybooru_call(client.post_list, tags="md5:%s" % md5)
+    spinner = Halo(
+            text="Querying MD5 %s%s%s" % (fg(colors["info"]), md5, attr(0)),
+            spinner="arrow", stream=sys.stderr, color="yellow")
+    spinner.start()
+
+    result = exec_pybooru_call(client.post_list, tags="md5:%s" % md5)
+
+    spinner.succeed("Fetched MD5 %s%s%s" % (fg(colors["info"]), md5, attr(0)))
+    return result
 
 
 def search(tags="", page=1, limit=200, random=False, raw=False, **kwargs):
@@ -161,6 +181,7 @@ def search(tags="", page=1, limit=200, random=False, raw=False, **kwargs):
 
     # Generate full list of pages as integers without duplicates.
     page_set = set()
+    post_total = count_posts(params["tags"])
 
     for page in params["page"]:
         if str(page).isdigit():
@@ -175,7 +196,7 @@ def search(tags="", page=1, limit=200, random=False, raw=False, **kwargs):
         # e.g. -p 2+: All the pages in a range from 2 to the last possible.
         elif re.match(r"^\d+\+$", str(page)):
             begin = int(page.split("+")[0])
-            end = math.ceil(count_posts(params["tags"]) / params["limit"])
+            end = math.ceil(post_total / params["limit"])
 
         # e.g. -p +5: All the pages in a range from 1 to 5.
         elif re.match(r"^\+\d+$", str(page)):
@@ -184,10 +205,28 @@ def search(tags="", page=1, limit=200, random=False, raw=False, **kwargs):
 
         page_set.update(range(begin, end + 1))
 
+    posts_to_get = min(len(page_set) * params["limit"], post_total)
+    page_nbr = str(len(page_set))
+    page_nbr += " pages" if len(page_set) > 1 else " page"
+
+    spinner = Halo(spinner="arrow", stream=sys.stderr, color="yellow")
+    spinner.start()
+
     results = []
     for page in page_set:
+        spinner.text = ("Querying search {0}{3}{2}, page {1}{4}{2} "
+                        "({0}{5}{2} posts over {0}{6}{2})").format(
+                fg(colors["info"]), fg(colors["info2"]), attr(0),
+                params["tags"], page, posts_to_get, page_nbr)
+
         params["page"] = page
         results += exec_pybooru_call(client.post_list, **params)
+
+    spinner.succeed(
+            "Fetched search {0}{2}{1} ({0}{3}{1} posts over {0}{4}{1})".format(
+                fg(colors["info"]), attr(0),
+                params["tags"], posts_to_get, page_nbr))
+
     return results
 
 
@@ -195,10 +234,10 @@ def count_posts(tags=None):
     return exec_pybooru_call(client.count_posts, tags)["counts"]["posts"]
 
 
-def exec_pybooru_call(function, **args):
+def exec_pybooru_call(function, *args, **kwargs):
     for max_error_count in range(1, 10 + 1):
         try:
-            return function(**args)
+            return function(*args, **kwargs)
         except (pybooru.exceptions.PybooruHTTPError, KeyError) as error:
             code = re.search(r"In _request: ([0-9]+)", error._msg).group(1)
             url = re.search(r"URL: (https://.+)", error._msg).group(1)
@@ -210,11 +249,16 @@ def exec_pybooru_call(function, **args):
 logging.basicConfig(level=logging.INFO)
 
 for b in "danbooru", "safebooru":  # HTTPS for Danbooru, add safebooru
-    pybooru.resources.SITE_LIST[b] = {"url": "https://%s.donmai.us" % b}
+    booruRes.SITE_LIST[b] = {"url": "https://%s.donmai.us" % b}
 
-client = Danbooru("safebooru")
-# TODO: migrate this to config
+client = pybooru.Danbooru("safebooru")
+
+# TODO: migrate those to config
 limit_max = 200
+colors = {
+    "info": "green",
+    "info2": "blue"
+}
 
 if __name__ == "__main__":
     cliArgs = parse_args()
