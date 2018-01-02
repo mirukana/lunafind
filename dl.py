@@ -32,7 +32,7 @@ def make_dir(*args):
             os.mkdir(_dir)
 
 
-def check_post_keys(postDict, action, keys=["id"]):
+def post_has_keys(postDict, action, keys=["id"]):
     id_str = ""
     if "id" in postDict:
         id_str = " " + str(postDict["id"])
@@ -62,7 +62,7 @@ def download(postDict):
 def download_infos(postDict, indent=4):
     make_dir("infos")
 
-    if check_post_keys(postDict, "write JSON") is False:
+    if post_has_keys(postDict, "write JSON") is False:
         return False
 
     with open("infos/%d.json" % postDict["id"], "w") as jsonFile:
@@ -72,8 +72,7 @@ def download_infos(postDict, indent=4):
 def download_media(postDict):
     make_dir("media")
 
-    if check_post_keys(postDict, "download media",
-                       ["id", "file_url"]) is False:
+    if post_has_keys(postDict, "download media", ["id", "file_url"]) is False:
         return False
 
     post_id = postDict["id"]

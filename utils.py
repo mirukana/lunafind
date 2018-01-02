@@ -23,5 +23,3 @@ def info(*args, **kwargs):
 def update_line(string):
     sys.stderr.write("\r" + string)
     sys.stderr.flush()
-
-

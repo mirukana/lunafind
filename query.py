@@ -248,8 +248,8 @@ def exec_pybooru_call(function, *args, **kwargs):
 
 logging.basicConfig(level=logging.INFO)
 
-for b in "danbooru", "safebooru":  # HTTPS for Danbooru, add safebooru
-    booruRes.SITE_LIST[b] = {"url": "https://%s.donmai.us" % b}
+for booru in "danbooru", "safebooru":  # HTTPS for Danbooru, add safebooru
+    booruRes.SITE_LIST[booru] = {"url": "https://%s.donmai.us" % booru}
 
 client = pybooru.Danbooru("safebooru")
 
