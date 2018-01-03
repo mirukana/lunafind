@@ -3,11 +3,13 @@ import sys
 import os
 import json
 import logging
+import multiprocessing
 import requests
 import pybooru.resources as booruRes
 
+# TODO: Move thoses to config
 site = "https://safebooru.donmai.us"
-posts_dled = 0
+processes = 16
 
 
 def main():
@@ -48,8 +50,8 @@ def download_list(postList):
     print("%d posts to download" % len(postList))
     # TODO: Print estimated total file size.
 
-    for post in postList:
-        download(post)
+    pool = multiprocessing.Pool(processes)
+    pool.map(download, postList)
 
 
 def download(postDict):
