@@ -6,6 +6,7 @@ import logging
 import multiprocessing
 import requests
 import pybooru.resources as booruRes
+import utils
 
 # TODO: Move thoses to config
 site = "https://safebooru.donmai.us"
@@ -26,12 +27,6 @@ def load_infos():
         return json.load(open(sys.argv[-1]))
 
     # TODO: print help
-
-
-def make_dir(*args):
-    for _dir in args:
-        if not os.path.exists(_dir):
-            os.mkdir(_dir)
 
 
 def post_has_keys(postDict, action, keys=["id"]):
@@ -62,7 +57,7 @@ def download(postDict):
 
 
 def download_infos(postDict, indent=4):
-    make_dir("infos")
+    utils.make_dirs("infos")
 
     if post_has_keys(postDict, "write JSON") is False:
         return False
@@ -72,7 +67,7 @@ def download_infos(postDict, indent=4):
 
 
 def download_media(postDict):
-    make_dir("media")
+    utils.make_dirs("media")
 
     if post_has_keys(postDict, "download media", ["id", "file_url"]) is False:
         return False
@@ -94,7 +89,7 @@ def download_media(postDict):
                       (post_id, booruRes.HTTPError[req.status_code][0]))
 
     with open("media/%s.%s" % (post_id, media_ext), "wb") as mediaFile:
-        for chunk in req.iter_content(chunk_size=16384):
+        for chunk in req.iter_content(chunk_size=16 * 1024 ** 2):
             if chunk:
                 mediaFile.write(chunk)
 

@@ -16,6 +16,12 @@ class CapitalisedHelpFormatter(argparse.HelpFormatter):
         )
 
 
+def make_dirs(*args):
+    for _dir in args:
+        if not os.path.exists(_dir):
+            os.makekdirs(_dir, exist_ok=True)
+
+
 def info(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
