@@ -10,7 +10,6 @@ from urllib.parse import urlparse, parse_qs
 from colored import attr, fg
 from halo import Halo
 import pybooru
-import pybooru.resources as booruRes
 import utils
 import patches
 import exceptions
@@ -247,9 +246,6 @@ def exec_pybooru_call(function, *args, **kwargs):
 
 
 logging.basicConfig(level=logging.INFO)
-
-for booru in "danbooru", "safebooru":  # HTTPS for Danbooru, add safebooru
-    booruRes.SITE_LIST[booru] = {"url": "https://%s.donmai.us" % booru}
 
 client = pybooru.Danbooru("safebooru")
 

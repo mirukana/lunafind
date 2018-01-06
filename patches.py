@@ -1,4 +1,5 @@
 from pybooru.api_danbooru import DanbooruApi_Mixin
+import pybooru.resources
 
 
 def count_posts(self, tags):
@@ -11,3 +12,8 @@ def count_posts(self, tags):
 
 
 DanbooruApi_Mixin.count_posts = count_posts
+
+# HTTPS for Danbooru and Konachan, add Safebooru
+pybooru.resources.SITE_LIST["konachan"]["url"] = "https://konachan.com"
+for booru in "danbooru", "safebooru":
+    pybooru.resources.SITE_LIST[booru]["url"] = "https://%s.donmai.us" % booru
