@@ -11,7 +11,6 @@ from colored import attr, fg
 from halo import Halo
 import pybooru
 import utils
-import patches
 import exceptions
 
 
