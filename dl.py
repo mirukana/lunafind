@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import utils
 import sys
 import os
 import json
@@ -6,7 +7,6 @@ import logging
 import multiprocessing
 import requests
 import pybooru.resources as booruRes
-import utils
 
 # TODO: Move thoses to config
 site = "https://safebooru.donmai.us"

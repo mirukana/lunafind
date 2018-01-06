@@ -1,6 +1,10 @@
+import signal
 import os
 import sys
 import argparse
+
+# Must be effective ASAP. Hide traceback when hitting CTRL-C (sends SIGINT).
+signal.signal(signal.SIGINT, lambda sig_number, _: sys.exit(128 + sig_number))
 
 
 class CapitalisedHelpFormatter(argparse.HelpFormatter):

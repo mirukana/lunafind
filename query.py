@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import utils
 import sys
 import re
 from pprint import pprint
@@ -10,8 +11,30 @@ from urllib.parse import urlparse, parse_qs
 from colored import attr, fg
 from halo import Halo
 import pybooru
-import utils
 import exceptions
+
+logging.basicConfig(level=logging.INFO)
+
+client = pybooru.Danbooru("safebooru")
+
+# TODO: migrate those to config
+limit_max = 200
+colors = {
+    "info": "green",
+    "info2": "blue"
+}
+
+
+def main():
+    global cliArgs
+    cliArgs = parse_args()
+
+    if cliArgs.pretty_print and cliArgs.json:
+        print(merged_output(cliArgs.query[0], toJson=True, jsonIndent=4))
+    elif cliArgs.pretty_print and not cliArgs.json:
+        pprint(merged_output(cliArgs.query[0], toJson=False), indent=4)
+    else:
+        print(merged_output(cliArgs.query[0], toJson=cliArgs.json))
 
 
 def parse_args(args=None):
@@ -244,23 +267,5 @@ def exec_pybooru_call(function, *args, **kwargs):
     raise exceptions.QueryBooruError(code, url)
 
 
-logging.basicConfig(level=logging.INFO)
-
-client = pybooru.Danbooru("safebooru")
-
-# TODO: migrate those to config
-limit_max = 200
-colors = {
-    "info": "green",
-    "info2": "blue"
-}
-
 if __name__ == "__main__":
-    cliArgs = parse_args()
-
-    if cliArgs.pretty_print and cliArgs.json:
-        print(merged_output(cliArgs.query[0], toJson=True, jsonIndent=4))
-    elif cliArgs.pretty_print and not cliArgs.json:
-        pprint(merged_output(cliArgs.query[0], toJson=False), indent=4)
-    else:
-        print(merged_output(cliArgs.query[0], toJson=cliArgs.json))
+    main()
