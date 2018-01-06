@@ -33,12 +33,3 @@ def make_dirs(*args):
     for _dir in args:
         if not os.path.exists(_dir):
             os.makedirs(_dir, exist_ok=True)
-
-
-def info(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
-
-
-def update_line(string):
-    sys.stderr.write("\r" + string)
-    sys.stderr.flush()
