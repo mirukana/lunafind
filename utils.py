@@ -3,6 +3,7 @@ import os
 import sys
 import argparse
 import cursor  # TODO: Remove when halo issue #41 is fixed.
+import hashlib
 
 
 def abort_script(signalNbr=2):
@@ -29,7 +30,7 @@ class CapitalisedHelpFormatter(argparse.HelpFormatter):
 
 
 def bytes2human(size, prefix="", suffix=""):
-    for unit in "", "K", "M", "G", "T", "P", "E", "Z":
+    for unit in "B", "K", "M", "G", "T", "P", "E", "Z":
         if abs(size) < 1024.0:
             return "%3.1f%s%s%s" % (size, prefix, unit, suffix)
         size /= 1024.0
@@ -40,3 +41,16 @@ def make_dirs(*args):
     for _dir in args:
         if not os.path.exists(_dir):
             os.makedirs(_dir, exist_ok=True)
+
+
+def get_file_md5(filePath, chunkSize=16 * 1024 ** 2):
+    hash_md5 = hashlib.md5()
+
+    with open(filePath, "rb") as _file:
+        while True:
+            data = _file.read(chunkSize)
+            if not data:
+                break
+            hash_md5.update(data)
+
+    return hash_md5.hexdigest()
