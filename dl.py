@@ -41,9 +41,13 @@ def post_has_keys(postDict, action, keys=["id"]):
             return False
 
 
+def approx_dl_size(postList):
+    return sum(post["file_size"] for post in postList)
+
+
 def download_list(postList):
-    print("%d posts to download" % len(postList))
-    # TODO: Print estimated total file size.
+    print("Downloading %d posts for about %s\n" %
+          (len(postList), utils.bytes2human(approx_dl_size(postList))))
 
     pool = multiprocessing.Pool(processes)
     pool.map(download, postList)
