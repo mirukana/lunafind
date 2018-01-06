@@ -6,6 +6,7 @@ import shutil
 import json
 import logging
 import multiprocessing
+import time
 import requests
 import pybooru.resources as booruRes
 
@@ -68,15 +69,20 @@ def download_list(postList):
 
 
 def download(postDict):
-    if save_infos(postDict) or download_media(postDict) is False:
-        return False
+    download_media(postDict)
+    save_infos(postDict)
 
 
-def save_infos(postDict, indent=4):
+def save_infos(postDict, addDlTime=True, indent=4):
     utils.make_dirs("infos")
 
     if has_vital_keys(postDict, "write JSON") is False:
         return False
+
+    if addDlTime:
+        # Example date: 2016-11-24T02:30-04:00
+        t = time.strftime("%FT%T%z")
+        postDict["download_time"] = t[:22] + ":" + t[-2:]
 
     with open("infos/%d.json" % postDict["id"], "w") as jsonFile:
         json.dump(postDict, jsonFile, indent=indent, ensure_ascii=False)
