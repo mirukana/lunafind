@@ -2,9 +2,16 @@ import signal
 import os
 import sys
 import argparse
+import cursor  # TODO: Remove when halo issue #41 is fixed.
+
+
+def abort_script(signalNbr=2):
+    cursor.show()  # TODO: Remove when halo issue #41 is fixed.
+    sys.exit(128 + signalNbr)
+
 
 # Must be effective ASAP. Hide traceback when hitting CTRL-C (sends SIGINT).
-signal.signal(signal.SIGINT, lambda sig_number, _: sys.exit(128 + sig_number))
+signal.signal(signal.SIGINT, lambda signalNbr, _: abort_script(signalNbr))
 
 
 class CapitalisedHelpFormatter(argparse.HelpFormatter):
