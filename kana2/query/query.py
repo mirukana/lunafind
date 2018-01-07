@@ -22,7 +22,7 @@ def multiple(queries, toJson=False, jsonIndent=None):
     """Call auto() for every arguments, return a flattened list of results."""
     results = []
     for query in queries:
-        results += auto(query)
+        results += auto(str(query))
 
     results = tools.filter_duplicates(results)
     # Sort posts from newest to oldest, like a booru's results would show.
@@ -39,16 +39,18 @@ def auto(query):
     Detect what kind of query an argument is,
     return a list of post dicts from the appropriate function.
     """
-    if re.match(r"^[a-fA-F\d]{32}$", str(query)):  # 32 chars alphanumeric
+    query = str(query)
+
+    if re.match(r"^[a-fA-F\d]{32}$", query):  # 32 chars alphanumeric
         return md5(query)
 
     if query.isdigit():
         return post_id(query)
 
-    if re.match(r"^%s/posts/(\d+)\?*.*$" % client.site_url, str(query)):
+    if re.match(r"^%s/posts/(\d+)\?*.*$" % client.site_url, query):
         return url_post(query)
 
-    if str(query).startswith(client.site_url):
+    if query.startswith(client.site_url):
         return url_result(query)
 
     return search(tags=query)
@@ -61,12 +63,14 @@ def url_post(url):
 
 def post_id(_id):
     """Return one dict in a list for the found post on the booru."""
+    _id = int(_id)
+
     spinner = Halo(
             text="Querying post %s%s%s" % (fg(colors["info"]), _id, attr(0)),
             spinner="arrow", stream=sys.stderr, color="yellow")
     spinner.start()
 
-    result = tools.exec_pybooru_call(client.post_list, tags="id:%s" % _id)
+    result = tools.exec_pybooru_call(client.post_list, tags="id:%d" % _id)
 
     spinner.succeed("Fetched post %s%s%s" % (fg(colors["info"]), _id, attr(0)))
     return result
