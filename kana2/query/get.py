@@ -18,10 +18,10 @@ colors = {
 }
 
 
-def merged_output(queries, toJson=False, jsonIndent=None):
+def queries(queryList, toJson=False, jsonIndent=None):
     """Call auto() for every arguments, return a flattened list of results."""
     results = []
-    for query in queries:
+    for query in queryList:
         results += auto(query)
 
     results = tools.filter_duplicates(results)
@@ -43,7 +43,7 @@ def auto(query):
         return md5(query)
 
     if query.isdigit():
-        return _id(query)
+        return post_id(query)
 
     if re.match(r"^%s/posts/(\d+)\?*.*$" % client.site_url, str(query)):
         return url_post(query)
@@ -55,11 +55,11 @@ def auto(query):
 
 
 def url_post(url):
-    """Call _id() with the post number in the URL."""
-    return _id(re.search(r"(\d+)\?*.*$", url).group(1))
+    """Call post_id() with the post number in the URL."""
+    return post_id(re.search(r"(\d+)\?*.*$", url).group(1))
 
 
-def _id(_id):
+def post_id(_id):
     """Return one dict in a list for the found post on the booru."""
     spinner = Halo(
             text="Querying post %s%s%s" % (fg(colors["info"]), _id, attr(0)),
