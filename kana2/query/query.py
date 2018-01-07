@@ -18,10 +18,10 @@ colors = {
 }
 
 
-def queries(queryList, toJson=False, jsonIndent=None):
+def multiple(queries, toJson=False, jsonIndent=None):
     """Call auto() for every arguments, return a flattened list of results."""
     results = []
-    for query in queryList:
+    for query in queries:
         results += auto(query)
 
     results = tools.filter_duplicates(results)
