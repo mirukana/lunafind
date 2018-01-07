@@ -14,22 +14,6 @@
 
 ## TODO
 
-→ Proper dir structure, example:
-
-    ```
-    kana2/
-        README.md
-        setup.py
-        kana2/
-            __init__.py
-            download/
-                ...
-            filter/
-                ...
-            query/
-                ...
-    ```
-
 - Break query's page function stuff into smaller functions
 
 - (ignore me)
