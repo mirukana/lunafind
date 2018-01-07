@@ -20,7 +20,10 @@ def main():
     download_list(load_infos())
 
 
-def load_infos():
+def load_infos(infos=None):
+    if infos:
+        return json.loads(infos)
+
     # TODO: accept python dict from ./query
     if not os.isatty(0):  # If something is piped
         return json.load(sys.stdin)
@@ -61,8 +64,10 @@ def approx_dl_size(postList):
 
 
 def download_list(postList):
-    print("Downloading %d posts for a maximum of about %s\n" %
-          (len(postList), utils.bytes2human(approx_dl_size(postList))))
+    print("Downloading %d posts, about %s%s\n" %
+          (len(postList),
+           utils.bytes2human(approx_dl_size(postList)),
+           next((" max" for p in postList if p["file_ext"] == "zip"), "")))
 
     pool = multiprocessing.Pool(processes)
     pool.map(download, postList)

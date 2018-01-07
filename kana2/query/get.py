@@ -1,100 +1,21 @@
-#!/usr/bin/env python3
-import utils
-import sys
-import re
-from pprint import pprint
-import argparse
 import json
 import math
-import logging
-from urllib.parse import urlparse, parse_qs
+import re
+import sys
+import urllib.parse
+
 from colored import attr, fg
 from halo import Halo
-import pybooru
-import exceptions
 
-logging.basicConfig(level=logging.INFO)
-
-client = pybooru.Danbooru("safebooru")
+from . import args
+from . import client
+from . import tools
 
 # TODO: migrate those to config
-limit_max = 200
 colors = {
     "info": "green",
     "info2": "blue"
 }
-
-
-def main():
-    global cliArgs
-    cliArgs = parse_args()
-
-    if cliArgs.pretty_print and cliArgs.json:
-        print(merged_output(cliArgs.query[0], toJson=True, jsonIndent=4))
-    elif cliArgs.pretty_print and not cliArgs.json:
-        pprint(merged_output(cliArgs.query[0], toJson=False), indent=4)
-    else:
-        print(merged_output(cliArgs.query[0], toJson=cliArgs.json))
-
-
-def parse_args(args=None):
-    """Define argument parser and return parsed CLI arguments."""
-    parser = argparse.ArgumentParser(
-            description="Output post informations from a booru's API.",
-            add_help=False,
-            formatter_class=utils.CapitalisedHelpFormatter
-    )
-
-    parser._positionals.title = "Positional arguments"
-    parser.add_argument(
-            "query",
-            action="append", nargs="+", metavar="QUERY",
-            help="Tag search, post ID, post URL, search results URL or " +
-                 " '%%' for the home page."
-    )
-
-    searchOpts = parser.add_argument_group("Search queries options")
-    searchOpts.add_argument(
-            "-p", "--page",
-            nargs="+", default=1,
-            help="Pages to fetch (default: %(default)d)\n" +
-                 "Can be a single page or a range (e.g. 3-777, 1+ or +20)"
-    )
-    searchOpts.add_argument(
-            "-l", "--limit",
-            type=int, default=limit_max,
-            help="Number of posts per page (default: %(default)d)"
-    )
-    searchOpts.add_argument(
-            "-r", "--random",
-            action="store_true",
-            help="Request random posts from the booru."
-    )
-    searchOpts.add_argument(
-            "-R", "--raw",
-            action="store_true",
-            help="Ask the booru to parse QUERY as a single literal tag."
-    )
-
-    parser._optionals.title = "General options"
-    parser.add_argument(
-            "-j", "--json",
-            action="store_true",
-            help="Output post informations as JSON."
-    )
-    parser.add_argument(
-            "-P", "--pretty-print",
-            action="store_true",
-            help="Print the post infos in a human-readable way."
-    )
-    parser.add_argument(
-            "-h", "--help",
-            action="help", default=argparse.SUPPRESS,
-            help="Show this help message and exit."
-    )
-
-    # Defaults to the CLI arguments
-    return parser.parse_args(args if args else None)
 
 
 def merged_output(queries, toJson=False, jsonIndent=None):
@@ -103,7 +24,7 @@ def merged_output(queries, toJson=False, jsonIndent=None):
     for query in queries:
         results += auto(query)
 
-    results = filter_duplicates(results)
+    results = tools.filter_duplicates(results)
     # Sort posts from newest to oldest, like a booru's results would show.
     results = sorted(results, key=lambda post: post["id"], reverse=True)
 
@@ -111,18 +32,6 @@ def merged_output(queries, toJson=False, jsonIndent=None):
         return json.dumps(results, ensure_ascii=False, indent=jsonIndent)
 
     return results
-
-
-# TODO: Move this to filter.py
-def filter_duplicates(postsList):
-    """Return a list of unique posts, duplicates are detected by post id."""
-    idSeen = []
-    for i, postDict in enumerate(postsList):
-        if postDict["id"] in idSeen:
-            del postsList[i]
-        else:
-            idSeen.append(postDict["id"])
-    return postsList
 
 
 def auto(query):
@@ -157,7 +66,7 @@ def _id(_id):
             spinner="arrow", stream=sys.stderr, color="yellow")
     spinner.start()
 
-    result = exec_pybooru_call(client.post_list, tags="id:%s" % _id)
+    result = tools.exec_pybooru_call(client.post_list, tags="id:%s" % _id)
 
     spinner.succeed("Fetched post %s%s%s" % (fg(colors["info"]), _id, attr(0)))
     return result
@@ -165,7 +74,7 @@ def _id(_id):
 
 def url_result(url):
     """Call search() with the parameters found in the URL."""
-    return search(**parse_qs(urlparse(url).query))
+    return search(**urllib.parse.parse_qs(urllib.parse.urlparse(url).query))
 
 
 def md5(md5):
@@ -175,7 +84,7 @@ def md5(md5):
             spinner="arrow", stream=sys.stderr, color="yellow")
     spinner.start()
 
-    result = exec_pybooru_call(client.post_list, tags="md5:%s" % md5)
+    result = tools.exec_pybooru_call(client.post_list, tags="md5:%s" % md5)
 
     spinner.succeed("Fetched MD5 %s%s%s" % (fg(colors["info"]), md5, attr(0)))
     return result
@@ -193,7 +102,7 @@ def search(tags="", page=1, limit=200, random=False, raw=False, **kwargs):
     # Try to override function parameters with defined CLI arguments.
     for param, _ in params.items():
         try:
-            params[param] = vars(cliArgs)[param]
+            params[param] = args.parsed.__dict__[param]
         except (AttributeError, KeyError):
             pass
 
@@ -202,7 +111,7 @@ def search(tags="", page=1, limit=200, random=False, raw=False, **kwargs):
 
     # Generate full list of pages as integers without duplicates.
     page_set = set()
-    post_total = count_posts(params["tags"])
+    post_total = tools.count_posts(params["tags"])
 
     for page in params["page"]:
         if str(page).isdigit():
@@ -241,7 +150,7 @@ def search(tags="", page=1, limit=200, random=False, raw=False, **kwargs):
                 params["tags"], page, posts_to_get, page_nbr)
 
         params["page"] = page
-        results += exec_pybooru_call(client.post_list, **params)
+        results += tools.exec_pybooru_call(client.post_list, **params)
 
     spinner.succeed(
             "Fetched search {0}{2}{1} ({0}{3}{1} posts over {0}{4}{1})".format(
@@ -249,23 +158,3 @@ def search(tags="", page=1, limit=200, random=False, raw=False, **kwargs):
                 params["tags"], posts_to_get, page_nbr))
 
     return results
-
-
-def count_posts(tags=None):
-    return exec_pybooru_call(client.count_posts, tags)["counts"]["posts"]
-
-
-def exec_pybooru_call(function, *args, **kwargs):
-    for max_error_count in range(1, 10 + 1):
-        try:
-            return function(*args, **kwargs)
-        except (pybooru.exceptions.PybooruHTTPError, KeyError) as error:
-            code = re.search(r"In _request: ([0-9]+)", error._msg).group(1)
-            url = re.search(r"URL: (https://.+)", error._msg).group(1)
-            logging.warn("Error %s from booru (URL: %s)" % (code, url))
-
-    raise exceptions.QueryBooruError(code, url)
-
-
-if __name__ == "__main__":
-    main()
