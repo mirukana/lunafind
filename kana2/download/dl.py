@@ -1,8 +1,3 @@
-#!/usr/bin/env python3
-import utils
-import sys
-import os
-import shutil
 import json
 import logging
 import multiprocessing
@@ -10,78 +5,33 @@ import time
 import requests
 import pybooru.resources as booruRes
 
-# TODO: Move thoses to config
-site = "https://safebooru.donmai.us"
-processes = 16
+from . import checks
+from . import tools
+from .. import utils
+
+from . import processes_nbr
+from . import site
 
 
-def main():
-    logging.basicConfig(level=logging.INFO)
-    download_list(load_infos())
-
-
-def load_infos(infos=None):
-    if infos:
-        return json.loads(infos)
-
-    # TODO: accept python dict from ./query
-    if not os.isatty(0):  # If something is piped
-        return json.load(sys.stdin)
-
-    if os.path.isfile(sys.argv[-1]):
-        return json.load(open(sys.argv[-1]))
-
-    # TODO: print help
-
-
-def getDlFileExt(postDict):
-    # TODO: Config option to download normal zip instead.
-    try:
-        if postDict["file_url"].endswith(".zip"):
-            return postDict["large_file_url"].split(".")[-1]
-        return postDict["file_ext"]
-    except KeyError:
-        return "UNKNOWN"
-
-
-def has_vital_keys(postDict, action, keys=["id"]):
-    id_str = ""
-    if "id" in postDict:
-        id_str = " %s" % postDict["id"]
-
-    for key in keys:
-        if key not in postDict:
-            logging.error("Unable to %s for post%s, missing %s" %
-                          (action, id_str, key))
-            if "id" in postDict:
-                move_failed_dl(postDict["id"], getDlFileExt(postDict),
-                               "missing-" + key)
-            return False
-
-
-def approx_dl_size(postList):
-    return sum(post["file_size"] for post in postList)
-
-
-def download_list(postList):
+def posts(postList):
     print("Downloading %d posts, about %s%s\n" %
           (len(postList),
-           utils.bytes2human(approx_dl_size(postList)),
+           utils.bytes2human(tools.dl_size(postList)),
            next((" max" for p in postList if p["file_ext"] == "zip"), "")))
 
-    pool = multiprocessing.Pool(processes)
-    pool.map(download, postList)
+    pool = multiprocessing.Pool(processes_nbr)
+    pool.map(post, postList)
 
 
-def download(postDict):
-    download_media(postDict)
-    save_infos(postDict)
+def post(postDict):
+    media(postDict)
+    infos(postDict)
 
 
-def save_infos(postDict, addDlTime=True, indent=4):
+def infos(postDict, addDlTime=True, indent=4):
     utils.make_dirs("infos")
 
-    if has_vital_keys(postDict, "write JSON") is False:
+    if checks.has_vital_keys(postDict, "write JSON") is False:
         return False
 
     if addDlTime:
@@ -93,11 +43,11 @@ def save_infos(postDict, addDlTime=True, indent=4):
         json.dump(postDict, jsonFile, indent=indent, ensure_ascii=False)
 
 
-def download_media(postDict, chunkSize=16 * 1024 ** 2):
+def media(postDict, chunkSize=16 * 1024 ** 2):
     utils.make_dirs("media")
 
     check_keys = ["id", "file_url", "large_file_url", "md5"]
-    if has_vital_keys(postDict, "download media", check_keys) is False:
+    if checks.has_vital_keys(postDict, "download media", check_keys) is False:
         return False
 
     postID = postDict["id"]
@@ -109,7 +59,7 @@ def download_media(postDict, chunkSize=16 * 1024 ** 2):
         mediaURL = site + postDict["large_file_url"]
         verify_integrity_method = "filesize", postDict["large_file_url"]
 
-    mediaExt = getDlFileExt(postDict)
+    mediaExt = tools.get_file_to_dl_ext(postDict)
 
     logging.info("Downloading media for post %d" % postID)
 
@@ -117,7 +67,7 @@ def download_media(postDict, chunkSize=16 * 1024 ** 2):
     if req.status_code not in range(200, 204 + 1):
         logging.error("Failed media download for post %d: %s" %
                       (postID, booruRes.HTTP_STATUS_CODE[req.status_code][0]))
-        move_failed_dl(postID, mediaExt, "error-%s" % req.status_code)
+        checks.move_failed_dl(postID, mediaExt, "error-%s" % req.status_code)
         return False
 
     with open("media/%s.%s" % (postID, mediaExt), "wb") as mediaFile:
@@ -125,35 +75,4 @@ def download_media(postDict, chunkSize=16 * 1024 ** 2):
             if chunk:
                 mediaFile.write(chunk)
 
-    verify_dl_integrity(postID, mediaExt, verify_integrity_method)
-
-
-def verify_dl_integrity(postID, mediaExt, method):
-    media = "media/%s.%s" % (postID, mediaExt)
-
-    if not (method[0] == "md5" and utils.get_file_md5(media) == method[1] or
-
-            method[0] == "filesize" and method[1] == os.path.getsize(media) or
-
-            method[0] == "filesize" and
-            requests.head(site + method[1]).headers["content-length"] !=
-            os.path.getsize(media)):
-        logging.error("Corrupted download, %s check failed." % method[0])
-        move_failed_dl(postID, mediaExt, method[0] + "-mismatch")
-
-
-def move_failed_dl(postID, mediaExt, errorDir):
-    media = "media/", "%s.%s" % (postID, mediaExt)
-    infos = "infos/", "%s.json" % postID
-
-    for path in media, infos:
-        utils.make_dirs("%s/%s" % (path[0], errorDir))
-        try:
-            dirFile = "".join(path)
-            shutil.move(dirFile, dirFile.replace("/", "/%s/" % errorDir, 1))
-        except FileNotFoundError:
-            pass
-
-
-if __name__ == "__main__":
-    main()
+    checks.verify_dl(postID, mediaExt, verify_integrity_method)
