@@ -41,6 +41,7 @@ def auto(query):
     """
     query = str(query)
 
+    # Generate full list of pages as integers without duplicates.
     if re.match(r"^[a-fA-F\d]{32}$", query):  # 32 chars alphanumeric
         return md5(query)
 
@@ -113,33 +114,11 @@ def search(tags="", page=1, limit=200, random=False, raw=False, **kwargs):
     if type(params["page"]) != list:
         params["page"] = [params["page"]]
 
-    # Generate full list of pages as integers without duplicates.
-    page_set = set()
     post_total = tools.count_posts(params["tags"])
-
-    for page in params["page"]:
-        if str(page).isdigit():
-            page_set.add(int(page))
-            continue
-
-        # e.g. -p 3-10: All the pages in the range (3, 4, 5...).
-        if re.match(r"^\d+-\d+$", str(page)):
-            begin = int(page.split("-")[0])
-            end = int(page.split("-")[-1])
-
-        # e.g. -p 2+: All the pages in a range from 2 to the last possible.
-        elif re.match(r"^\d+\+$", str(page)):
-            begin = int(page.split("+")[0])
-            end = math.ceil(post_total / params["limit"])
-
-        # e.g. -p +5: All the pages in a range from 1 to 5.
-        elif re.match(r"^\+\d+$", str(page)):
-            begin = 1
-            end = int(page.split("+")[-1])
-
-        page_set.update(range(begin, end + 1))
-
+    page_set = tools.generate_page_set(params["page"], params["tags"],
+                                       params["limit"], post_total)
     posts_to_get = min(len(page_set) * params["limit"], post_total)
+
     page_nbr = str(len(page_set))
     page_nbr += " pages" if len(page_set) > 1 else " page"
 

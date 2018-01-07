@@ -14,8 +14,6 @@
 
 ## TODO
 
-- Break query's page function stuff into smaller functions
-
 - (ignore me)
 - Subcommand design, e.g. `kana2 q|query|d|download|f|filter args...`
 - Use [doctopt](https://docopt.readthedocs.io/en/latest/) instead of argparser
@@ -23,16 +21,18 @@
 - Better CLI interface, progress bar for dl, e'#tc
 - [termcolor](https://pypi.python.org/pypi/termcolor), used in **halo**
 
+- Global timer, so that 0.5-1s must have passed between any request
+
 - Query script
   - Multiprocess
   - Patch pybooru.\_request to handle errors ourself
   - Allow page/limit/etc to modify a single request
+  - Fix "Fetching" message cut off in python3 interpreter
 
 - Download script
   - Artist commentaries JSON
   - Notes JSON
   - zplug-like UI for multiprocess downloading
-  - Global timer, so that 0.5-1s must have passed between any request
   - Do not overwrite files by default?
   - Option to define what types of files will be downloaded (media/info/etc),
     defaults to all (m,i,a,n)
@@ -48,11 +48,8 @@
   - Sort by specific key, ascending or descending
   - Max number of posts
 
-- Docstrings
+- Update the damn docstrings
   - Adapt krip manpages or use docstrings to generate stuff
-
-- Read [ŧhis](https://wiki.python.org/moin/PythonSpeed/PerformanceTip) and
-  apply whatever can be learned from it
 
 ## Tests to write
 
