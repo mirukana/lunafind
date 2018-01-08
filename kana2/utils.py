@@ -7,13 +7,13 @@ import cursor  # TODO: Remove when halo issue #41 is fixed.
 import hashlib
 
 
-def abort_script(signalNbr=2):
+def abort_script(signal_nbr=2):
     cursor.show()  # TODO: Remove when halo issue #41 is fixed.
-    sys.exit(128 + signalNbr)
+    sys.exit(128 + signal_nbr)
 
 
 # Must be effective ASAP. Hide traceback when hitting CTRL-C (sends SIGINT).
-signal.signal(signal.SIGINT, lambda signalNbr, _: abort_script(signalNbr))
+signal.signal(signal.SIGINT, lambda signal_nbr, _: abort_script(signal_nbr))
 
 
 class CapitalisedHelpFormatter(argparse.HelpFormatter):
@@ -49,12 +49,12 @@ def make_dirs(*args):
             os.makedirs(_dir, exist_ok=True)
 
 
-def get_file_md5(filePath, chunkSize=16 * 1024 ** 2):
+def get_file_md5(file_path, chunk_size=16 * 1024 ** 2):
     hash_md5 = hashlib.md5()
 
-    with open(filePath, "rb") as _file:
+    with open(file_path, "rb") as _file:
         while True:
-            data = _file.read(chunkSize)
+            data = _file.read(chunk_size)
             if not data:
                 break
             hash_md5.update(data)
