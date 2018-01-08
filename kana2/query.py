@@ -38,11 +38,11 @@ def auto(*args):
 
 
 def post_id(*args):
-    return [{"tags": "id:%s" % post_id} for post_id in args]
+    return [{"type": "post_id", "tags": "id:%s" % post_id} for post_id in args]
 
 
 def md5(*args):
-    return [{"tags": "md5:%s" % md5} for md5 in args]
+    return [{"type": "md5", "tags": "md5:%s" % md5} for md5 in args]
 
 
 def url_post(*args):
@@ -50,8 +50,11 @@ def url_post(*args):
 
 
 def url_result(*args):
-    return [dict(parse_qsl(urlparse(url).query, True)) for url in args]
+    return [dict(parse_qsl(urlparse(url).query, keep_blank_values=True) +
+            [("type", "url_result")]) for url in args]
 
 
 def search(*args):
+    for search in args:
+        search["type"] = "search"
     return list(args)
