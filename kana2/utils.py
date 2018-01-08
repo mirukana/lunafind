@@ -30,9 +30,9 @@ class CapitalisedHelpFormatter(argparse.HelpFormatter):
         )
 
 
-def filter_duplicate_dicts(_list):
-    json_set = {json.dumps(_dict, sort_keys=True) for _dict in _list}
-    return [json.loads(_dict) for _dict in json_set]
+def filter_duplicate_dicts(list_):
+    json_set = {json.dumps(dict_, sort_keys=True) for dict_ in list_}
+    return [json.loads(dict_) for dict_ in json_set]
 
 
 def bytes2human(size, prefix="", suffix=""):
@@ -44,17 +44,17 @@ def bytes2human(size, prefix="", suffix=""):
 
 
 def make_dirs(*args):
-    for _dir in args:
-        if not os.path.exists(_dir):
-            os.makedirs(_dir, exist_ok=True)
+    for dir_ in args:
+        if not os.path.exists(dir_):
+            os.makedirs(dir_, exist_ok=True)
 
 
 def get_file_md5(file_path, chunk_size=16 * 1024 ** 2):
     hash_md5 = hashlib.md5()
 
-    with open(file_path, "rb") as _file:
+    with open(file_path, "rb") as file_:
         while True:
-            data = _file.read(chunk_size)
+            data = file_.read(chunk_size)
             if not data:
                 break
             hash_md5.update(data)
