@@ -14,14 +14,15 @@
 
 ## TODO
 
-- (ignore me)
-- Subcommand design, e.g. `kana2 q|query|d|download|f|filter args...`
+- Implement new design (see gajim convo)
 - Use [doctopt](https://docopt.readthedocs.io/en/latest/) instead of argparser
 - Config system
 - Better CLI interface, progress bar for dl, e'#tc
 - [termcolor](https://pypi.python.org/pypi/termcolor), used in **halo**
 
 - Global timer, so that 0.5-1s must have passed between any request
+
+- re.compile everywhere
 
 - Query script
   - Multiprocess
@@ -50,6 +51,8 @@
 
 - Update the damn docstrings
   - Adapt krip manpages or use docstrings to generate stuff
+
+- Thumbnail script
 
 ## Tests to write
 

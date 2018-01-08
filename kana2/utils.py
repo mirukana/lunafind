@@ -1,3 +1,4 @@
+import json
 import signal
 import os
 import sys
@@ -27,6 +28,11 @@ class CapitalisedHelpFormatter(argparse.HelpFormatter):
         return super(CapitalisedHelpFormatter, self).add_usage(
             usage, actions, groups, prefix
         )
+
+
+def filter_duplicate_dicts(_list):
+    json_set = {json.dumps(_dict, sort_keys=True) for _dict in _list}
+    return [json.loads(_dict) for _dict in json_set]
 
 
 def bytes2human(size, prefix="", suffix=""):
