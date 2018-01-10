@@ -1,8 +1,12 @@
 import re
 from urllib.parse import parse_qsl, urlparse
 
-from . import CLIENT, utils
+import pybooru
 
+from . import utils
+
+CLIENT = pybooru.danbooru.Danbooru("safebooru")
+"""pybooru.danbooru.Danbooru: See :class:`~pybooru.danbooru.Danbooru`"""
 
 def auto(*args):
     results = []

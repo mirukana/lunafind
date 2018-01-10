@@ -4,7 +4,11 @@ import re
 
 import pybooru
 
-from . import CLIENT, exceptions
+from . import exceptions
+
+
+CLIENT = pybooru.danbooru.Danbooru("safebooru")
+"""pybooru.danbooru.Danbooru: See :class:`~pybooru.danbooru.Danbooru`"""
 
 
 # TODO: Move this to filter.py

@@ -1,10 +1,13 @@
 import sys
 from collections import defaultdict
 
+import pybooru
 from halo import Halo
 
-from . import CLIENT, tools
+from . import tools
 
+CLIENT = pybooru.danbooru.Danbooru("safebooru")
+"""pybooru.danbooru.Danbooru: See :class:`~pybooru.danbooru.Danbooru`"""
 
 def info(queries):
     """Return a list of dicts containing information for every post found."""
