@@ -1,10 +1,11 @@
-import json
-import signal
-import os
-import sys
 import argparse
-import cursor  # TODO: Remove when halo issue #41 is fixed.
 import hashlib
+import json
+import os
+import signal
+import sys
+
+import cursor  # TODO: Remove when halo issue #41 is fixed.
 
 
 def abort_script(signal_nbr=2):

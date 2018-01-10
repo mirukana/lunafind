@@ -1,12 +1,7 @@
 import re
-from urllib.parse import urlparse, parse_qsl
+from urllib.parse import parse_qsl, urlparse
 
-import pybooru
-
-from . import utils
-
-# TODO: Make this work with any booru URL
-client = pybooru.Danbooru("safebooru")
+from . import client, utils
 
 
 def auto(*args):
@@ -50,8 +45,8 @@ def url_post(*args):
 
 
 def url_result(*args):
-    return [dict(parse_qsl(urlparse(url).query, keep_blank_values=True) +
-            [("type", "url_result")]) for url in args]
+    return [dict(parse_qsl(urlparse(url).query) + [("type", "url_result")])
+            for url in args]
 
 
 def search(*args):
