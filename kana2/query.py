@@ -13,25 +13,25 @@ def auto(*args):
 
     for query in args:
         if isinstance(query, dict):
-            results += search(query)
+            results.extend(search(query))
             continue
 
         query = str(query)
 
         if re.match(r"^[a-fA-F\d]{32}$", query):  # 32 chars alphanumeric
-            results += md5(query)
+            results.extend(md5(query))
 
         elif query.isdigit():
-            results += post_id(query)
+            results.extend(post_id(query))
 
         elif re.match(r"^%s/posts/(\d+)\?*.*$" % CLIENT.site_url, query):
-            results += url_post(query)
+            results.extend(url_post(query))
 
         elif query.startswith(CLIENT.site_url):
-            results += url_result(query)
+            results.extend(url_result(query))
 
         else:
-            results += search({"tags": query})
+            results.extend(search({"tags": query}))
 
     return utils.filter_duplicate_dicts(results)
 

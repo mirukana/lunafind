@@ -10,8 +10,7 @@ CLIENT = pybooru.danbooru.Danbooru("safebooru")
 """pybooru.danbooru.Danbooru: See :class:`~pybooru.danbooru.Danbooru`"""
 
 def info(queries):
-    """Return a list of dicts containing information for every post found."""
-    results = [None]
+    results = []
 
     for query in queries:
         params = {"tags": "", "page": [1], "limit": 200,
@@ -31,7 +30,7 @@ def info(queries):
                                             page_set)
 
             params["page"] = page
-            results += tools.exec_pybooru_call(CLIENT.post_list, **params)
+            results.extend(tools.exec_pybooru_call(CLIENT.post_list, **params))
 
         spinner.succeed(get_spinner_text("succeed", query, posts_to_get,
                                          page_set))
