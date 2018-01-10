@@ -1,14 +1,14 @@
 import re
 from urllib.parse import parse_qsl, urlparse
 
-from . import client, utils
+from . import CLIENT, utils
 
 
 def auto(*args):
     results = []
 
     for query in args:
-        if type(query) is dict:
+        if isinstance(query, dict):
             results += search(query)
             continue
 
@@ -20,10 +20,10 @@ def auto(*args):
         elif query.isdigit():
             results += post_id(query)
 
-        elif re.match(r"^%s/posts/(\d+)\?*.*$" % client.site_url, query):
+        elif re.match(r"^%s/posts/(\d+)\?*.*$" % CLIENT.site_url, query):
             results += url_post(query)
 
-        elif query.startswith(client.site_url):
+        elif query.startswith(CLIENT.site_url):
             results += url_result(query)
 
         else:
@@ -50,6 +50,6 @@ def url_result(*args):
 
 
 def search(*args):
-    for search in args:
-        search["type"] = "search"
+    for search_ in args:
+        search_["type"] = "search"
     return list(args)

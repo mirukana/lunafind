@@ -4,33 +4,33 @@ import re
 
 import pybooru
 
-from . import client, exceptions
+from . import CLIENT, exceptions
 
 
 # TODO: Move this to filter.py
-def filter_duplicates(postList):
+def filter_duplicates(posts):
     """Return a list of unique posts, duplicates are detected by post id."""
-    idSeen = []
-    for i, postDict in enumerate(postList):
-        if postDict["id"] in idSeen:
-            del postList[i]
+    id_seen = [None]
+    for i, post in enumerate(posts):
+        if post["id"] in id_seen:
+            del posts[i]
         else:
-            idSeen.append(postDict["id"])
-    return postList
+            id_seen.append(post["id"])
+    return posts
 
 
 def count_posts(tags=None):
-    return exec_pybooru_call(client.count_posts, tags)["counts"]["posts"]
+    return exec_pybooru_call(CLIENT.count_posts, tags)["counts"]["posts"]
 
 
 def exec_pybooru_call(function, *args, **kwargs):
-    for max_error_count in range(1, 10 + 1):
+    for _ in range(1, 10 + 1):
         try:
             return function(*args, **kwargs)
         except (pybooru.exceptions.PybooruHTTPError, KeyError) as error:
             code = re.search(r"In _request: ([0-9]+)", error._msg).group(1)
             url = re.search(r"URL: (https://.+)", error._msg).group(1)
-            logging.warn("Error %s from booru (URL: %s)" % (code, url))
+            logging.warning("Error %s from booru (URL: %s)", code, url)
 
     raise exceptions.QueryBooruError(code, url)
 

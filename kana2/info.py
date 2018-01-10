@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from halo import Halo
 
-from . import client, tools
+from . import CLIENT, tools
 
 
 def info(queries):
@@ -28,7 +28,7 @@ def info(queries):
                                             page_set)
 
             params["page"] = page
-            results += tools.exec_pybooru_call(client.post_list, **params)
+            results += tools.exec_pybooru_call(CLIENT.post_list, **params)
 
         spinner.succeed(get_spinner_text("succeed", query, posts_to_get,
                                          page_set))
