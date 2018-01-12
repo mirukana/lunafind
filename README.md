@@ -20,9 +20,7 @@
 - Better CLI interface, progress bar for dl, e'#tc
 - [termcolor](https://pypi.python.org/pypi/termcolor), used in **halo**
 
-- Global timer, so that 0.5-1s must have passed between any request
-
-- re.compile everywhere
+- Colors
 
 - Query script
   - Multiprocess
@@ -31,23 +29,21 @@
   - Fix "Fetching" message cut off in python3 interpreter
 
 - Download script
-  - Artist commentaries JSON
-  - Notes JSON
-  - zplug-like UI for multiprocess downloading
-  - Do not overwrite files by default?
-  - Option to define what types of files will be downloaded (media/info/etc),
-    defaults to all (m,i,a,n)
-  - Option to disable adding download time, <progName> prefix for added key
+- Artist commentaries JSON
+- Notes JSON
+- zplug-like UI for multiprocess downloading
+- Do not overwrite files by default?
+- Option to disable adding download time, <progName> prefix for added key
 
 - Ignore and error lists
 
 - Filter script
-  - Duplicates
-  - Blacklist
-  - Tag conditions
-  - "JSON" conditions
-  - Sort by specific key, ascending or descending
-  - Max number of posts
+- Duplicates
+- Blacklist
+- Tag conditions
+- "JSON" conditions
+- Sort by specific key, ascending or descending
+the- Max number of posts
 
 - Update the damn docstrings
   - Adapt krip manpages or use docstrings to generate stuff
