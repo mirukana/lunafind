@@ -5,22 +5,14 @@ import os
 import signal
 import sys
 
-import cursor  # TODO: Remove when halo issue #41 is fixed.
-
-
-def abort_script(signal_nbr=2):
-    cursor.show()  # TODO: Remove when halo issue #41 is fixed.
-    sys.exit(128 + signal_nbr)
-
-
-# Must be effective ASAP. Hide traceback when hitting CTRL-C (sends SIGINT).
-signal.signal(signal.SIGINT, lambda signal_nbr, _: abort_script(signal_nbr))
+# Must be effective ASAP, hide traceback when hitting CTRL-C (SIGINT).
+signal.signal(signal.SIGINT, lambda signal_nbr, _: sys.exit(128 + signal_nbr))
 
 
 class CapitalisedHelpFormatter(argparse.HelpFormatter):
-    """
-    Display argparse's help with a capitalized "usage:".
-    Use with:
+    """ Display argparse's help with a capitalized "usage:".
+
+    Can be used with:
         argparse.ArgumentParser(formatter_class=CapitalisedHelpFormatter)
     """
     def add_usage(self, usage, actions, groups, prefix=None):
