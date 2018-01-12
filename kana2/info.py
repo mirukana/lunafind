@@ -1,4 +1,4 @@
-"""Get booru post information from a query."""
+"""Get booru post information from a query dictionary."""
 
 import sys
 
