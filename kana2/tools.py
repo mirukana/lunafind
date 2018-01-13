@@ -106,13 +106,7 @@ def exec_pybooru_call(function, *args, **kwargs):
     raise exceptions.QueryBooruError(code, url)
 
 
-def generate_page_set(page_list, limit, total_posts):
-    regexes = {
-        "page-page": re.compile(r"^\d+-\d+$"),
-        "page+": re.compile(r"^\d+\+$"),
-        "+page": re.compile(r"^\+\d+$")
-    }
-
+def generate_page_set(page_list, limit=None, total_posts=None):
     page_set = set()
 
     for page in page_list:
@@ -123,17 +117,22 @@ def generate_page_set(page_list, limit, total_posts):
             continue
 
         # e.g. -p 3-10: All the pages in the range (3, 4, 5...).
-        if regexes["page-page"].match(page):
+        if re.match(r"^\d+-\d+$", page):
             begin = int(page.split("-")[0])
             end = int(page.split("-")[-1])
 
         # e.g. -p 2+: All the pages in a range from 2 to the last possible.
-        elif regexes["page+"].match(page):
+        elif re.match(r"^\d+\+$", page):
             begin = int(page.split("+")[0])
+
+            if not limit or not total_posts:
+                raise TypeError("limit and total_posts parameters required "
+                                "to use the <page>+ feature.")
+
             end = math.ceil(total_posts / limit)
 
         # e.g. -p +5: All the pages in a range from 1 to 5.
-        elif regexes["+page"].match(page):
+        elif  re.match(r"^\+\d+$", page):
             begin = 1
             end = int(page.split("+")[-1])
 
