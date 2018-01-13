@@ -42,7 +42,7 @@ def auto(*args):
               Duplicate queries are discarded.
 
     Examples:
-        >>>query.auto(1, 1, 2, "ca0339e7b4c9648db71b79b1df37158e",
+        >>> query.auto(1, 1, 2, "ca0339e7b4c9648db71b79b1df37158e",
                       "https://safebooru.donmai.us/posts/2935330",
                       "https://safebooru.donmai.us/posts.json?tags=shinki",
                       {"tags":"mima", "page":["+4", 10]})
