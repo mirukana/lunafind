@@ -41,7 +41,7 @@ def info(queries):
         post_total = tools.count_posts(params["tags"])
         page_set   = tools.generate_page_set(params["page"], params["limit"],
                                              post_total)
-        page_nbr = len(page_set)
+        page_nbr     = len(page_set)
         posts_to_get = min(len(page_set) * params["limit"], post_total)
 
         spinner = Halo(spinner="arrow", stream=sys.stderr, color="yellow")
