@@ -20,6 +20,8 @@
 - Better CLI interface, progress bar for dl, e'#tc
 - [termcolor](https://pypi.python.org/pypi/termcolor), used in **halo**
 
+- Check for booru return code not just in media
+
 - Colors
 
 - Query script
