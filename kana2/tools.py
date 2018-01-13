@@ -21,14 +21,11 @@ def filter_duplicates(posts):
         posts (list): Post information dictionaries.
 
     Returns:
-        posts (list): Post dictionaries with non duplicated posts.
+        posts (list): Post dictionaries without duplicates.
 
     Examples:
-        >>> _json = tools.filter_duplicates([{"id": 1, ...},
-                                            {"id": 1, ...},
-                                            {"id": 2, ...}, ...])
-        >>> _json
-        [{'id': 1, ...}, {'id': 2, ...}, ...]
+        >>> tools.filter_duplicates([{"id": 1}, {"id": 1}, {"id": 2}])
+        [{'id': 1}, {'id': 2}]
 
     """
 
@@ -42,61 +39,60 @@ def filter_duplicates(posts):
 
 
 def count_posts(tags=None):
-    """Returns the quantity of posts of given tags.
+    """Return the number of posts for given tags.
 
     Args:
-        tags (int or str): The desired tag(s) search. Default: None.
+        tags (str): The desired tag search to get a count for. Default: None.
+                    If this is None, the post count for the entire booru will
+                    be shown.
 
     Returns:
-        (int) The number of existent posts with given tags.
+        (int): The number of existing posts with given tags.
+               If the number of tags used exceeds the maximum limit
+               (2 for visitors and normal members on Danbooru), return `0`.
 
     Examples:
-        >>> tools.count_posts("hakurei_reimu")
-        46343
-        >>> tools.count_posts("hakurei_reimu maribel_hearn")
-        342
+        >>> tools.count_posts() > 1000
+        True
 
+        >>> tools.count_posts("hakurei_reimu date:2017-09-17")
+        5
 
-        If it's given 2+ tags or an inexistent tag, it will return 0:
-
-        >>> tools.count_posts("hakurei_reimy")
-        0
         >>> tools.count_posts("hakurei_reimu maribel_hearn usami_renko")
         0
-
-
-        If tags == None, it will return the total posts number in safebooru:
-
-        >>> tools.count_posts()
-        2236330
     """
 
     return exec_pybooru_call(CLIENT.count_posts, tags)["counts"]["posts"]
 
 
 def exec_pybooru_call(function, *args, **kwargs):
-    """Generates a dictionary containing general posts info.
+    """Retry a Pybooru function 10 times before giving up.
+
+    `pybooru.exceptions.PybooruHTTPError` and `KeyError` exceptions
+    will be caught.
 
     Args:
-        function (function): The function to be used
-        *args: What should be used as the function argument(s).
+        function (function): The function to be used.
+        *args: Any function argument.
+        **kwargs: Any named function argument.
 
     Returns:
-        If the rquest succeeds, it will return the function's output (usually
-        a dictionary). Else it will raise an exception containing error
-        information.
+        If the function succeeds, its output will be returned.
+
+    Raises:
+        QueryBooruError: If giving up after too many errors.
 
     Examples:
+        >>> import pybooru
         >>> client = pybooru.danbooru.Danbooru("safebooru")
-        >>> tools.exec_pybooru_call(CLIENT.count_posts, "hakurei_reimu")
-        {'counts': {'posts': 46343}}
+        >>> tools.exec_pybooru_call(client.count_posts, "hakurei_reimu")
+        {'counts': {'posts': ...}}
 
-        >>> tools.exec_pybooru_call(CLIENT.note_show, 1667182)
-        {'id': 1667182, 'created_at': '2016-05-10T06:58:29.587-04:00',
-        'updated_at': '2016-05-10T06:58:29.587-04:00', 'creator_id': 327249,
-        'x': 624, 'y': 199, 'width': 132, 'height': 153, 'is_active': True,
-        'post_id': 2351910, 'body': 'Trying to get oxygen,', 'version': 1,
-        'creator_name': 'Ph.D'}
+        >>> tools.exec_pybooru_call(client.post_show, -1)
+        WARNING:root:Error 404 from booru (URL: https://.../posts/-1.json)
+        ...
+        kana2.exceptions.QueryBooruError: Unable to complete request,
+...         error 404 from 'https://safebooru.donmai.us/posts/-1.json'.
     """
 
     for _ in range(1, 10 + 1):

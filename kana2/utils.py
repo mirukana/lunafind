@@ -12,7 +12,7 @@ signal.signal(signal.SIGINT, lambda signal_nbr, _: sys.exit(128 + signal_nbr))
 class CapitalisedHelpFormatter(argparse.HelpFormatter):
     """ Display argparse's help with a capitalized "usage:".
 
-    Can be used with:
+    Example:
         argparse.ArgumentParser(formatter_class=CapitalisedHelpFormatter)
     """
     def add_usage(self, usage, actions, groups, prefix=None):
@@ -29,28 +29,27 @@ def filter_duplicate_dicts(list_):
 
 
 def bytes2human(size, prefix="", suffix=""):
-    """Transform bytes size to a more readable way.
+    """Return byte sizes as a human-readable number.
 
     Args:
-        size (int): The size in bytes;
-        prefix: What is shown before the unit;
-        suffix: What is shown after the unit.
+        size (int): A size in bytes.
+        prefix (str): String shown before the unit. Defaults to `""`.
+        suffix (str): String shown after the unit. Defaults to `""`.
 
     Returns:
-        Returns how many (unit) exist in (size).
-
-        If size >= 2 ** 80, it will return in yotabytes.
-
-        note: (size) must be < 2 ** 1024, else it will make a stack
-        overflow.
+        (str): A human-readable number.
+               Can be in bytes, kilobytes, megabytes, gigabytes, terabytes,
+               petabytes, exabytes, zettabytes or yottabytes.
 
     Examples:
         >>> utils.bytes2human(8196)
         '8.0K'
-        >>> utils.bytes2human(16 * 1024, suffix="B", prefix=" ")
-        '16.0 KB'
-        >>> utils.bytes2human(1 << 32)
-        '4.0G'
+
+        >>> utils.bytes2human(26684646897, prefix=" ", suffix="B")
+        '24.9 GB'
+
+        >>> utils.bytes2human(1 << 80)
+        '1.0Y'
     """
     for unit in "B", "K", "M", "G", "T", "P", "E", "Z":
         if abs(size) < 1024.0:
@@ -60,23 +59,17 @@ def bytes2human(size, prefix="", suffix=""):
 
 
 def make_dirs(*args):
-    """Create directories in given path.
-    It will be created parental levels if the path depth does not exist.
+    """Create directories as needed for a given path.
 
     Args:
-        *args: The path of directory
+        *args (str): New directory absolute or relative path.
 
     Examples:
-        To make a directory in the current working directory, you must use
-        relative path:
-
-        >>> utils.make_dirs("year")
-        >>> utils.makedirs("year/month/day", "week/hour/century")
-
-
-        Or you can use absolute path:
-
-        >>> utils.makedirs("/home/backup", "/etc/conf")
+        >>> import os
+        >>> os.chdir("/tmp")
+        >>> utils.make_dirs("foo/bar/lorem")
+        >>> os.path.exists("/tmp/foo/bar/lorem")
+        True
     """
     for dir_ in args:
         if not os.path.exists(dir_):
@@ -84,19 +77,19 @@ def make_dirs(*args):
 
 
 def get_file_md5(file_path, chunk_size=16 * 1024 ** 2):
-    """Generates a file's MD5 hash.
+    """Calculate a file's MD5 hash.
 
     Args:
-        file_path: Where the file is.
-        chunk_size (int): The size of the chunk to be loaded to RAM.
-            Default = 16MB (16 * 1024 ** 2)
+        file_path (str): Path of the file to calculate hash.
+        chunk_size (int): Maximum size of a chunk to be loaded in RAM,
+                          defaults to `16 * 1024 ** 2` (16 MB).
 
     Returns:
-        (str) The MD5 hash of the given file.
+        (str): The MD5 hash of the given file.
 
     Examples:
-        >>> utils.get_file_md5("kana2/query.py")
-        '77af6728279fb6357671be4faba53de8'
+        >>> utils.get_file_md5("/dev/null")
+        'd41d8cd98f00b204e9800998ecf8427e'
     """
     hash_md5 = hashlib.md5()
 
