@@ -1,4 +1,4 @@
-"""Tools used in internal scripts."""
+"""Various global variables, functions and others specially used for kana2."""
 
 import logging
 import math
@@ -106,10 +106,42 @@ def exec_pybooru_call(function, *args, **kwargs):
     raise exceptions.QueryBooruError(code, url)
 
 
-def generate_page_set(page_list, limit=None, total_posts=None):
+def generate_page_set(pages, limit=None, total_posts=None):
+    """Return a set of valid booru pages from a list of expressions.
+
+    An expression can be a:
+    - Single page (e.g. `"1"`);
+    - Range (`"3-5"`);
+    - Range from the first page to a given page (`"+6"`);
+    - Range from the a given page to the last page (`"1+"`).
+
+    Args:
+        pages (list): Page expressions to parse.
+        limit (int): Number of posts per page.
+                     Needed for `"<page>+"` expressions.  Defaults to `None`.
+        total_posts (int): Total number of posts for the tag search pages are
+                           generated for. Needed for `"<page>+"` expressions.
+                           Defaults to `None`.
+
+    Raises:
+        TypeError: If a `"<page>+"` item is present in `pages`, but
+                   the `limit` or `total_posts` parameter isn't set.
+
+    Examples:
+        >>> tools.generate_page_set(["20", "7", "6-9", "+3"])
+        {1, 2, 3, 6, 7, 8, 9, 20}
+
+        >>> tools.generate_page_set(["1+"])
+        ...
+        TypeError: limit and total_posts parameters required to use the
+...                <page>+ feature.
+
+        >>> tools.generate_page_set(["1+"], 200, tools.count_posts("ib"))
+        {1, 2, 3, 4, 5, 6}
+    """
     page_set = set()
 
-    for page in page_list:
+    for page in pages:
         page = str(page)
 
         if page.isdigit():

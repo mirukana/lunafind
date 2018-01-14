@@ -10,11 +10,8 @@ Query dictionaries can include the following keys:
     - `tags` (`str`): The tags to search for.
         Can be any tag combination that works on the booru.
         Note, Danbooru limits searches to 2 tags for normal members/visitors.
-    - `page` (`list`): List of pages to search. Items in the list can be:
-        - Single pages (e.g. `"1"`)
-        - Ranges (`"3-5"`)
-        - Ranges from the first page to a given page (`"+6"`)
-        - Ranges from the a given page to the last page (`"1+"`)
+    - `page` (`list`): List of pages to search.
+                       See :func:`tools.generate_page_set` for details.
     - `limit` (`int`): How many posts per page to retrieve.
     - `random` (`bool`): Randomize search results.
     - `raw` (`bool`): Parse `tags` as a single literal tag.

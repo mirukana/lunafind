@@ -1,3 +1,4 @@
+"""General useful classes, functions and others used in kana2."""
 import argparse
 import hashlib
 import json
@@ -24,6 +25,19 @@ class CapitalisedHelpFormatter(argparse.HelpFormatter):
 
 
 def filter_duplicate_dicts(list_):
+    """Return a list of dictionaries without duplicates.
+
+    Args:
+        list_ (list): List of dictionaries.
+
+    Returns:
+        (list): Filtered list.
+
+    Examples:
+        >>> utils.filter_duplicate_dicts([{"a": 1}, {"a": 3}, {"a": 3}])
+        [{'a': 3}, {'a': 1}]
+    """
+
     json_set = {json.dumps(dict_, sort_keys=True) for dict_ in list_}
     return [json.loads(dict_) for dict_ in json_set]
 
