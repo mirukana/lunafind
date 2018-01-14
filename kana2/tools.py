@@ -40,14 +40,13 @@ def count_posts(tags=None):
 
     Args:
         tags (str, optional): The desired tag search to get a count for.
-                              Default: None.
-                              If this is None, the post count for the entire
-                              booru will be shown.
+            If this is None, the post count for the entire booru will be shown.
+            Default: None.
 
     Returns:
         (int): The number of existing posts with given tags.
-               If the number of tags used exceeds the maximum limit
-               (2 for visitors and normal members on Danbooru), return `0`.
+            If the number of tags used exceeds the maximum limit
+            (2 for visitors and normal members on Danbooru), return `0`.
 
     Examples:
         >>> tools.count_posts() > 1000
@@ -116,12 +115,10 @@ def generate_page_set(pages, limit=None, total_posts=None):
     Args:
         pages (list): Page expressions to parse.
         limit (int, optional): Number of posts per page.
-                               Needed for `"<page>+"` expressions.
-                               Defaults to `None`.
+            Needed for `"<page>+"` expressions.  Defaults to `None`.
         total_posts (int, optional): Total number of posts for the tag search
-                                     pages are generated for.
-                                     Needed for `"<page>+"` expressions.
-                                     Defaults to `None`.
+            pages are generated for.  Needed for `"<page>+"` expressions.
+            Defaults to `None`.
 
     Raises:
         TypeError: If a `"<page>+"` item is present in `pages`, but

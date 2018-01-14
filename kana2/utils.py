@@ -96,7 +96,7 @@ def get_file_md5(file_path, chunk_size=16 * 1024 ** 2):
     Args:
         file_path (str): Path of the file to calculate hash.
         chunk_size (int, optional): Maximum size of a chunk to be loaded in
-                                    RAM. Defaults to `16 * 1024 ** 2` (16 MB).
+            RAM. Defaults to `16 * 1024 ** 2` (16 MB).
 
     Returns:
         (str): The MD5 hash of the given file.

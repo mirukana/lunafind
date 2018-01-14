@@ -32,7 +32,7 @@ def auto(*args):
 
     Args:
         *args: A post ID, MD5 hash, post URL, search result URL or
-               tag search parameters dictionary.
+            tag search parameters dictionary.
 
     Returns:
         list: Query dictionaries for each argument passed.
@@ -82,7 +82,7 @@ def post_id(*args):
 
     Args:
         *args (str): A number corresponding to a post's ID.
-                     `int` arguments are automatically converted.
+            `int` arguments are automatically converted.
 
     Returns:
         list: Query dictionaries for each argument passed.
@@ -154,8 +154,8 @@ def search(*args):
 
     Args:
         *args (str): A dictionary of search parameters.
-                     Possible parameters are any key found in query
-                     directionaries, minus `type`.
+            Possible parameters are any key found in query
+            directionaries, minus `type`.
 
     Returns:
         list: Query dictionaries for each argument passed.
