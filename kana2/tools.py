@@ -6,9 +6,6 @@ import re
 
 import pybooru
 
-from . import exceptions
-
-
 CLIENT = pybooru.danbooru.Danbooru("safebooru")
 """pybooru.danbooru.Danbooru: See :class:`~pybooru.danbooru.Danbooru`"""
 
@@ -80,7 +77,7 @@ def exec_pybooru_call(function, *args, **kwargs):
         If the function succeeds, its output will be returned.
 
     Raises:
-        QueryBooruError: If giving up after too many errors.
+        BooruError: If giving up after too many errors.
 
     Examples:
         >>> import pybooru
@@ -91,19 +88,19 @@ def exec_pybooru_call(function, *args, **kwargs):
         >>> tools.exec_pybooru_call(client.post_show, -1)
         WARNING:root:Error 404 from booru (URL: https://.../posts/-1.json)
         ...
-        kana2.exceptions.QueryBooruError: Unable to complete request,
+        kana2.exceptions.BooruError: Unable to complete request,
 ...         error 404 from 'https://safebooru.donmai.us/posts/-1.json'.
     """
 
     for _ in range(1, 10 + 1):
         try:
             return function(*args, **kwargs)
-        except (pybooru.exceptions.PybooruHTTPError, KeyError) as error:
-            code = re.search(r"In _request: ([0-9]+)", error._msg).group(1)
-            url = re.search(r"URL: (https://.+)", error._msg).group(1)
-            logging.warning("Error %s from booru (URL: %s)", code, url)
+        except pybooru.exceptions.PybooruHTTPError as error:
+            code, url = error.args[1], error.args[2]
+            logging.warning("Error %s from booru - URL: %s", code, url)
 
-    raise exceptions.QueryBooruError(code, url)
+    raise pybooru.exceptions.PybooruHTTPError(
+        'Unable to complete request after 10 tries', code, url)
 
 
 def generate_page_set(pages, limit=None, total_posts=None):
