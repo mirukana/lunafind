@@ -47,8 +47,8 @@ def bytes2human(size, prefix="", suffix=""):
 
     Args:
         size (int): A size in bytes.
-        prefix (str): String shown before the unit. Defaults to `""`.
-        suffix (str): String shown after the unit. Defaults to `""`.
+        prefix (str, optional): String shown before the unit. Defaults to `""`.
+        suffix (str, optional): String shown after the unit. Defaults to `""`.
 
     Returns:
         (str): A human-readable number.
@@ -95,8 +95,8 @@ def get_file_md5(file_path, chunk_size=16 * 1024 ** 2):
 
     Args:
         file_path (str): Path of the file to calculate hash.
-        chunk_size (int): Maximum size of a chunk to be loaded in RAM,
-                          defaults to `16 * 1024 ** 2` (16 MB).
+        chunk_size (int, optional): Maximum size of a chunk to be loaded in
+                                    RAM. Defaults to `16 * 1024 ** 2` (16 MB).
 
     Returns:
         (str): The MD5 hash of the given file.

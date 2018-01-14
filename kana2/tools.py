@@ -39,9 +39,10 @@ def count_posts(tags=None):
     """Return the number of posts for given tags.
 
     Args:
-        tags (str): The desired tag search to get a count for. Default: None.
-                    If this is None, the post count for the entire booru will
-                    be shown.
+        tags (str, optional): The desired tag search to get a count for.
+                              Default: None.
+                              If this is None, the post count for the entire
+                              booru will be shown.
 
     Returns:
         (int): The number of existing posts with given tags.
@@ -114,11 +115,13 @@ def generate_page_set(pages, limit=None, total_posts=None):
 
     Args:
         pages (list): Page expressions to parse.
-        limit (int): Number of posts per page.
-                     Needed for `"<page>+"` expressions.  Defaults to `None`.
-        total_posts (int): Total number of posts for the tag search pages are
-                           generated for. Needed for `"<page>+"` expressions.
-                           Defaults to `None`.
+        limit (int, optional): Number of posts per page.
+                               Needed for `"<page>+"` expressions.
+                               Defaults to `None`.
+        total_posts (int, optional): Total number of posts for the tag search
+                                     pages are generated for.
+                                     Needed for `"<page>+"` expressions.
+                                     Defaults to `None`.
 
     Raises:
         TypeError: If a `"<page>+"` item is present in `pages`, but
