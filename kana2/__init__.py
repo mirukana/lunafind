@@ -1,9 +1,8 @@
-#!/usr/bin/env python3
 """Danbooru-related CLI tools."""
 
 import pybooru
 
-from . import info, query
+from . import info, query, tools, utils
 
 __author__ = "kana, julio"
 __license__ = "Private"
