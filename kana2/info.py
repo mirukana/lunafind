@@ -39,8 +39,8 @@ def info(queries):
         params.update(query)
 
         post_total = tools.count_posts(params["tags"])
-        page_set   = tools.generate_page_set(params["page"], params["limit"],
-                                             post_total)
+        page_set   = tools.generate_page_set(params["page"], post_total,
+                                             params["limit"])
         page_nbr     = len(page_set)
         posts_to_get = min(len(page_set) * params["limit"], post_total)
 

@@ -103,7 +103,7 @@ def exec_pybooru_call(function, *args, **kwargs):
         'Unable to complete request after 10 tries', code, url)
 
 
-def generate_page_set(pages, limit=None, total_posts=None):
+def generate_page_set(pages, total_posts=None, limit=None):
     """Return a set of valid booru pages from a list of expressions.
 
     An expression can be a:
@@ -114,11 +114,11 @@ def generate_page_set(pages, limit=None, total_posts=None):
 
     Args:
         pages (list): Page expressions to parse.
-        limit (int, optional): Number of posts per page.
-            Needed for `"<page>+"` expressions.  Defaults to `None`.
         total_posts (int, optional): Total number of posts for the tag search
             pages are generated for.  Needed for `"<page>+"` expressions.
             Defaults to `None`.
+        limit (int, optional): Number of posts per page.
+            Needed for `"<page>+"` expressions.  Defaults to `None`.
 
     Raises:
         TypeError: If a `"<page>+"` item is present in `pages`, but
@@ -133,7 +133,7 @@ def generate_page_set(pages, limit=None, total_posts=None):
         TypeError: limit and total_posts parameters required to use the
 ...                <page>+ feature.
 
-        >>> tools.generate_page_set(["1+"], 200, tools.count_posts("ib"))
+        >>> tools.generate_page_set(["1+"], tools.count_posts("ib"), 200)
         {1, 2, 3, 4, 5, 6}
     """
     page_set = set()
