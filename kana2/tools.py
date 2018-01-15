@@ -1,10 +1,11 @@
 """Various global variables, functions and others specially used for kana2."""
 
 import logging
-import math
-import re
+import shutil
 
 import pybooru
+
+from . import utils
 
 CLIENT = pybooru.danbooru.Danbooru("safebooru")
 """pybooru.danbooru.Danbooru: See :class:`~pybooru.danbooru.Danbooru`"""
@@ -23,7 +24,6 @@ def filter_duplicates(posts):
     Examples:
         >>> tools.filter_duplicates([{"id": 1}, {"id": 1}, {"id": 2}])
         [{'id': 1}, {'id': 2}]
-
     """
 
     id_seen = [None]
@@ -103,68 +103,40 @@ def exec_pybooru_call(function, *args, **kwargs):
         'Unable to complete request after 10 tries', code, url)
 
 
-def generate_page_set(pages, total_posts=None, limit=None):
-    """Return a set of valid booru pages from a list of expressions.
+def get_file_to_dl_ext(post):
+    # TODO: Config option to download normal zip instead.
+    try:
+        if post["file_url"].endswith(".zip"):
+            return post["large_file_url"].split(".")[-1]
+        return post["file_ext"]
+    except KeyError:
+        return "unknown"
 
-    An expression can be a:
-    - Single page (e.g. `"1"`);
-    - Range (`"3-5"`);
-    - Range from the first page to a given page (`"+6"`);
-    - Range from the a given page to the last page (`"1+"`).
 
-    Args:
-        pages (list): Page expressions to parse.
-        total_posts (int, optional): Total number of posts for the tag search
-            pages are generated for.  Needed for `"<page>+"` expressions.
-            Defaults to `None`.
-        limit (int, optional): Number of posts per page.
-            Needed for `"<page>+"` expressions.  Defaults to `None`.
+def has_vital_keys(post, action, keys=["id"]):
+    id_str = ""
+    if "id" in post:
+        id_str = " %s" % post["id"]
 
-    Raises:
-        TypeError: If a `"<page>+"` item is present in `pages`, but
-                   the `limit` or `total_posts` parameter isn't set.
+    for key in keys:
+        if key not in post:
+            logging.error("Unable to %s for post%s, missing %s",
+                          action, id_str, key)
+            if "id" in post:
+                move_failed_dl(post["id"],
+                               get_file_to_dl_ext(post),
+                               "missing-" + key)
+            return False
 
-    Examples:
-        >>> tools.generate_page_set(["20", "7", "6-9", "+3"])
-        {1, 2, 3, 6, 7, 8, 9, 20}
 
-        >>> tools.generate_page_set(["1+"])
-        ...
-        TypeError: limit and total_posts parameters required to use the
-...                <page>+ feature.
+def move_failed_dl(post_id, media_ext, error_dir):
+    media = "media/", "%s.%s" % (post_id, media_ext)
+    info = "info/", "%s.json" % post_id
 
-        >>> tools.generate_page_set(["1+"], tools.count_posts("ib"), 200)
-        {1, 2, 3, 4, 5, 6}
-    """
-    page_set = set()
-
-    for page in pages:
-        page = str(page)
-
-        if page.isdigit():
-            page_set.add(int(page))
-            continue
-
-        # e.g. -p 3-10: All the pages in the range (3, 4, 5...).
-        if re.match(r"^\d+-\d+$", page):
-            begin = int(page.split("-")[0])
-            end = int(page.split("-")[-1])
-
-        # e.g. -p 2+: All the pages in a range from 2 to the last possible.
-        elif re.match(r"^\d+\+$", page):
-            begin = int(page.split("+")[0])
-
-            if not limit or not total_posts:
-                raise TypeError("limit and total_posts parameters required "
-                                "to use the <page>+ feature.")
-
-            end = math.ceil(total_posts / limit)
-
-        # e.g. -p +5: All the pages in a range from 1 to 5.
-        elif  re.match(r"^\+\d+$", page):
-            begin = 1
-            end = int(page.split("+")[-1])
-
-        page_set.update(range(begin, end + 1))
-
-    return page_set
+    for path in media, info:
+        utils.make_dirs("%s/%s" % (path[0], error_dir))
+        try:
+            dir_file = "".join(path)
+            shutil.move(dir_file, dir_file.replace("/", "/%s/" % error_dir, 1))
+        except FileNotFoundError:
+            pass

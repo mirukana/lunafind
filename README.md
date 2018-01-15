@@ -47,8 +47,7 @@
 - Sort by specific key, ascending or descending
 the- Max number of posts
 
-- Update the damn docstrings
-  - Adapt krip manpages or use docstrings to generate stuff
+- Generate docs and manpages with Sphinx
 
 - Thumbnail script
 

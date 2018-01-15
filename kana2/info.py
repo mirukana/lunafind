@@ -1,9 +1,10 @@
 """Get booru post information from a query dictionary."""
 
-import sys
+import logging
+import math
+import re
 
 import pybooru
-from halo import Halo
 
 from . import tools
 
@@ -31,7 +32,6 @@ def info(queries):
         >>> info.info([{"type": "search", "tags": "satsuki_rin", "limit": 1}])
         [{'id':...}]
     """
-    results = []
 
     for query in queries:
         params = {"tags": "", "page": [1], "limit": 200,
@@ -39,25 +39,96 @@ def info(queries):
         params.update(query)
 
         post_total = tools.count_posts(params["tags"])
-        page_set   = tools.generate_page_set(params["page"], post_total,
-                                             params["limit"])
+        page_set   = generate_page_set(params["page"], post_total,
+                                       params["limit"])
         page_nbr     = len(page_set)
         posts_to_get = min(len(page_set) * params["limit"], post_total)
 
-        spinner = Halo(spinner="arrow", stream=sys.stderr, color="yellow")
-        spinner.start()
-
         for page in page_set:
-            spinner.text = get_spinner_text("running", query, posts_to_get,
-                                            page_nbr)
-
             params["page"] = page
-            results.extend(tools.exec_pybooru_call(CLIENT.post_list, **params))
 
-        spinner.succeed(get_spinner_text("success", query, posts_to_get,
-                                         page_nbr))
+            logging.info(
+                "Getting infos - tags: %s, page: %s, total pages: %s, "
+                "posts: %s, limit: %s%s%s",
+                params["tags"],
+                params["page"],
+                page_nbr,
+                posts_to_get,
+                params["limit"],
+                ", random" if params["random"] else "",
+                ", raw" if params["raw"] else "")
 
-    return results
+
+            for post in tools.exec_pybooru_call(CLIENT.post_list, **params):
+                yield post
+
+
+def generate_page_set(pages, total_posts=None, limit=None):
+    """Return a set of valid booru pages from a list of expressions.
+
+    An expression can be a:
+    - Single page (e.g. `"1"`);
+    - Range (`"3-5"`);
+    - Range from the first page to a given page (`"+6"`);
+    - Range from the a given page to the last page (`"1+"`).
+
+    Args:
+        pages (list): Page expressions to parse.
+        total_posts (int, optional): Total number of posts for the tag search
+            pages are generated for.  Needed for `"<page>+"` expressions.
+            Defaults to `None`.
+        limit (int, optional): Number of posts per page.
+            Needed for `"<page>+"` expressions.  Defaults to `None`.
+
+    Raises:
+        TypeError: If a `"<page>+"` item is present in `pages`, but
+                   the `limit` or `total_posts` parameter isn't set.
+
+    Examples:
+        >>> tools.generate_page_set(["20", "7", "6-9", "+3"])
+        {1, 2, 3, 6, 7, 8, 9, 20}
+
+        >>> tools.generate_page_set(["1+"])
+        ...
+        TypeError: limit and total_posts parameters required to use the
+...                <page>+ feature.
+
+        >>> tools.generate_page_set(["1+"], tools.count_posts("ib"), 200)
+        {1, 2, 3, 4, 5, 6}
+    """
+    page_set = set()
+
+    for page in pages:
+        page = str(page)
+
+        if page.isdigit():
+            page_set.add(int(page))
+            continue
+
+        # e.g. -p 3-10: All the pages in the range (3, 4, 5...).
+        if re.match(r"^\d+-\d+$", page):
+            begin = int(page.split("-")[0])
+            end = int(page.split("-")[-1])
+
+        # e.g. -p 2+: All the pages in a range from 2 to the last possible.
+        elif re.match(r"^\d+\+$", page):
+            begin = int(page.split("+")[0])
+
+            if not limit or not total_posts:
+                raise TypeError("limit and total_posts parameters required "
+                                "to use the <page>+ feature.")
+
+            end = math.ceil(total_posts / limit)
+
+        # e.g. -p +5: All the pages in a range from 1 to 5.
+        elif  re.match(r"^\+\d+$", page):
+            begin = 1
+            end = int(page.split("+")[-1])
+
+        page_set.update(range(begin, end + 1))
+
+    return page_set
+
 
 
 def get_spinner_text(state, query, posts_to_get=None, page_nbr=None):
@@ -90,6 +161,7 @@ def get_spinner_text(state, query, posts_to_get=None, page_nbr=None):
 "tags": "hakurei_reimu", "page": ["+3"]}, page_nbr=3)
         'Fetched info for search hakurei_reimu (3 pages)'
     """
+
     info_state = {"running": "Fetching", "success": "Fetched"}
 
     if "type" not in query:

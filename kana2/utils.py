@@ -24,6 +24,63 @@ class CapitalisedHelpFormatter(argparse.HelpFormatter):
             usage, actions, groups, prefix)
 
 
+class Stream(object):
+    """Context manager to open any file or standard stream.
+
+    Args:
+        stream: File path, `sys.stdin`, `sys.stdout` or `sys.stderr`.
+        mode (str, optional): Specify the mode to open files in.
+            See :func:`~open`. Defaults to `"r"`.
+
+    Attributes:
+        stream (obj): Opened file or standard stream.
+        is_file (bool): If the opened stream is a file or standard stream.
+
+    Examples:
+        >>> with utils.Stream(sys.stdout) as stream: stream.write("Test\n")
+        ...
+        Test
+
+        >>> with utils.Stream("new.txt", "w") as stream: stream.write("123\n")
+        ...
+        >>> with utils.Stream("new.txt") as stream: print(stream.read())
+        ...
+        123
+    """
+
+    def __init__(self, stream, mode="r"):
+        if stream in (sys.stdin, sys.stdout, sys.stderr):
+            self.stream  = stream
+            self.is_file = False
+        else:
+            self.stream  = open(stream, mode)
+            self.is_file = True
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type_, value, traceback):
+        if self.is_file:
+            self.stream.close()
+
+
+def write(content, stream, mode="w"):
+    with Stream(stream, mode) as output:
+        if output.is_file or "b" not in mode:
+            output.stream.write(str(content))
+        else:
+            output.stream.buffer.write(str(content))
+
+
+def chunk_write(content_iter, stream, mode="wb"):
+    with Stream(stream, mode) as output:
+        for chunk in content_iter:
+            if chunk and output.is_file or "b" not in mode:
+                output.stream.write(chunk)
+            elif chunk:
+                output.stream.buffer.write(chunk)
+
+
 def filter_duplicate_dicts(list_):
     """Return a list of dictionaries without duplicates.
 
