@@ -11,7 +11,7 @@ Query dictionaries can include the following keys:
         Can be any tag combination that works on the booru.
         Note, Danbooru limits searches to 2 tags for normal members/visitors.
     - `page` (`list`): List of pages to search.
-                       See :func:`tools.generate_page_set` for details.
+                       See :func:`info.generate_page_set` for details.
     - `limit` (`int`): How many posts per page to retrieve.
     - `random` (`bool`): Randomize search results.
     - `raw` (`bool`): Parse `tags` as a single literal tag.
@@ -151,6 +151,8 @@ def search(*args):
         *args (str): A dictionary of search parameters.
             Possible parameters are any key found in query
             directionaries, minus `type`.
+            If the `"page"` value is a `int` or `str`, it will be wrapped
+            into a list as expected for queries.
 
     Returns:
         list: Query dictionaries for each argument passed.
@@ -162,4 +164,8 @@ def search(*args):
 
     for search_ in args:
         search_["type"] = "search"
+
+        if isinstance(search_["page"], (int, str)):
+            search_["page"] = [search_["page"]]
+
     return list(args)
