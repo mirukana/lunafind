@@ -4,7 +4,7 @@ import logging
 
 import pybooru
 
-from . import info, media, query, tools, utils
+__all__ = ["info", "media", "query", "tools", "utils"]
 
 __author__  = "kana, julio"
 __license__ = "Private"
@@ -13,8 +13,8 @@ __email__   = "ym96@protonmail.ch"
 __status__  = "Prototype"
 
 PROCESSES = 16
+"""Maximum number of processes for functions using parallelization."""
 CLIENT    = pybooru.danbooru.Danbooru("safebooru")
 """Booru client. See :class:`~pybooru.danbooru.Danbooru`"""
-
 
 logging.basicConfig(level=logging.INFO)
