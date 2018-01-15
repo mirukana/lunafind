@@ -5,10 +5,7 @@ import pybooru.resources as booruRes
 
 import requests
 
-from . import tools, utils
-
-# TODO: Migrate this to config
-SITE = "https://safebooru.donmai.us"
+from . import CLIENT, tools, utils
 
 
 def media(post, chunk_size=16 * 1024 ** 2):
@@ -17,12 +14,12 @@ def media(post, chunk_size=16 * 1024 ** 2):
         return False
 
     post_id          = post["id"]
-    media_url        = SITE + post["file_url"]
+    media_url        = CLIENT.site_url + post["file_url"]
     # verify_dl_method = "md5", post["md5"]
 
     # If the post is an ugoira, get the associated video instead of the zip.
     if post["file_ext"] == "zip":
-        media_url        = SITE + post["large_file_url"]
+        media_url        = CLIENT.site_url + post["large_file_url"]
         # verify_dl_method = "filesize", post["large_file_url"]
 
     # media_ext = tools.get_file_to_dl_ext(post)
@@ -49,7 +46,8 @@ def verify(file_, method):
             method[1] == os.path.getsize(file_) or
 
             method[0] == "filesize" and
-            requests.head(SITE + method[1]).headers["content-length"] !=
+            requests.head(CLIENT.site_url +
+                          method[1]).headers["content-length"] !=
             os.path.getsize(file_)):
 
         logging.error("Corrupted download, %s check failed.", method[0])

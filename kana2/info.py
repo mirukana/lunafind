@@ -4,12 +4,8 @@ import logging
 import math
 import re
 
-import pybooru
+from . import CLIENT, tools
 
-from . import tools
-
-CLIENT = pybooru.danbooru.Danbooru("safebooru")
-"""pybooru.danbooru.Danbooru: See :class:`~pybooru.danbooru.Danbooru`"""
 
 def info(queries):
     """Return booru post information for query results.

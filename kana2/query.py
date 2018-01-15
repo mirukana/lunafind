@@ -20,12 +20,7 @@ Query dictionaries can include the following keys:
 import re
 from urllib.parse import parse_qsl, urlparse
 
-import pybooru
-
-from . import utils
-
-CLIENT = pybooru.danbooru.Danbooru("safebooru")
-"""pybooru.danbooru.Danbooru: See :class:`~pybooru.danbooru.Danbooru`"""
+from . import CLIENT, utils
 
 def auto(*args):
     """Automatically call appropriate functions to return queries.

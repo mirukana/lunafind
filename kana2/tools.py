@@ -5,10 +5,7 @@ import shutil
 
 import pybooru
 
-from . import utils
-
-CLIENT = pybooru.danbooru.Danbooru("safebooru")
-"""pybooru.danbooru.Danbooru: See :class:`~pybooru.danbooru.Danbooru`"""
+from . import CLIENT, utils
 
 
 # TODO: Move this to filter.py
