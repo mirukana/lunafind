@@ -34,8 +34,7 @@ def media(post, chunk_size=16 * 1024 ** 2):
         # tools.move_failed_dl(post_id, media_ext, "error-%s" % req.status_code
         return False
 
-    for chunk in req.iter_content(chunk_size):
-        yield chunk
+    yield from req.iter_content(chunk_size)
 
 
 def verify(file_, method):

@@ -2,12 +2,28 @@
 
 import logging
 import math
+# import multiprocessing
 import re
 
 from . import CLIENT, tools
 
+# TODO: Update docstrings
 
 def info(queries):
+    for subquery in get_subqueries(queries):
+        logging.info(
+            "Getting infos - tags: %s, page: %s, total: %s, "
+            "posts: %s, limit: %s%s%s",
+            subquery["tags"], subquery["page"], subquery["total_pages"],
+            subquery["posts_to_get"], subquery["limit"],
+            ", random" if subquery["random"] else "",
+            ", raw"    if subquery["raw"]    else "")
+
+        for post in tools.exec_pybooru_call(CLIENT.post_list, **subquery):
+            yield post
+
+
+def get_subqueries(queries):
     """Return booru post information for query results.
 
     Takes the output of a :mod:`kana2.query` function, such as
@@ -30,36 +46,28 @@ def info(queries):
     """
 
     for query in queries:
-        params = {"tags": "", "page": [1], "limit": 200,
-                  "random": False, "raw": False}  # defaults
+        # Default parameters, get overwritten by any query params.
+        params = {"tags":   "",    "page": [1],  "limit": 200,
+                  "random": False, "raw":  False}
         params.update(query)
 
         post_total = tools.count_posts(params["tags"])
         page_set   = generate_page_set(params["page"], post_total,
                                        params["limit"])
-        page_nbr     = len(page_set)
+        total_pages  = len(page_set)
         posts_to_get = min(len(page_set) * params["limit"], post_total)
 
         for page in page_set:
-            params["page"] = page
-
-            logging.info(
-                "Getting infos - tags: %s, page: %s, total pages: %s, "
-                "posts: %s, limit: %s%s%s",
-                params["tags"],
-                params["page"],
-                page_nbr,
-                posts_to_get,
-                params["limit"],
-                ", random" if params["random"] else "",
-                ", raw" if params["raw"] else "")
+            # Cannot just keep changing params["page"], else the same dict
+            # is yielded every time (copy vs memory reference?).
+            subquery                 = dict(params)
+            subquery["page"]         = page
+            subquery["total_pages"]  = total_pages
+            subquery["posts_to_get"] = posts_to_get
+            yield subquery
 
 
-            for post in tools.exec_pybooru_call(CLIENT.post_list, **params):
-                yield post
-
-
-def generate_page_set(pages, total_posts=None, limit=None):
+def generate_page_set(page_exprs, total_posts=None, limit=None):
     """Return a set of valid booru pages from a list of expressions.
 
     An expression can be a:
@@ -69,7 +77,7 @@ def generate_page_set(pages, total_posts=None, limit=None):
     - Range from the a given page to the last page (`"1+"`).
 
     Args:
-        pages (list): Page expressions to parse.
+        page_exprs (list): Page expressions to parse.
         total_posts (int, optional): Total number of posts for the tag search
             pages are generated for.  Needed for `"<page>+"` expressions.
             Defaults to `None`.
@@ -92,9 +100,10 @@ def generate_page_set(pages, total_posts=None, limit=None):
         >>> tools.generate_page_set(["1+"], tools.count_posts("ib"), 200)
         {1, 2, 3, 4, 5, 6}
     """
+
     page_set = set()
 
-    for page in pages:
+    for page in page_exprs:
         page = str(page)
 
         if page.isdigit():
@@ -117,9 +126,12 @@ def generate_page_set(pages, total_posts=None, limit=None):
             end = math.ceil(total_posts / limit)
 
         # e.g. -p +5: All the pages in a range from 1 to 5.
-        elif  re.match(r"^\+\d+$", page):
+        elif re.match(r"^\+\d+$", page):
             begin = 1
             end = int(page.split("+")[-1])
+
+        else:
+            raise ValueError("Invalid page expression: '%s'" % page)
 
         page_set.update(range(begin, end + 1))
 
