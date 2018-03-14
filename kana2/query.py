@@ -26,7 +26,7 @@ def auto(*args):
     """Automatically call appropriate functions to return queries.
 
     Args:
-        *args: A post ID, MD5 hash, post URL, search result URL or
+        *args: A post ID, MD5 hash, post URL, search result URL, tag search or
             tag search parameters dictionary.
 
     Returns:
@@ -164,6 +164,9 @@ def search(*args):
 
     for search_ in args:
         search_["type"] = "search"
+
+        if not "page" in search_:
+            search_["page"] = [1]
 
         if isinstance(search_["page"], (int, str)):
             search_["page"] = [search_["page"]]

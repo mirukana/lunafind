@@ -12,7 +12,7 @@ from . import CLIENT, tools
 def info(queries):
     for subquery in get_subqueries(queries):
         logging.info(
-            "Getting infos - tags: %s, page: %s, total: %s, "
+            "Getting info - tags: %s, page: %s, total: %s, "
             "posts: %s, limit: %s%s%s",
             subquery["tags"], subquery["page"], subquery["total_pages"],
             subquery["posts_to_get"], subquery["limit"],

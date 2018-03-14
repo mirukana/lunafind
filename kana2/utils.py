@@ -72,7 +72,7 @@ def write(content, stream, mode="w"):
             output.stream.buffer.write(str(content))
 
 
-def chunk_write(content_iter, stream, mode="wb"):
+def chunk_write(content_iter, stream, mode="w"):
     with Stream(stream, mode) as output:
         for chunk in content_iter:
             if chunk and output.is_file or "b" not in mode:

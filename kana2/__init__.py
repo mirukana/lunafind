@@ -4,7 +4,7 @@ import logging
 
 import pybooru
 
-__all__ = ["info", "media", "query", "tools", "utils"]
+__all__ = ["download", "info", "media", "query", "tools", "utils"]
 
 __author__  = "kana, julio"
 __license__ = "Private"

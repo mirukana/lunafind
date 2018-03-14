@@ -1,6 +1,7 @@
 """Various global variables, functions and others specially used for kana2."""
 
 import logging
+import re
 import shutil
 
 import pybooru
@@ -137,3 +138,12 @@ def move_failed_dl(post_id, media_ext, error_dir):
             shutil.move(dir_file, dir_file.replace("/", "/%s/" % error_dir, 1))
         except FileNotFoundError:
             pass
+
+
+def replace_keys(post, string):
+    if not isinstance(string, str):
+        return string
+
+    return re.sub(r"(?<!\\)(?:\\\\)*{(.+?)}",
+                  lambda match: str(post[match.group(1)]),
+                  string)

@@ -14,15 +14,20 @@ def media(post, chunk_size=16 * 1024 ** 2):
         return False
 
     post_id          = post["id"]
-    media_url        = CLIENT.site_url + post["file_url"]
+    media_url        = post["file_url"]
     # verify_dl_method = "md5", post["md5"]
 
     # If the post is an ugoira, get the associated video instead of the zip.
+    # The file_ext key turns out to not be reliable for older posts.
     if post["file_ext"] == "zip":
-        media_url        = CLIENT.site_url + post["large_file_url"]
+        media_url        = post["large_file_url"]
         # verify_dl_method = "filesize", post["large_file_url"]
 
     # media_ext = tools.get_file_to_dl_ext(post)
+
+    # Only media hosted on raikou(2).donmai.us will have the full URL.
+    if not media_url.startswith("http"):
+        media_url = "%s%s" % (CLIENT.site_url, media_url)
 
     logging.info("Downloading media for post %d", post_id)
 
