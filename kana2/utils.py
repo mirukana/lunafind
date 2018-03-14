@@ -172,3 +172,11 @@ def get_file_md5(file_path, chunk_size=16 * 1024 ** 2):
             hash_md5.update(data)
 
     return hash_md5.hexdigest()
+
+
+def get_ratio(width, height):
+    def get_gcd(a, b):
+        return a if b == 0 else get_gcd(b, a % b)
+
+    gcd = get_gcd(width, height)
+    return width / height, (int(width / gcd), int(height / gcd))

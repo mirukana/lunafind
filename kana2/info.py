@@ -2,14 +2,17 @@
 
 import logging
 import math
+import os
 # import multiprocessing
 import re
 
-from . import CLIENT, tools
+import arrow
+
+from . import CLIENT, tools, utils
 
 # TODO: Update docstrings
 
-def info(queries):
+def info(queries, add_extra_info=True):
     for subquery in get_subqueries(queries):
         logging.info(
             "Getting info - tags: %s, page: %s, total: %s, "
@@ -20,7 +23,27 @@ def info(queries):
             ", raw"    if subquery["raw"]    else "")
 
         for post in tools.exec_pybooru_call(CLIENT.post_list, **subquery):
+            if add_extra_info:
+                post["kana2"] = extra_info(post)
+
             yield post
+
+
+def extra_info(post):
+    extra = {}
+
+    extra["aspect_ratio"] = utils.get_ratio(post["image_width"],
+                                            post["image_height"])
+
+    if post["file_ext"] == "zip":
+        # File is ugoira, the webm is to be downloaded instead.
+        extra["ext"] = os.path.splitext(post["large_file_url"])[1][1:]
+    else:
+        extra["ext"] = post["file_ext"]
+
+    extra["fetch_date"] = arrow.now().format("YYYY-MM-DDTHH:mm:ss.SSSZZ")
+
+    return extra
 
 
 def get_subqueries(queries):
