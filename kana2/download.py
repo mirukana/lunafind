@@ -14,9 +14,8 @@ def posts(posts_):
                  len(posts_),
                  utils.bytes2human(get_dl_size(posts_)))
 
-    # TODO: Use with
-    pool = multiprocessing.Pool(PROCESSES)
-    pool.map(one_post, posts_)
+    with multiprocessing.Pool(PROCESSES) as pool:
+        pool.map(one_post, posts_)
 
 
 def one_post(post,
