@@ -17,10 +17,11 @@ Query dictionaries can include the following keys:
     - `raw` (`bool`): Parse `tags` as a single literal tag.
 """
 
+import math
 import re
 from urllib.parse import parse_qsl, urlparse
 
-from . import CLIENT, utils
+from . import CLIENT, utils, tools
 
 def auto(*args):
     """Automatically call appropriate functions to return queries.
@@ -172,3 +173,118 @@ def search(*args):
             search_["page"] = [search_["page"]]
 
     return list(args)
+
+
+def get_single_page_queries(queries):
+    """Return booru post information for query results.
+
+    Takes the output of a :mod:`kana2.query` function, such as
+    :func:`query.auto`.
+    Appropriate calls to the booru's API will be made to retrieve information
+    on the wanted posts.
+
+    Args:
+        queries (list): List of queries from :mod:`kana2.query` to process.
+
+    Returns:
+        list: Dictionaries for every post's information returned by the booru.
+
+    Examples:
+        >>> info.info(query.auto(1667182))
+        [{'id': 1667182,...18bc138af5cd5bb1c50d9201d94ec8a7.jpg'}]
+
+        >>> info.info([{"type": "search", "tags": "satsuki_rin", "limit": 1}])
+        [{'id':...}]
+    """
+
+    for query in queries:
+        # Default parameters, get overwritten by any query params.
+        params = {"tags":   "",    "page": [1],  "limit": 200,
+                  "random": False, "raw":  False}
+        params.update(query)
+
+        post_total = tools.count_posts(params["tags"])
+        page_set   = generate_page_set(params["page"], post_total,
+                                       params["limit"])
+        total_pages  = len(page_set)
+        posts_to_get = min(len(page_set) * params["limit"], post_total)
+
+        for page in page_set:
+            # Cannot just keep changing params["page"], else the same dict
+            # is yielded every time (copy vs memory reference?).
+            subquery                 = dict(params)
+            subquery["page"]         = page
+            subquery["total_pages"]  = total_pages
+            subquery["posts_to_get"] = posts_to_get
+            yield subquery
+
+
+def generate_page_set(page_exprs, total_posts=None, limit=None):
+    """Return a set of valid booru pages from a list of expressions.
+
+    An expression can be a:
+    - Single page (e.g. `"1"`);
+    - Range (`"3-5"`);
+    - Range from the first page to a given page (`"+6"`);
+    - Range from the a given page to the last page (`"1+"`).
+
+    Args:
+        page_exprs (list): Page expressions to parse.
+        total_posts (int, optional): Total number of posts for the tag search
+            pages are generated for.  Needed for `"<page>+"` expressions.
+            Defaults to `None`.
+        limit (int, optional): Number of posts per page.
+            Needed for `"<page>+"` expressions.  Defaults to `None`.
+
+    Raises:
+        TypeError: If a `"<page>+"` item is present in `pages`, but
+                   the `limit` or `total_posts` parameter isn't set.
+
+    Examples:
+        >>> tools.generate_page_set(["20", "7", "6-9", "+3"])
+        {1, 2, 3, 6, 7, 8, 9, 20}
+
+        >>> tools.generate_page_set(["1+"])
+        ...
+        TypeError: limit and total_posts parameters required to use the
+...                <page>+ feature.
+
+        >>> tools.generate_page_set(["1+"], tools.count_posts("ib"), 200)
+        {1, 2, 3, 4, 5, 6}
+    """
+
+    page_set = set()
+
+    for page in page_exprs:
+        page = str(page)
+
+        if page.isdigit():
+            page_set.add(int(page))
+            continue
+
+        # e.g. -p 3-10: All the pages in the range (3, 4, 5...).
+        if re.match(r"^\d+-\d+$", page):
+            begin = int(page.split("-")[0])
+            end = int(page.split("-")[-1])
+
+        # e.g. -p 2+: All the pages in a range from 2 to the last possible.
+        elif re.match(r"^\d+\+$", page):
+            begin = int(page.split("+")[0])
+
+            if not limit or not total_posts:
+                raise TypeError("limit and total_posts parameters required "
+                                "to use the <page>+ feature.")
+
+            end = math.ceil(total_posts / limit)
+
+        # e.g. -p +5: All the pages in a range from 1 to 5.
+        elif re.match(r"^\+\d+$", page):
+            begin = 1
+            end = int(page.split("+")[-1])
+
+        else:
+            raise ValueError("Invalid page expression: '%s'" % page)
+
+        page_set.update(range(begin, end + 1))
+
+    return page_set

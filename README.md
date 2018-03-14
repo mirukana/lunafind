@@ -4,7 +4,7 @@
 
 (Pybooru with the latest improvements isn't released yet on pip.)
 
-    sudo pip3 install pybooru requests halo arrow --upgrade
+    sudo pip3 install https://git.io/vNT0B requests halo arrow --upgrade
 
 ## kanarip v1 incompatibilities
 
@@ -13,6 +13,8 @@
 - Download full artcom and notes
 
 ## TODO
+
+- Update to Pybooru new version
 
 - DL script
     - Do not overwrite files by default?
