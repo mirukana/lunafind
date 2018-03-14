@@ -2,6 +2,7 @@ import json
 import logging
 import multiprocessing
 import os
+import sys
 
 from . import PROCESSES, media, tools, utils
 
@@ -13,6 +14,7 @@ def posts(posts_):
                  len(posts_),
                  utils.bytes2human(get_dl_size(posts_)))
 
+    # TODO: Use with
     pool = multiprocessing.Pool(PROCESSES)
     pool.map(one_post, posts_)
 
@@ -33,5 +35,5 @@ def one_post(post,
     write_content(media.media(post), media_dest, "wb")
 
 
-def get_dl_size(post_list):
-    return sum(post["file_size"] for post in post_list)
+def get_dl_size(posts_):
+    return sys.getsizeof(posts_) + sum(post["file_size"] for post in posts_)

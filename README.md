@@ -4,54 +4,44 @@
 
 (Pybooru with the latest improvements isn't released yet on pip.)
 
-    sudo pip3 install https://git.io/vNT0B requests halo --upgrade
+    sudo pip3 install pybooru requests halo arrow --upgrade
 
-## kanarip v1 compatibility
+## kanarip v1 incompatibilities
 
-- Save JSONS instead of tag files
+- Save JSONS in info/ instead of generating tags/ and meta/
 - Downloaded artcom and notes will no longer be wrapped in lists
 - Download full artcom and notes
 
 ## TODO
 
-- Implement new design (see gajim convo)
-- Use [doctopt](https://docopt.readthedocs.io/en/latest/) instead of argparser
-- Config system
-- Better CLI interface, progress bar for dl, e'#tc
-- [termcolor](https://pypi.python.org/pypi/termcolor), used in **halo**
+- DL script
+    - Do not overwrite files by default?
+
+- CLI script
+    - [termcolor](https://pypi.python.org/pypi/termcolor), used in **halo**
+    - zplug-like UI for multiprocess downloading?
+    - Use [doctopt](https://docopt.readthedocs.io/en/latest/)
+    - Config system
 
 - Check for booru return code not just in media
-
-- Colors
-
-- Query script
-  - Multiprocess
-  - Patch pybooru.\_request to handle errors ourself
-  - Allow page/limit/etc to modify a single request
-  - Fix "Fetching" message cut off in python3 interpreter
-
-- Download script
-- Artist commentaries JSON
-- Notes JSON
-- zplug-like UI for multiprocess downloading
-- Do not overwrite files by default?
-- Option to disable adding download time, <progName> prefix for added key
 
 - Ignore and error lists
 
 - Filter script
-- Duplicates
-- Blacklist
-- Tag conditions
-- "JSON" conditions
-- Sort by specific key, ascending or descending
-the- Max number of posts
-
-- Generate docs and manpages with Sphinx
+    - Duplicates
+    - Blacklist
+    - Tag conditions
+    - "JSON" conditions
+    - Sort by specific key, ascending or descending
+    - Max number of posts
 
 - Thumbnail script
 
+- Generate docs and manpages with Sphinx
+
 ## Tests to write
+
+OLD! Will review later
 
 - Query
   - The client's adress (safebooru) adress is HTTPS, valid and reachable

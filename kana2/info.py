@@ -3,7 +3,6 @@
 import logging
 import math
 import os
-# import multiprocessing
 import re
 
 import arrow
@@ -11,6 +10,7 @@ import arrow
 from . import CLIENT, tools, utils
 
 # TODO: Update docstrings
+# TODO: multiprocessing
 
 def info(queries, add_extra_info=True):
     for subquery in get_subqueries(queries):

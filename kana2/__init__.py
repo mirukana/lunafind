@@ -1,4 +1,9 @@
-"""Danbooru-related CLI tools."""
+"""Danbooru-related CLI tools.
+
+Attributes:
+    PROCESSES: Maximum number of processes for functions using parallelization.
+    CLIENT: Booru client. See :class:`~pybooru.danbooru.Danbooru`
+"""
 
 import logging
 
@@ -13,8 +18,6 @@ __email__   = "ym96@protonmail.ch"
 __status__  = "Prototype"
 
 PROCESSES = 6
-"""Maximum number of processes for functions using parallelization."""
 CLIENT    = pybooru.danbooru.Danbooru("safebooru")
-"""Booru client. See :class:`~pybooru.danbooru.Danbooru`"""
 
 logging.basicConfig(level=logging.INFO)

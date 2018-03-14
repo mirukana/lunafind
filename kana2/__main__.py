@@ -1,7 +1,7 @@
 """Future CLI interaction module."""
 
 def main():
-    """Work in progress soon."""
+    """Work in progress."""
     print("hi")
     raise NotImplementedError("bye")
 
