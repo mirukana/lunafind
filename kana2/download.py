@@ -3,20 +3,18 @@ import logging
 import multiprocessing
 import os
 
-from . import PROCESSES, info, media, tools, utils
+from . import PROCESSES, media, tools, utils
 
 
-def posts(queries):
-    # for post in info.info(queries):
-
-    to_download = list(info.info(queries))
+def posts(posts_):
+    posts_ = list(posts_)
 
     logging.info("Downloading %d posts, estimated %s",
-                 len(to_download),
-                 utils.bytes2human(get_dl_size(to_download)))
+                 len(posts_),
+                 utils.bytes2human(get_dl_size(posts_)))
 
     pool = multiprocessing.Pool(PROCESSES)
-    pool.map(one_post, to_download)
+    pool.map(one_post, posts_)
 
 
 def one_post(post,
