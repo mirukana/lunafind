@@ -19,7 +19,7 @@ def posts(posts_):
 
 def one_post(post,
              info_dest="info/{id}.json",
-             media_dest="media/{id}.{file_ext}",
+             media_dest="media/{id}.{kana2_ext}",
              notes_dest="notes/{id}.json",
              artcom_dest="artcom/{id}.json"):
 
