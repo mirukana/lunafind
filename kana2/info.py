@@ -1,30 +1,40 @@
 """Get booru post information from a query dictionary."""
 
 import logging
+import multiprocessing
 import os
 
 import arrow
 
-from . import CLIENT, tools, utils, query
+from . import CLIENT, PROCESSES, query, tools, utils
 
-# TODO: Update docstrings
-# TODO: multiprocessing
 
-def info(queries, add_extra_info=True):
-    for subquery in query.get_single_page_queries(queries):
-        logging.info(
-            "Getting info - tags: %s, page: %s, total: %s, "
-            "posts: %s, limit: %s%s%s",
-            subquery["tags"], subquery["page"], subquery["total_pages"],
-            subquery["posts_to_get"], subquery["limit"],
-            ", random" if subquery["random"] else "",
-            ", raw"    if subquery["raw"]    else "")
+def pages(queries, add_extra_info=True):
+    with multiprocessing.Pool(PROCESSES) as pool:
+        yield pool.map(one_page_pool,
+                       query.get_single_page_queries(queries),
+                       add_extra_info)
 
-        for post in tools.exec_pybooru_call(CLIENT.post_list, **subquery):
-            if add_extra_info:
-                post = extra_info(post)
 
-            yield post
+def one_page_pool(*args, **kwargs):
+    return next(one_page(*args, **kwargs))
+
+
+def one_page(query_, add_extra_info=True):
+    try:
+        query_ = next(query_)
+    except (TypeError, StopIteration):
+        pass
+
+    logging.info("Getting info - tags: %s, page: %s, total: %s, "
+                 "limit: %s, posts: %s%s%s",
+                 query_["tags"], query_["page"], query_["total_pages"],
+                 query_["limit"], query_["posts_to_get"],
+                 ", random" if query_["random"] else "",
+                 ", raw"    if query_["raw"]    else "")
+
+    for post in tools.exec_pybooru_call(CLIENT.post_list, **query_):
+        yield extra_info(post) if add_extra_info else post
 
 
 def extra_info(post):

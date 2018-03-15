@@ -14,6 +14,8 @@
 
 ## TODO
 
+- Global timer
+
 - Update to Pybooru new version
 
 - DL script
