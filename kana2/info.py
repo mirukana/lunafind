@@ -11,15 +11,14 @@ from . import CLIENT, PROCESSES, query, tools, utils
 
 
 def pages(queries, add_extra_info=True):
-
     with ThreadPool(PROCESSES) as pool:
-        yield pool.map(one_page_pool,
+        yield pool.map(one_page,
                        query.get_single_page_queries(queries),
                        add_extra_info)
 
 
 def one_page_pool(*args, **kwargs):
-    return next(one_page(*args, **kwargs))
+    yield list(one_page(*args, **kwargs))
 
 
 def one_page(query_, add_extra_info=True):

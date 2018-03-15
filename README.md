@@ -14,12 +14,12 @@
 
 ## TODO
 
-- Global timer
+- Always use query.get_single_page_queries with query.auto
 
 - Update to Pybooru new version
 
 - DL script
-    - Do not overwrite files by default?
+    - Check for corrupted DLs
 
 - CLI script
     - [termcolor](https://pypi.python.org/pypi/termcolor), used in **halo**

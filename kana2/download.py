@@ -8,7 +8,7 @@ from . import PROCESSES, media, tools, utils
 
 
 def posts(posts_):
-    posts_ = list(posts_)
+    posts_ = next(posts_)
 
     logging.info("Downloading %d posts, estimated %s",
                  len(posts_),
@@ -35,4 +35,5 @@ def one_post(post,
 
 
 def get_dl_size(posts_):
+    print(posts_)
     return sys.getsizeof(posts_) + sum(post["file_size"] for post in posts_)
