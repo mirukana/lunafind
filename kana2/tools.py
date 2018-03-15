@@ -3,6 +3,7 @@
 import logging
 import re
 import shutil
+import time
 
 import pybooru
 
@@ -90,8 +91,11 @@ def exec_pybooru_call(function, *args, **kwargs):
 ...         error 404 from 'https://safebooru.donmai.us/posts/-1.json'.
     """
 
+
     for _ in range(1, 10 + 1):
         try:
+            # Avoid being kicked out for too many requests at once.
+            time.sleep(0.6)
             return function(*args, **kwargs)
         except pybooru.exceptions.PybooruHTTPError as error:
             code, url = error.args[1], error.args[2]

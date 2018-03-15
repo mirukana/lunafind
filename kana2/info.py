@@ -1,7 +1,8 @@
 """Get booru post information from a query dictionary."""
 
 import logging
-import multiprocessing
+# Using threads instead of processes, else SSL errors happen.
+from multiprocessing.dummy import Pool as ThreadPool
 import os
 
 import arrow
@@ -10,7 +11,8 @@ from . import CLIENT, PROCESSES, query, tools, utils
 
 
 def pages(queries, add_extra_info=True):
-    with multiprocessing.Pool(PROCESSES) as pool:
+
+    with ThreadPool(PROCESSES) as pool:
         yield pool.map(one_page_pool,
                        query.get_single_page_queries(queries),
                        add_extra_info)
@@ -41,12 +43,18 @@ def extra_info(post):
     post["kana2_aspect_ratio"] = utils.get_ratio(post["image_width"],
                                                  post["image_height"])
 
-    if post["file_ext"] == "zip":
-        # File is ugoira, the webm is to be downloaded instead.
-        post["kana2_ext"] = os.path.splitext(post["large_file_url"])[1][1:]
-    else:
-        post["kana2_ext"] = post["file_ext"]
+    # TODO: Remove this try/except once the error has been caught.
+    try:
+        if post["file_ext"] == "zip":
+            # File is ugoira, the webm is to be downloaded instead.
+            post["kana2_ext"] = os.path.splitext(post["large_file_url"])[1][1:]
+        else:
+            post["kana2_ext"] = post["file_ext"]
 
-    post["kana2_fetch_date"] = arrow.now().format("YYYY-MM-DDTHH:mm:ss.SSSZZ")
+        post["kana2_fetch_date"] = arrow.now().format("YYYY-MM-DDTHH:mm:ss.SSSZZ")
+    except KeyError:
+        from pprint import pprint
+        pprint(post)
+        raise
 
     return post
