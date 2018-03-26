@@ -14,8 +14,6 @@
 
 ## TODO
 
-- Always use query.get_single_page_queries with query.auto
-
 - Update to Pybooru new version
 
 - DL script

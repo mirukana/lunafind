@@ -8,8 +8,6 @@ from . import PROCESSES, media, tools, utils
 
 
 def posts(posts_):
-    posts_ = next(posts_)
-
     logging.info("Downloading %d posts, estimated %s",
                  len(posts_),
                  utils.bytes2human(get_dl_size(posts_)))
