@@ -7,25 +7,17 @@ import os
 
 import arrow
 
-from . import CLIENT, PROCESSES, query, tools, utils
+from . import CLIENT, PROCESSES, tools, utils
 
 
 def pages(queries, add_extra_info=True):
     with ThreadPool(PROCESSES) as pool:
-        yield pool.map(one_page,
-                       query.get_single_page_queries(queries),
-                       add_extra_info)
-
-
-def one_page_pool(*args, **kwargs):
-    yield list(one_page(*args, **kwargs))
+        return pool.map(one_page, queries)
 
 
 def one_page(query_, add_extra_info=True):
-    try:
-        query_ = next(query_)
-    except (TypeError, StopIteration):
-        pass
+    if not isinstance(query_, dict):
+        raise TypeError("Expected one query dictionary, got %s" % type(query_))
 
     logging.info("Getting info - tags: %s, page: %s, total: %s, "
                  "limit: %s, posts: %s%s%s",
@@ -34,26 +26,25 @@ def one_page(query_, add_extra_info=True):
                  ", random" if query_["random"] else "",
                  ", raw"    if query_["raw"]    else "")
 
-    for post in tools.exec_pybooru_call(CLIENT.post_list, **query_):
-        yield extra_info(post) if add_extra_info else post
+    return [extra_info(post) if add_extra_info else post
+            for post in tools.exec_pybooru_call(CLIENT.post_list, **query_)]
 
 
 def extra_info(post):
     post["kana2_aspect_ratio"] = utils.get_ratio(post["image_width"],
                                                  post["image_height"])
 
-    # TODO: Remove this try/except once the error has been caught.
     try:
         if post["file_ext"] == "zip":
             # File is ugoira, the webm is to be downloaded instead.
             post["kana2_ext"] = os.path.splitext(post["large_file_url"])[1][1:]
         else:
             post["kana2_ext"] = post["file_ext"]
-
-        post["kana2_fetch_date"] = arrow.now().format("YYYY-MM-DDTHH:mm:ss.SSSZZ")
     except KeyError:
-        from pprint import pprint
-        pprint(post)
-        raise
+        # TODO: general verify post function
+        logging.error("Post %d is missing a file_ext key, "
+                      "cannot add kana2_ext key", post["id"])
+
+    post["kana2_fetch_date"] = arrow.now().format("YYYY-MM-DDTHH:mm:ss.SSSZZ")
 
     return post

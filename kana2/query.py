@@ -141,8 +141,10 @@ def url_result(*args):
         [{'type': 'url_result', 'tags': 'scenery', 'page': '3'}]
     """
 
-    return [dict([("type", "url_result")] + parse_qsl(urlparse(url).query))
-            for url in args]
+    return get_single_page_queries(
+        [dict([("type", "url_result")] + parse_qsl(urlparse(url).query))
+         for url in args]
+    )
 
 
 def search(*args):
@@ -172,7 +174,7 @@ def search(*args):
         if isinstance(search_["page"], (int, str)):
             search_["page"] = [search_["page"]]
 
-    return list(args)
+    return get_single_page_queries(list(args))
 
 
 def get_single_page_queries(queries):
@@ -197,10 +199,13 @@ def get_single_page_queries(queries):
         [{'id':...}]
     """
 
+    page_queries = []
+
     for query in queries:
         # Default parameters, get overwritten by any query params.
-        params = {"tags":   "",    "page": [1],  "limit": 200,
-                  "random": False, "raw":  False}
+        # random or raw on False will not work.
+        params = {"tags":  "",     "page": [1], "limit": 200,
+                  "random": False, "raw": False}
         params.update(query)
 
         post_total = tools.count_posts(params["tags"])
@@ -212,11 +217,13 @@ def get_single_page_queries(queries):
         for page in page_set:
             # Cannot just keep changing params["page"], else the same dict
             # is yielded every time (copy vs memory reference?).
-            subquery                 = dict(params)
-            subquery["page"]         = page
-            subquery["total_pages"]  = total_pages
-            subquery["posts_to_get"] = posts_to_get
-            yield subquery
+            page_query                 = dict(params)
+            page_query["page"]         = page
+            page_query["total_pages"]  = total_pages
+            page_query["posts_to_get"] = posts_to_get
+            page_queries.append(page_query)
+
+        return page_queries
 
 
 def generate_page_set(page_exprs, total_posts=None, limit=None):
@@ -252,6 +259,8 @@ def generate_page_set(page_exprs, total_posts=None, limit=None):
         >>> tools.generate_page_set(["1+"], tools.count_posts("ib"), 200)
         {1, 2, 3, 4, 5, 6}
     """
+
+    # TODO: Check for max page when +3 & others
 
     page_set = set()
 

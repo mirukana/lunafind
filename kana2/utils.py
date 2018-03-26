@@ -180,3 +180,6 @@ def get_ratio(width, height):
 
     gcd = get_gcd(width, height)
     return width / height, (int(width / gcd), int(height / gcd))
+
+def flatten_list(list_):
+    return [item for sublist in list_ for item in sublist]

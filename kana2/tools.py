@@ -91,11 +91,21 @@ def exec_pybooru_call(function, *args, **kwargs):
 ...         error 404 from 'https://safebooru.donmai.us/posts/-1.json'.
     """
 
+    # Build the actual parameter dict for the API query URL:
+    # Filter out "random" and "raw" parameters if their value is False
+    # because Danbooru will see them as true (bug?);
+    # Filter out kana2-specific parameters like "posts_to_get";
+    # Replace boolean parameters by lowercase strings equivalents
+    # so they can be interpreted correctly by Danbooru.
+    kwargs = {k: "true" if v is True else "false" if v is False else v
+              for k, v in kwargs.items()
+              if not (k in ("random", "raw") and v is False) and \
+                 not k in ("posts_to_get", "total_pages", "type")}
 
     for _ in range(1, 10 + 1):
         try:
             # Avoid being kicked out for too many requests at once.
-            time.sleep(0.6)
+            # time.sleep(0.6)
             return function(*args, **kwargs)
         except pybooru.exceptions.PybooruHTTPError as error:
             code, url = error.args[1], error.args[2]
