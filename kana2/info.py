@@ -1,9 +1,9 @@
 """Get booru post information from a query dictionary."""
 
 import logging
-# Using threads instead of processes, else SSL errors happen.
-from multiprocessing.dummy import Pool as ThreadPool
 import os
+from itertools import product
+from multiprocessing.dummy import Pool as ThreadPool
 
 import arrow
 
@@ -12,7 +12,9 @@ from . import CLIENT, PROCESSES, tools, utils
 
 def pages(queries, add_extra_info=True):
     with ThreadPool(PROCESSES) as pool:
-        return utils.flatten_list(pool.map(one_page, queries))
+        return utils.flatten_list(
+            pool.starmap(one_page, product(queries, (add_extra_info,)))
+        )
 
 
 def one_page(query, add_extra_info=True):
