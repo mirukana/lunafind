@@ -28,7 +28,7 @@ def posts(posts_, dests=None, save_extra_info=True, stop_on_err=False):
 
     stats["total_ok"]   = len([r for r in returns if r[1] is True])
     stats["total_fail"] = stats["total"] - stats["total_ok"]
-    stats["successes"]  = dict(returns)
+    stats["returns"]    = dict(returns)
 
     return stats
 
@@ -37,9 +37,9 @@ def one_post(post, dests=None, save_extra_info=True, stop_on_err=False):
     if not isinstance(post, dict):
         raise TypeError("Expected one query dictionary, got %s." % type(post))
 
-    post     = extra.add_keys_if_needed(post)
-    dests    = dests or {}
-    err_strs = []
+    post          = extra.add_keys_if_needed(post)
+    dests         = dests or {}
+    errors_gotten = []
 
     # Build the dests dict, with a default path if a key wasn't already
     # supplied. Make necessary directories.
@@ -68,7 +68,10 @@ def one_post(post, dests=None, save_extra_info=True, stop_on_err=False):
             media.verify(post, dests["media"])
 
         except (errors.Kana2Error, PybooruError, RetryError) as err:
-            err_strs.append(utils.log_error(err))
+            utils.log_error(err)
+            # Append dict containing error attributes and error name.
+            errors_gotten.append({**vars(err),
+                                  **{"error": err.__class__.__name__}})
 
             if os.path.isfile(dests["media"]):
                 logging.info("Moving failed post %s's media to %s",
@@ -79,7 +82,7 @@ def one_post(post, dests=None, save_extra_info=True, stop_on_err=False):
             if stop_on_err:
                 raise err
 
-            return post.get("id"), err_strs
+            return post.get("id"), errors_gotten
 
     #if dests["notes"] is not False: TODO
         #utils.chunk_write(notes.notes(post), dests["notes"])
