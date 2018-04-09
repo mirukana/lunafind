@@ -17,9 +17,6 @@
 
 - download.py
     - Test that everything changed since the last commit works
-    - Handle requests.exceptions.ConnectionError:
-             HTTPSConnectionPool(host='safebooru.donmai.us', port=443):
-             Max retries exceeded with url
 
 - notes.py
 - artcom.py

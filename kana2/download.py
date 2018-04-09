@@ -9,7 +9,7 @@ from itertools import product
 
 from pybooru.exceptions import PybooruError
 
-from requests.exceptions import RetryError
+from requests.exceptions import RequestException
 
 from . import PROCESSES, errors, extra, media, tools, utils
 
@@ -67,7 +67,7 @@ def one_post(post, dests=None, save_extra_info=True, stop_on_err=False):
             utils.chunk_write(media.media(post), dests["media"], mode="wb")
             media.verify(post, dests["media"])
 
-        except (errors.Kana2Error, PybooruError, RetryError) as err:
+        except (errors.Kana2Error, PybooruError, RequestException) as err:
             utils.log_error(err)
             # Append dict containing error attributes and error name.
             errors_gotten.append({**vars(err),
