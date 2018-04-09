@@ -9,7 +9,9 @@ import logging
 
 import pybooru
 
-__all__ = ["download", "info", "media", "query", "tools", "utils"]
+__all__ = ["errors", "tools", "utils", "reqwrap", "extra",
+           "query", "download",
+           "info", "media"]
 
 __author__  = "kana, julio"
 __license__ = "Private"

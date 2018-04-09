@@ -2,7 +2,9 @@
 import argparse
 import hashlib
 import json
+import logging
 import os
+import re
 import signal
 import sys
 
@@ -22,6 +24,29 @@ class CapitalisedHelpFormatter(argparse.HelpFormatter):
 
         return super(CapitalisedHelpFormatter, self).add_usage(
             usage, actions, groups, prefix)
+
+
+# https://codereview.stackexchange.com/q/25417/25471#25471
+class DiscardStdStreams(object):
+    def __init__(self, stdout = None, stderr = None):
+        self.devnull = open(os.devnull, "w")
+        self._stdout = stdout or self.devnull or sys.stdout
+        self._stderr = stderr or self.devnull or sys.stderr
+        self.old_stdout = sys.stdout
+        self.old_stderr = sys.stderr
+
+    def __enter__(self):
+        self.old_stdout.flush()
+        self.old_stderr.flush()
+        sys.stdout = self._stdout
+        sys.stderr = self._stderr
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._stdout.flush()
+        self._stderr.flush()
+        sys.stdout = self.old_stdout
+        sys.stderr = self.old_stderr
+        self.devnull.close()
 
 
 class Stream(object):
@@ -122,29 +147,12 @@ def bytes2human(size, prefix="", suffix=""):
         >>> utils.bytes2human(1 << 80)
         '1.0Y'
     """
+    size = int(size)
     for unit in "B", "K", "M", "G", "T", "P", "E", "Z":
         if abs(size) < 1024.0:
             return "%3.1f%s%s%s" % (size, prefix, unit, suffix)
         size /= 1024.0
     return "%.1f%s%s%s" % (size, prefix, "Y", suffix)
-
-
-def make_dirs(*args):
-    """Create directories as needed for a given path.
-
-    Args:
-        *args (str): New directory absolute or relative path.
-
-    Examples:
-        >>> import os
-        >>> os.chdir("/tmp")
-        >>> utils.make_dirs("foo/bar/lorem")
-        >>> os.path.exists("/tmp/foo/bar/lorem")
-        True
-    """
-    for dir_ in args:
-        if not os.path.exists(dir_):
-            os.makedirs(dir_, exist_ok=True)
 
 
 def get_file_md5(file_path, chunk_size=16 * 1024 ** 2):
@@ -174,12 +182,15 @@ def get_file_md5(file_path, chunk_size=16 * 1024 ** 2):
     return hash_md5.hexdigest()
 
 
-def get_ratio(width, height):
-    def get_gcd(a, b):
-        return a if b == 0 else get_gcd(b, a % b)
-
-    gcd = get_gcd(width, height)
-    return width / height, (int(width / gcd), int(height / gcd))
-
 def flatten_list(list_):
     return [item for sublist in list_ for item in sublist]
+
+
+def log_error(error):
+    """Log an exception, removing the wrapping single quotes"""
+    no_wrapping_quotes = re.sub(r"^'|'$", "", str(error))
+
+    if error.print_err:
+        logging.error(no_wrapping_quotes)
+
+    return no_wrapping_quotes

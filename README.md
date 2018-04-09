@@ -4,18 +4,29 @@
 
 (Pybooru with the right commits isn't released yet on pip.)
 
-    sudo pip3 install https://git.io/vx2YG requests halo arrow --upgrade
+    sudo pip3 install https://git.io/vx2YG requests halo arrow whratio --upgrade
 
 ## kanarip v1 incompatibilities
 
 - Save JSONS in info/ instead of generating tags/ and meta/
+- Errored files structure: {info,media,etc}/failed/id.ext instead of errors/...
 - Downloaded artcom and notes will no longer be wrapped in lists
 - Download full artcom and notes
 
 ## TODO
 
-- DL script
-    - Check for corrupted DLs
+- download.py
+    - Test that everything changed since the last commit works
+    - Handle requests.exceptions.ConnectionError:
+             HTTPSConnectionPool(host='safebooru.donmai.us', port=443):
+             Max retries exceeded with url
+
+- Save extra tag: source booru
+
+- notes.py
+- artcom.py
+
+- Merge tools.py and utils.py?
 
 - CLI script
     - [termcolor](https://pypi.python.org/pypi/termcolor), used in **halo**

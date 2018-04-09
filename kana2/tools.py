@@ -1,13 +1,8 @@
 """Various global variables, functions and others specially used for kana2."""
 
-import logging
 import re
-import shutil
-import time
 
-import pybooru
-
-from . import CLIENT, utils
+from . import CLIENT, reqwrap
 
 
 # TODO: Move this to filter.py
@@ -58,106 +53,14 @@ def count_posts(tags=None):
         0
     """
 
-    return exec_pybooru_call(CLIENT.count_posts, tags)["counts"]["posts"]
-
-
-def exec_pybooru_call(function, *args, **kwargs):
-    """Retry a Pybooru function 10 times before giving up.
-
-    `pybooru.exceptions.PybooruHTTPError` and `KeyError` exceptions
-    will be caught.
-
-    Args:
-        function (function): The function to be used.
-        *args: Any function argument.
-        **kwargs: Any named function argument.
-
-    Returns:
-        If the function succeeds, its output will be returned.
-
-    Raises:
-        BooruError: If giving up after too many errors.
-
-    Examples:
-        >>> import pybooru
-        >>> client = pybooru.danbooru.Danbooru("safebooru")
-        >>> tools.exec_pybooru_call(client.count_posts, "hakurei_reimu")
-        {'counts': {'posts': ...}}
-
-        >>> tools.exec_pybooru_call(client.post_show, -1)
-        WARNING:root:Error 404 from booru (URL: https://.../posts/-1.json)
-        ...
-        kana2.exceptions.BooruError: Unable to complete request,
-...         error 404 from 'https://safebooru.donmai.us/posts/-1.json'.
-    """
-
-    # Build the actual parameter dict for the API query URL:
-    # Filter out "random" and "raw" parameters if their value is False
-    # because Danbooru will see them as true (bug?);
-    # Filter out kana2-specific parameters like "posts_to_get";
-    # Replace boolean parameters by lowercase strings equivalents
-    # so they can be interpreted correctly by Danbooru.
-    kwargs = {k: "true" if v is True else "false" if v is False else v
-              for k, v in kwargs.items()
-              if not (k in ("random", "raw") and v is False) and \
-                 not k in ("posts_to_get", "total_pages", "type")}
-
-    for _ in range(1, 10 + 1):
-        try:
-            # Avoid being kicked out for too many requests at once.
-            # time.sleep(0.6)
-            return function(*args, **kwargs)
-        except pybooru.exceptions.PybooruHTTPError as error:
-            code, url = error.args[1], error.args[2]
-            logging.warning("Error %s from booru - URL: %s", code, url)
-
-    raise pybooru.exceptions.PybooruHTTPError(
-        'Unable to complete request after 10 tries', code, url)
-
-
-def get_file_to_dl_ext(post):
-    # TODO: Config option to download normal zip instead.
-    try:
-        if post["file_url"].endswith(".zip"):
-            return post["large_file_url"].split(".")[-1]
-        return post["file_ext"]
-    except KeyError:
-        return "unknown"
-
-
-def has_vital_keys(post, action, keys=["id"]):
-    id_str = ""
-    if "id" in post:
-        id_str = " %s" % post["id"]
-
-    for key in keys:
-        if key not in post:
-            logging.error("Unable to %s for post%s, missing %s",
-                          action, id_str, key)
-            if "id" in post:
-                move_failed_dl(post["id"],
-                               get_file_to_dl_ext(post),
-                               "missing-" + key)
-            return False
-
-
-def move_failed_dl(post_id, media_ext, error_dir):
-    media = "media/", "%s.%s" % (post_id, media_ext)
-    info = "info/", "%s.json" % post_id
-
-    for path in media, info:
-        utils.make_dirs("%s/%s" % (path[0], error_dir))
-        try:
-            dir_file = "".join(path)
-            shutil.move(dir_file, dir_file.replace("/", "/%s/" % error_dir, 1))
-        except FileNotFoundError:
-            pass
+    return reqwrap.pybooru_api(CLIENT.count_posts, tags)["counts"]["posts"]
 
 
 def replace_keys(post, string):
     if not isinstance(string, str):
         return string
 
-    return re.sub(r"(?<!\\)(?:\\\\)*{(.+?)}",
-                  lambda match: str(post[match.group(1)]),
+    # Unless \ escaped: {foo} → Capture foo; {foo, bar} Capture foo and bar.
+    return re.sub(r"(?<!\\)(?:\\\\)*{(.+?)(?:, ?(.+?))?}",
+                  lambda match: str(post.get(match.group(1), match.group(2))),
                   string)

@@ -1,60 +1,53 @@
+"""Get media from booru posts"""
+
 import logging
 import os
 
-import pybooru.resources as booruRes
-
-import requests
-
-from . import CLIENT, tools, utils
+from . import errors, extra, reqwrap, utils
 
 
 def media(post, chunk_size=16 * 1024 ** 2):
-    check_keys = ["id", "file_url", "large_file_url", "md5"]
-    if tools.has_vital_keys(post, "download media", check_keys) is False:
-        return False
+    if not isinstance(post, dict):
+        raise TypeError("Expected one query dictionary, got %s." % type(post))
 
-    post_id          = post["id"]
-    media_url        = post["file_url"]
-    # verify_dl_method = "md5", post["md5"]
+    post = extra.add_keys_if_needed(post)
 
-    # If the post is an ugoira, get the associated video instead of the zip.
-    # The file_ext key turns out to not be reliable for older posts.
-    if post["file_ext"] == "zip":
-        media_url        = post["large_file_url"]
-        # verify_dl_method = "filesize", post["large_file_url"]
+    try:
+        url  = post["kana2_dl_url"]
+        ext  = post["kana2_dl_ext"]
+        size = post["kana2_dl_size"]
+    except KeyError as err:
+        raise errors.CriticalKeyError(post, err.args[0], "cannot fetch media")
 
-    # media_ext = tools.get_file_to_dl_ext(post)
+    logging.info("Retrieving media (%s, %s) for post %s",
+                 ext, utils.bytes2human(size), post.get("id", "without ID"))
 
-    # Only media hosted on raikou(2).donmai.us will have the full URL.
-    if not media_url.startswith("http"):
-        media_url = "%s%s" % (CLIENT.site_url, media_url)
-
-    logging.info("Downloading media for post %d", post_id)
-
-    req = requests.get(media_url, stream=True, timeout=60)
-
-    if req.status_code not in range(200, 204 + 1):
-        logging.error("Failed media download for post %d: %s",
-                      post_id, booruRes.HTTP_STATUS_CODE[req.status_code][0])
-        # tools.move_failed_dl(post_id, media_ext, "error-%s" % req.status_code
-        return False
-
+    req = reqwrap.http("get", url, stream=True)
     yield from req.iter_content(chunk_size)
 
 
-def verify(file_, method):
-    if not (method[0] == "md5" and
-            method[1] == utils.get_file_md5(file_) or
+def verify(post, file_path):
+    post = extra.add_keys_if_needed(post)
 
-            method[0] == "filesize" and
-            method[1] == os.path.getsize(file_) or
+    try:
+        if not post["kana2_is_ugoira"] and "md5" in post:
+            verify_md5(post, file_path, post["md5"])
+        else:
+            verify_filesize(post, file_path, post["kana2_dl_size"])
+    except KeyError as err:
+        raise errors.CriticalKeyError(post, err.args[0], "cannot verify media")
 
-            method[0] == "filesize" and
-            requests.head(CLIENT.site_url +
-                          method[1]).headers["content-length"] !=
-            os.path.getsize(file_)):
 
-        logging.error("Corrupted download, %s check failed.", method[0])
+def verify_md5(post, file_path, expected_md5):
+    actual_md5 = utils.get_file_md5(file_path)
 
-        # TODO: Have download handle this.
-        # tools.move_failed_dl(post_id, file_ext, method[0] + "-mismatch")
+    if actual_md5 != expected_md5:
+        raise errors.MD5VerifyError(post, file_path, expected_md5, actual_md5)
+
+
+def verify_filesize(post, file_path, expected_bytesize):
+    actual_size = os.path.getsize(file_path)
+
+    if actual_size != int(expected_bytesize):
+        raise errors.FilesizeVerifyError(post, file_path,
+                                         expected_bytesize, actual_size)
