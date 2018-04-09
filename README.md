@@ -21,24 +21,12 @@
              HTTPSConnectionPool(host='safebooru.donmai.us', port=443):
              Max retries exceeded with url
 
-- Save extra tag: source booru
-
 - notes.py
 - artcom.py
 
 - Merge tools.py and utils.py?
 
-- CLI script
-    - [termcolor](https://pypi.python.org/pypi/termcolor), used in **halo**
-    - zplug-like UI for multiprocess downloading?
-    - Use [doctopt](https://docopt.readthedocs.io/en/latest/)
-    - Config system
-
-- Check for booru return code not just in media
-
-- Ignore and error lists
-
-- Filter script
+- filter.py
     - Duplicates
     - Blacklist
     - Tag conditions
@@ -48,7 +36,17 @@
 
 - Thumbnail script
 
-- Generate docs and manpages with Sphinx
+- D O C S T R I N G S
+    - Generate docs and manpages with Sphinx
+- T E S T S
+
+- CLI script
+    - [termcolor](https://pypi.python.org/pypi/termcolor), used in **halo**
+    - zplug-like UI for multiprocess downloading?
+    - Use [doctopt](https://docopt.readthedocs.io/en/latest/)
+    - Config system
+    - Auto filter
+    - Ignore and error lists
 
 ## Tests to write
 

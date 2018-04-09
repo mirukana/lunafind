@@ -82,6 +82,7 @@ def get_dl_info(post):
             )
 
     # Only media hosted on raikou(2).donmai.us will have the full URL as value.
+    # 2018-04-09: All posts have full URL now?
     url = url if url.startswith("http") else CLIENT.site_url + url
 
     if is_ugoira or size == "no file_size key":
