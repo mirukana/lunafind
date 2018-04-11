@@ -11,7 +11,7 @@ from pybooru.exceptions import PybooruError
 
 from requests.exceptions import RequestException
 
-from . import PROCESSES, errors, extra, media, tools, utils
+from . import PROCESSES, errors, extra, media, notes, tools, utils
 
 
 def posts(posts_, dests=None, save_extra_info=True, stop_on_err=False):
@@ -58,8 +58,7 @@ def one_post(post, dests=None, save_extra_info=True, stop_on_err=False):
         dump = {k: v for k, v in post.items() if not k in extra.KEYS} \
                if not save_extra_info else post
 
-        utils.chunk_write(json.dumps(dump, ensure_ascii=False, sort_keys=True),
-                          dests["info"])
+        utils.chunk_write(utils.jsonify(dump), dests["info"])
         del dump
 
     if dests["media"] is not False:
@@ -84,8 +83,8 @@ def one_post(post, dests=None, save_extra_info=True, stop_on_err=False):
 
             return post.get("id"), errors_gotten
 
-    #if dests["notes"] is not False: TODO
-        #utils.chunk_write(notes.notes(post), dests["notes"])
+    if dests["notes"] is not False and notes.has_notes(post):
+        utils.chunk_write(utils.jsonify(notes.notes(post)), dests["notes"])
 
     #if dests["artcom"] is not False: TODO
         #utils.chunk_write(artcom.artcom(post), dests["artcom"])
