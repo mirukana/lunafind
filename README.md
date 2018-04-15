@@ -18,8 +18,12 @@
 - download.py
     - Test that everything changed since the last commit works
 
-- notes.py
 - artcom.py
+
+- Multi proc media notes artcom?
+- Handle connection errors at multiprocessing functions levels
+
+- Prettier logging
 
 - Merge tools.py and utils.py?
 
@@ -32,6 +36,8 @@
     - Max number of posts
 
 - Thumbnail script
+
+- Do something about parent/child posts
 
 - D O C S T R I N G S
     - Generate docs and manpages with Sphinx
