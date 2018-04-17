@@ -7,11 +7,9 @@ def notes(post):
     if not isinstance(post, dict):
         raise TypeError("Expected one query dictionary, got %s." % type(post))
 
-    try:
-        return reqwrap.pybooru_api(CLIENT.note_list, None, post["id"])
-    except KeyError as err:
-        raise errors.CriticalKeyError(post, err.args[0], "cannot get notes")
+    return reqwrap.pybooru_api(CLIENT.note_list, None, post["id"])
 
 
 def has_notes(post):
+    # last_noted_at can not exist, or be null/false in the JSON.
     return True if post.get("last_noted_at") else False
