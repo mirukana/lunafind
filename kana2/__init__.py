@@ -11,7 +11,7 @@ import pybooru
 
 __all__ = ["errors", "tools", "utils", "reqwrap", "extra",
            "query", "download",
-           "info", "media", "notes"]
+           "info", "media", "notes", "artcom"]
 
 __author__  = "kana, julio"
 __license__ = "Private"
