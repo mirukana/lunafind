@@ -15,13 +15,24 @@
 
 ## TODO
 
-- download.py
-    - Test that everything changed since the last commit works
+- reqwrap.py
+  - Custom exception instead of raising requests RetryError
+  - More readable True/False → "true"/"false"
+  - Put random/raw/etc filtering in info.py or query.py instead
 
-- notes.py
-- artcom.py
+- Library usability improvements
+    - Functions: Just take a query as arg? e.g. info.abettername("rumia")
+    - Multiple args instead of having to write a dict? e.g. func("rumia", 20)
+    - Some way to avoid the ))[0])))[0])))))) mess?
 
 - Merge tools.py and utils.py?
+
+- General code
+    - Enforce static variable types, especially for function arguments
+      - Maybe with [mypy](https://github.com/python/mypy)?
+    - See about CPython and Pipy
+    - Use [attrs](http://www.attrs.org/en) for better classes
+    - \_private\_functions with a magic leading underscore
 
 - filter.py
     - Duplicates
@@ -36,6 +47,8 @@
 - D O C S T R I N G S
     - Generate docs and manpages with Sphinx
 - T E S T S
+
+- Better logging, also order correctly query things
 
 - CLI script
     - [termcolor](https://pypi.python.org/pypi/termcolor), used in **halo**
