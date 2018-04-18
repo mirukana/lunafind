@@ -6,12 +6,13 @@
 
     sudo pip3 install https://git.io/vx2YG requests halo arrow whratio --upgrade
 
-## kanarip v1 incompatibilities
+## kanarip incompatibilities
 
 - Save JSONS in info/ instead of generating tags/ and meta/
 - Errored files structure: {info,media,etc}/failed/id.ext instead of errors/...
-- Downloaded artcom and notes will no longer be wrapped in lists
 - Download full artcom and notes
+
+* kanarip couldn't fetch notes for posts created in the last 24h, this is fixed
 
 ## TODO
 
@@ -25,7 +26,7 @@
     - Multiple args instead of having to write a dict? e.g. func("rumia", 20)
     - Some way to avoid the ))[0])))[0])))))) mess?
 
-- Break download.one_post into smaller functions
+- Break download.one\_post() into smaller functions
 
 - Merge tools.py and utils.py?
 
