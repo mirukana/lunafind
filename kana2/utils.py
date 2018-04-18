@@ -194,3 +194,10 @@ def log_error(error):
         logging.error(no_wrapping_quotes)
 
     return no_wrapping_quotes
+
+
+def jsonify(obj, indent=False):
+    if not indent:
+        return json.dumps(obj, sort_keys=True, ensure_ascii=False)
+
+    return json.dumps(obj, sort_keys=True, ensure_ascii=False, indent=4)
