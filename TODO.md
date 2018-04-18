@@ -53,3 +53,7 @@
     - Config system
     - Auto filter
     - Ignore and error lists
+    - bash/zsh completitions
+
+- Other programs
+    - Tag subs management
