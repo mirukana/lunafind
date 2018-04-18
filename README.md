@@ -1,4 +1,4 @@
-# Notes
+# kana2 development notes
 
 ## Install dependencies
 
