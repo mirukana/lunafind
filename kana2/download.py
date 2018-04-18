@@ -1,5 +1,4 @@
 """Easily download multiple posts"""
-import json
 import logging
 import multiprocessing
 import os
@@ -11,7 +10,7 @@ from pybooru.exceptions import PybooruError
 
 from requests.exceptions import RequestException
 
-from . import PROCESSES, errors, extra, media, notes, tools, utils
+from . import PROCESSES, artcom, errors, extra, media, notes, tools, utils
 
 
 def posts(posts_, dests=None, save_extra_info=True, stop_on_err=False):
@@ -83,11 +82,12 @@ def one_post(post, dests=None, save_extra_info=True, stop_on_err=False):
 
             return post.get("id"), errors_gotten
 
-    if dests["notes"] is not False and notes.has_notes(post):
-        utils.chunk_write(utils.jsonify(notes.notes(post)), dests["notes"])
+    def write_notes_or_artcom(resource, content):
+        if dests[resource] is not False and content and content != []:
+            utils.chunk_write(utils.jsonify(content), dests[resource])
 
-    #if dests["artcom"] is not False: TODO
-        #utils.chunk_write(artcom.artcom(post), dests["artcom"])
+    write_notes_or_artcom("notes", notes.notes(post))
+    write_notes_or_artcom("artcom", artcom.artcom(post))
 
     # Cleanup empty dirs.
     for _, dest_path in dests.items():

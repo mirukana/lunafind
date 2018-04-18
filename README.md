@@ -25,6 +25,8 @@
     - Multiple args instead of having to write a dict? e.g. func("rumia", 20)
     - Some way to avoid the ))[0])))[0])))))) mess?
 
+- Break download.one_post into smaller functions
+
 - Merge tools.py and utils.py?
 
 - General code

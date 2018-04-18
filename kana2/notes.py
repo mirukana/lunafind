@@ -3,17 +3,14 @@
 from . import CLIENT, reqwrap
 
 
-def has_notes(post):
+def notes(post, only_active=True):
     if not isinstance(post, dict):
         raise TypeError("Expected one query dictionary, got %s." % type(post))
 
     # last_noted_at can not exist, or be null/false in the JSON.
-    return True if post.get("last_noted_at") else False
-
-
-def notes(post, only_active=True):
-    if not isinstance(post, dict):
-        raise TypeError("Expected one query dictionary, got %s." % type(post))
+    if not post.get("last_noted_at"):
+        # Avoid useless request.
+        return []
 
     notes_ = reqwrap.pybooru_api(CLIENT.note_list, post_id=post["id"])
 
