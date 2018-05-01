@@ -1,7 +1,5 @@
 # kana2 TODO list
 
-- Fix SSL Errors with requests and multiprocessing
-
 - reqwrap.py
   - Custom exception instead of raising requests RetryError
   - More readable True/False → "true"/"false"
