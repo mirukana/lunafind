@@ -15,17 +15,24 @@ from . import (CLIENT, PROCESSES, artcom, errors, extra, media, notes, tools,
                utils)
 
 
-def posts(posts_, dests=None, save_extra_info=True, stop_on_err=False):
+def posts(posts_, dests=None, save_extra_info=True, stop_on_err=False,
+          clean=True):
     stats = {"total": len(posts_), "size":  get_dl_size(posts_)}
 
     logging.info("Downloading %d posts, estimated %s",
                  stats["total"], utils.bytes2human(stats["size"]))
 
+    # client will be passed by RequestsPool.
+    args_list         = list(product(posts_, (dests,), (save_extra_info,),
+                                     (stop_on_err,), (False,)))
+
+    # Cleanup dirs after finishing the last post, instead of trying every time.
+    if clean:
+        args_list[-1]     = list(args_list[-1])
+        args_list[-1][-1] = True
+
     with RequestsPool(PROCESSES, pybooru.Danbooru, ("safebooru",)) as pool:
-        returns = pool.starmap(
-            one_post,
-            product(posts_, (dests,), (save_extra_info,), (stop_on_err,))
-        )
+        returns = pool.starmap(one_post, args_list)
 
     stats["total_ok"]   = len([r for r in returns if r[1] is True])
     stats["total_fail"] = stats["total"] - stats["total_ok"]
@@ -35,7 +42,7 @@ def posts(posts_, dests=None, save_extra_info=True, stop_on_err=False):
 
 
 def one_post(post, dests=None, save_extra_info=True, stop_on_err=False,
-             client=CLIENT):
+             clean=True, client=CLIENT):
     if not isinstance(post, dict):
         raise TypeError("Expected one query dictionary, got %s." % type(post))
 
@@ -94,12 +101,8 @@ def one_post(post, dests=None, save_extra_info=True, stop_on_err=False,
     write_notes_or_artcom("notes", notes.notes(post, client=client))
     write_notes_or_artcom("artcom", artcom.artcom(post, client=client))
 
-    # Cleanup empty dirs.
-    for _, dest_path in dests.items():
-        try:
-            os.rmdir(os.path.split(dest_path)[0])
-        except OSError:
-            pass
+    if clean:
+        cleanup(dests)
 
     return post.get("id"), True
 
@@ -117,3 +120,12 @@ def move_failed(original_dest):
     new_path = get_failed_dest(original_dest)
     os.makedirs(os.path.split(new_path)[0], exist_ok=True)
     shutil.move(original_dest, new_path)
+
+
+def cleanup(dests):
+    # TODO: Check if other subprocesses are still running before doing this.
+    for _, dest_path in dests.items():
+        try:
+            os.rmdir(os.path.split(dest_path)[0])
+        except OSError:
+            pass
