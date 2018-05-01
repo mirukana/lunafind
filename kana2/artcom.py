@@ -7,7 +7,7 @@ import arrow
 from . import CLIENT, reqwrap
 
 
-def artcom(post):
+def artcom(post, client=CLIENT):
     if not isinstance(post, dict):
         raise TypeError("Expected one query dictionary, got %s." % type(post))
 
@@ -28,7 +28,7 @@ def artcom(post):
                      post.get("id", "without ID"))
 
         # Will return [] if a post created in the last 24 hours has no artcom.
-        return reqwrap.pybooru_api(CLIENT.artist_commentary_list,
+        return reqwrap.pybooru_api(client.artist_commentary_list,
                                    post_id=post["id"])
 
     return []

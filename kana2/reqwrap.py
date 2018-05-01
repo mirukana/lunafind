@@ -63,12 +63,12 @@ def pybooru_api(function, *args, **kwargs):
     raise pybooru.exceptions.PybooruError(get_fatal_msg(code, url, max_tries))
 
 
-def http(method, url, **kwargs):
+def http(method, url, session=requests.Session(), **kwargs):
     max_tries = 5
 
     for tries in range(1, max_tries + 1):
-        # e.g. http("get", ...) calls requests.get(...)
-        req = getattr(requests, method)(url, timeout=6, **kwargs)
+        # e.g. http("get", ...) calls session.get(...)
+        req = getattr(session, method)(url, timeout=6, **kwargs)
         code = req.status_code
 
         if req.status_code in range(200, 204 + 1):

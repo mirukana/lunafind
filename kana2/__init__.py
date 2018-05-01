@@ -20,6 +20,6 @@ __email__   = "ym96@protonmail.ch"
 __status__  = "Development"
 
 PROCESSES = 8
-CLIENT    = pybooru.danbooru.Danbooru("safebooru")
+CLIENT    = pybooru.Danbooru("safebooru")
 
 logging.basicConfig(level=logging.INFO)

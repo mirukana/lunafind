@@ -3,14 +3,14 @@
 import logging
 import os
 
-from . import errors, extra, reqwrap, utils
+from . import CLIENT, errors, extra, reqwrap, utils
 
 
-def media(post, chunk_size=16 * 1024 ** 2):
+def media(post, chunk_size=16 * 1024 ** 2, client=CLIENT):
     if not isinstance(post, dict):
         raise TypeError("Expected one query dictionary, got %s." % type(post))
 
-    post = extra.add_keys_if_needed(post)
+    post = extra.add_keys_if_needed(post, client)
 
     try:
         url  = post["kana2_dl_url"]
@@ -22,12 +22,12 @@ def media(post, chunk_size=16 * 1024 ** 2):
     logging.info("Retrieving media (%s, %s) for post %s",
                  ext, utils.bytes2human(size), post.get("id", "without ID"))
 
-    req = reqwrap.http("get", url, stream=True)
+    req = reqwrap.http("get", url, client.client, stream=True)
     yield from req.iter_content(chunk_size)
 
 
-def verify(post, file_path):
-    post = extra.add_keys_if_needed(post)
+def verify(post, file_path, client=CLIENT):
+    post = extra.add_keys_if_needed(post, client)
 
     try:
         if not post["kana2_is_ugoira"] and "md5" in post:

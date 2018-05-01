@@ -14,7 +14,7 @@ OTHER_KEYS  = ("kana2_fetch_date",)
 KEYS        = DL_INFO_KEYS + RATIO_KEYS + OTHER_KEYS
 
 
-def add_keys_if_needed(post):
+def add_keys_if_needed(post, client=CLIENT):
     try:
         # If not "all those keys present in post"
         if not set(RATIO_KEYS) <= set(post):
@@ -24,7 +24,7 @@ def add_keys_if_needed(post):
 
     try:
         if not set(DL_INFO_KEYS) <= set(post):
-            post = add_dl_info(post)
+            post = add_dl_info(post, client)
     except errors.AddExtraKeyError as err:
         utils.log_error(err)
 
@@ -46,10 +46,11 @@ def add_aspect_ratio(post):
         raise errors.AddExtraKeyError(post, err.args[0], cannot)
 
 
-def add_dl_info(post):
+def add_dl_info(post, client=CLIENT):
     try:
         k = DL_INFO_KEYS
-        post[k[0]], post[k[1]], post[k[2]], post[k[3]] = get_dl_info(post)
+        post[k[0]], post[k[1]], post[k[2]], post[k[3]] = get_dl_info(post,
+                                                                     client)
         return post
 
     except errors.CriticalKeyError as err:
@@ -62,7 +63,7 @@ def add_date(post, format_str="YYYY-MM-DDTHH:mm:ss.SSSZZ"):
     return post
 
 
-def get_dl_info(post):
+def get_dl_info(post, client=CLIENT):
     try:
         url       = post["file_url"]
         ext       = url.split(".")[-1]
@@ -86,6 +87,7 @@ def get_dl_info(post):
     url = url if url.startswith("http") else CLIENT.site_url + url
 
     if is_ugoira or size == "no file_size key":
-        size = reqwrap.http("head", url).headers["content-length"]
+        size = reqwrap.http("head", url, client.client).headers[
+            "content-length"]
 
     return url, ext, size, is_ugoira

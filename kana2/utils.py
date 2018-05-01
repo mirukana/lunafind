@@ -190,8 +190,11 @@ def log_error(error):
     """Log an exception, removing the wrapping single quotes"""
     no_wrapping_quotes = re.sub(r"^'|'$", "", str(error))
 
-    if error.print_err:
-        logging.error(no_wrapping_quotes)
+    try:
+        if error.print_err:
+            logging.error(no_wrapping_quotes)
+    except AttributeError:  # If error has no print_err (not a kana2 error)
+        pass
 
     return no_wrapping_quotes
 

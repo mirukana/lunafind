@@ -177,7 +177,7 @@ def search(*args):
     return get_single_page_queries(list(args))
 
 
-def get_single_page_queries(queries):
+def get_single_page_queries(queries, client=CLIENT):
     """Return booru post information for query results.
 
     Takes the output of a :mod:`kana2.query` function, such as
@@ -208,7 +208,7 @@ def get_single_page_queries(queries):
                   "random": False, "raw": False}
         params.update(query)
 
-        post_total = tools.count_posts(params["tags"])
+        post_total = tools.count_posts(params["tags"], client)
         page_set   = generate_page_set(params["page"], post_total,
                                        params["limit"])
         total_pages  = len(page_set)

@@ -1,16 +1,18 @@
 """Easily download multiple posts"""
 import logging
-import multiprocessing
 import os
 import shutil
 import sys
 from itertools import product
 
+import pybooru
 from pybooru.exceptions import PybooruError
 
 from requests.exceptions import RequestException
+from requestspool import RequestsPool
 
-from . import PROCESSES, artcom, errors, extra, media, notes, tools, utils
+from . import (CLIENT, PROCESSES, artcom, errors, extra, media, notes, tools,
+               utils)
 
 
 def posts(posts_, dests=None, save_extra_info=True, stop_on_err=False):
@@ -19,7 +21,7 @@ def posts(posts_, dests=None, save_extra_info=True, stop_on_err=False):
     logging.info("Downloading %d posts, estimated %s",
                  stats["total"], utils.bytes2human(stats["size"]))
 
-    with multiprocessing.Pool(PROCESSES) as pool:
+    with RequestsPool(PROCESSES, pybooru.Danbooru, ("safebooru",)) as pool:
         returns = pool.starmap(
             one_post,
             product(posts_, (dests,), (save_extra_info,), (stop_on_err,))
@@ -32,11 +34,12 @@ def posts(posts_, dests=None, save_extra_info=True, stop_on_err=False):
     return stats
 
 
-def one_post(post, dests=None, save_extra_info=True, stop_on_err=False):
+def one_post(post, dests=None, save_extra_info=True, stop_on_err=False,
+             client=CLIENT):
     if not isinstance(post, dict):
         raise TypeError("Expected one query dictionary, got %s." % type(post))
 
-    post          = extra.add_keys_if_needed(post)
+    post          = extra.add_keys_if_needed(post, client)
     dests         = dests or {}
     errors_gotten = []
 
@@ -54,6 +57,7 @@ def one_post(post, dests=None, save_extra_info=True, stop_on_err=False):
         os.makedirs(os.path.split(dests[res])[0], exist_ok=True)
 
     if dests["info"] is not False:
+        # Remove extra info if save_extra_info is True
         dump = {k: v for k, v in post.items() if not k in extra.KEYS} \
                if not save_extra_info else post
 
@@ -62,8 +66,9 @@ def one_post(post, dests=None, save_extra_info=True, stop_on_err=False):
 
     if dests["media"] is not False:
         try:
-            utils.chunk_write(media.media(post), dests["media"], mode="wb")
-            media.verify(post, dests["media"])
+            utils.chunk_write(media.media(post, client=client), dests["media"],
+                              mode="wb")
+            media.verify(post, dests["media"], client)
 
         except (errors.Kana2Error, PybooruError, RequestException) as err:
             utils.log_error(err)
@@ -86,8 +91,8 @@ def one_post(post, dests=None, save_extra_info=True, stop_on_err=False):
         if dests[resource] is not False and content and content != []:
             utils.chunk_write(utils.jsonify(content), dests[resource])
 
-    write_notes_or_artcom("notes", notes.notes(post))
-    write_notes_or_artcom("artcom", artcom.artcom(post))
+    write_notes_or_artcom("notes", notes.notes(post, client=client))
+    write_notes_or_artcom("artcom", artcom.artcom(post, client=client))
 
     # Cleanup empty dirs.
     for _, dest_path in dests.items():

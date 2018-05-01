@@ -29,7 +29,7 @@ def filter_duplicates(posts):
     return posts
 
 
-def count_posts(tags=None):
+def count_posts(tags=None, client=CLIENT):
     """Return the number of posts for given tags.
 
     Args:
@@ -53,7 +53,7 @@ def count_posts(tags=None):
         0
     """
 
-    return reqwrap.pybooru_api(CLIENT.count_posts, tags)["counts"]["posts"]
+    return reqwrap.pybooru_api(client.count_posts, tags)["counts"]["posts"]
 
 
 def replace_keys(post, string):

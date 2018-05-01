@@ -5,7 +5,7 @@ import logging
 from . import CLIENT, reqwrap
 
 
-def notes(post, only_active=True):
+def notes(post, only_active=True, client=CLIENT):
     if not isinstance(post, dict):
         raise TypeError("Expected one query dictionary, got %s." % type(post))
 
@@ -16,6 +16,6 @@ def notes(post, only_active=True):
 
     logging.info("Retrieving notes for post %s", post.get("id", "without ID"))
 
-    notes_ = reqwrap.pybooru_api(CLIENT.note_list, post_id=post["id"])
+    notes_ = reqwrap.pybooru_api(client.note_list, post_id=post["id"])
 
     return [n for n in notes_ if n["is_active"]] if only_active else notes_
