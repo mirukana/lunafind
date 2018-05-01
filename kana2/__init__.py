@@ -15,7 +15,7 @@ __all__ = ["errors", "tools", "utils", "reqwrap", "extra",
 
 __author__  = "kana, julio"
 __license__ = "Private"
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 __email__   = "ym96@protonmail.ch"
 __status__  = "Development"
 
