@@ -4,7 +4,9 @@
 
 (Pybooru with the right commits isn't released yet on pip.)
 
-    sudo pip3 install https://git.io/vx2YG requests halo arrow whratio --upgrade
+    sudo pip3 install \
+        https://github.com/ccc032/pybooru/archive/http-codes.zip \
+        requests arrow whratio requestspool --upgrade
 
 ## kanarip incompatibilities
 
