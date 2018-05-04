@@ -89,7 +89,7 @@ def get_error_msg(code, url, tries, max_tries):
     return ("Booru request error: %d - %s, %s - URL: %s - "
             "Retrying in %ss (%s/%s)." %
             (code, HTTP_BOORU_CODES[code][0], HTTP_BOORU_CODES[code][1], url,
-             get_retrying_in_time(max_tries), tries, max_tries))
+             get_retrying_in_time(tries), tries, max_tries))
 
 
 def get_fatal_msg(code, url, tried_times):
