@@ -21,6 +21,7 @@ class CriticalKeyError(Kana2Error):
     def __init__(self, post, missing_key, msg_end="skipping", print_err=True):
         self.post        = post
         self.missing_key = missing_key
+        self.msg_end     = msg_end
         self.message     = "Post %s is missing critical %s key, %s" % \
                            (get_post_id(post), missing_key, msg_end)
         super().__init__(self.message, print_err)
@@ -30,7 +31,7 @@ class CriticalKeyError(Kana2Error):
     # else pickling/multiprocessing will fail.
     # See https://stackoverflow.com/a/36342588/9739343
     def __reduce__(self):
-        return CriticalKeyError, (self.post, self.missing_key)
+        return CriticalKeyError, (self.post, self.missing_key, self.msg_end)
 
 
 class AddExtraKeyError(Kana2Error):
@@ -55,6 +56,7 @@ class RetryError(Kana2Error):
         self.tried_times = tried_times
         self.max_tries   = max_tries
         self.print_err   = print_err
+        self.giving_up   = giving_up
 
         wait         = "giving up" if giving_up else "retrying in %ss" % \
                             reqwrap.get_retrying_in_time(tried_times)
@@ -66,7 +68,8 @@ class RetryError(Kana2Error):
 
     def __reduce__(self):
         return RetryError, \
-               (self.err_code, self.url, self.tried_times, self.max_tries)
+               (self.err_code, self.url, self.tried_times, self.max_tries,
+                self.giving_up)
 
 # Media verification errors
 
