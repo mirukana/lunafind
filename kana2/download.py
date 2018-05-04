@@ -6,9 +6,7 @@ import sys
 from itertools import product
 
 import pybooru
-from pybooru.exceptions import PybooruError
 
-from requests.exceptions import RequestException
 from requestspool import RequestsPool
 
 from . import (CLIENT, PROCESSES, artcom, errors, extra, media, notes, tools,
@@ -77,7 +75,7 @@ def one_post(post, dests=None, save_extra_info=True, stop_on_err=False,
                               mode="wb")
             media.verify(post, dests["media"], client)
 
-        except (errors.Kana2Error, PybooruError, RequestException) as err:
+        except errors.Kana2Error as err:
             utils.log_error(err)
             # Append dict containing error attributes and error name.
             errors_gotten.append({**vars(err),

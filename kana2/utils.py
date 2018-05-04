@@ -187,16 +187,15 @@ def flatten_list(list_):
 
 
 def log_error(error):
-    """Log an exception, removing the wrapping single quotes"""
-    no_wrapping_quotes = re.sub(r"^'|'$", "", str(error))
-
+    """Log an exception unless print_err is False, if existing"""
     try:
-        if error.print_err:
-            logging.error(no_wrapping_quotes)
+        if not error.print_err:
+            return error.message  # Don't print it
     except AttributeError:  # If error has no print_err (not a kana2 error)
         pass
 
-    return no_wrapping_quotes
+    logging.error(error.message)
+    return error.message
 
 
 def jsonify(obj, indent=False):

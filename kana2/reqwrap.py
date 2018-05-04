@@ -1,13 +1,12 @@
 """Pybooru and requests lib call wrappers"""
 
-import logging
 import time
 
 import pybooru
 
 import requests
 
-from . import errors
+from . import errors, utils
 
 
 def pybooru_api(function, *args, **kwargs):
@@ -51,7 +50,7 @@ def http(method, url, session=requests.Session(), **kwargs):
 
 
 def try_again(code, url, tries, max_tries):
-    logging.error(errors.RetryError(code, url, tries, max_tries).message)
+    utils.log_error(errors.RetryError(code, url, tries, max_tries))
     time.sleep(get_retrying_in_time(tries))
 
 
