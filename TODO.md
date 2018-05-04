@@ -1,7 +1,6 @@
 # kana2 TODO list
 
 - reqwrap.py
-  - Custom exception instead of raising requests RetryError
   - More readable True/False → "true"/"false"
   - Put random/raw/etc filtering in info.py or query.py instead
 
@@ -9,6 +8,8 @@
     - Functions: Just take a query as arg? e.g. info.abettername("rumia")
     - Multiple args instead of having to write a dict? e.g. func("rumia", 20)
     - Some way to avoid the ))[0])))[0])))))) mess?
+
+- Use Python 3.6+ new f"string {some_var}" interpolation when possible 
 
 - Break download.one\_post() into smaller functions
 

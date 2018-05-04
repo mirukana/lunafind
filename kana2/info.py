@@ -11,8 +11,6 @@ from . import CLIENT, PROCESSES, extra, reqwrap, utils
 
 
 def pages(queries, add_extra_info=True):
-    # Can't use multiprocessing without SSL errors, using
-    # undocumented multithread Pools instead.
     with RequestsPool(PROCESSES, pybooru.Danbooru, ("safebooru",)) as pool:
         # starmap() will see a list of (a_query, add_extra_info) tuples,
         # each corresponding to the params for a one_page() function call.
