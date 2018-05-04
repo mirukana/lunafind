@@ -8,6 +8,10 @@ import requests
 
 from . import errors, utils
 
+# Don't waste time for errors that won't go away by retrying,
+# like Unauthorized/Forbidden/Not Found/Invalid Parameters/etc.
+FATAL_HTTP_CODES = (401, 403, 410, 404, 422, 423, 424)
+MAX_TRIES        = 5
 
 def pybooru_api(function, *args, **kwargs):
     # Build the actual parameter dict for the API query URL:
@@ -21,22 +25,23 @@ def pybooru_api(function, *args, **kwargs):
               if not (k in ("random", "raw") and v is False) and \
                  not k in ("posts_to_get", "total_pages", "type")}
 
-    max_tries = 5
-
-    for tries in range(1, max_tries + 1):
+    for tries in range(1, MAX_TRIES + 1):
         try:
             return function(*args, **kwargs)
-        except pybooru.exceptions.PybooruHTTPError as error:
-            code, url = error.args[1], error.args[2]
-            try_again(code, url, tries, max_tries)
+        except pybooru.exceptions.PybooruHTTPError as err:
+            code, url = err.args[1], err.args[2]
 
-    raise errors.RetryError(code, url, max_tries, max_tries, giving_up=True)
+            if code in FATAL_HTTP_CODES:
+                raise errors.RetryError(code, url, 1, 1, giving_up=True)
+
+            try_again(code, url, tries)
+
+    raise errors.RetryError(code, url, MAX_TRIES, MAX_TRIES, giving_up=True)
 
 
 def http(method, url, session=requests.Session(), **kwargs):
-    max_tries = 5
 
-    for tries in range(1, max_tries + 1):
+    for tries in range(1, MAX_TRIES + 1):
         # e.g. http("get", ...) calls session.get(...)
         req  = getattr(session, method)(url, timeout=6, **kwargs)
         code = req.status_code
@@ -44,12 +49,15 @@ def http(method, url, session=requests.Session(), **kwargs):
         if req.status_code in range(200, 204 + 1):
             return req
 
-        try_again(code, url, tries, max_tries)
+        if req.status_code in FATAL_HTTP_CODES:
+            raise errors.RetryError(code, url, 1, 1, giving_up=True)
 
-    raise errors.RetryError(code, url, max_tries, max_tries, giving_up=True)
+        try_again(code, url, tries)
+
+    raise errors.RetryError(code, url, MAX_TRIES, MAX_TRIES, giving_up=True)
 
 
-def try_again(code, url, tries, max_tries):
+def try_again(code, url, tries, max_tries=MAX_TRIES):
     utils.log_error(errors.RetryError(code, url, tries, max_tries))
     time.sleep(get_retrying_in_time(tries))
 
