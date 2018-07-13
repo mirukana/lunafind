@@ -96,7 +96,7 @@ class Post(object):
     def set_paths(self, **user_paths):
         for res in RESOURCES:
             if res in user_paths:
-                self.paths[res] = user_paths[res]
+                self.paths[res] = utils.expand_path(user_paths[res])
 
             # Was set by the above if, or already set by a previous set_paths()
             if self.paths.get(res) is not None:

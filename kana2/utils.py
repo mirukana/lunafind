@@ -213,3 +213,9 @@ def jsonify(obj, indent=False):
 
 def dict_has(dict_, *keys):
     return set(keys) <= set(dict_)
+
+def expand_path(path):
+    try:
+        return os.path.expandvars(os.path.expanduser(path))
+    except TypeError:  # e.g. Post.set_paths(something=False) → Bool, error
+        return path

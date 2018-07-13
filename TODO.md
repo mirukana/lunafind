@@ -1,7 +1,5 @@
 # kana2 TODO list
 
-- path() or p"...": expand users and env variables
-
 - Refactor net and errors modules
 
 - Post object creator from ID, URL, search, folder, md5, etc
