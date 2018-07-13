@@ -8,8 +8,6 @@ import requests
 
 from . import errors, utils
 
-# TODO: refactor
-
 # Don't waste time for errors that won't go away by retrying,
 # like Unauthorized/Forbidden/Not Found/Invalid Parameters/etc.
 FATAL_HTTP_CODES = (401, 403, 410, 404, 422, 423, 424)

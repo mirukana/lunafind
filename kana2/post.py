@@ -14,7 +14,6 @@ RESOURCES_JSON  = set(("info", "extra", "artcom", "notes"))
 RESOURCES       = RESOURCES_JSON | set(("media",))
 
 
-# TODO: Validation, see other attr possibilities
 @attr.s
 class Post(object):
     info  = attr.ib(repr=False)
@@ -290,6 +289,3 @@ class Post(object):
             return False
 
         return True
-
-# TODO: load post from dir, url, search, etc
-# TODO: path() or p"...": expand users and env variables
