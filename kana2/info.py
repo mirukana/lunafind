@@ -1,10 +1,10 @@
-"""Get post information"""
+"""Get post information."""
 
-import logging
+import logging as log
 from . import CLIENT, net
 
 
 def for_id(*booru_ids, client=CLIENT):
     for bid in booru_ids:
-        logging.info(f"Retrieving info for post {bid}...")
+        log.info(f"Retrieving info for post {bid}...")
         yield net.booru_api(client.post_show, bid)

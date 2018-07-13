@@ -4,7 +4,7 @@ Attributes:
     CLIENT: Booru client. See :class:`~pybooru.danbooru.Danbooru`
 """
 
-import logging
+import logging as log
 import signal
 import sys
 
@@ -14,13 +14,14 @@ __all__ = ["post", "info", "net", "errors", "utils"]
 
 __author__  = "kana"
 __license__ = "Private"
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 __email__   = "ym96@protonmail.ch"
 __status__  = "Development"
 
-CLIENT = pybooru.Danbooru("safebooru")
+CLIENT     = pybooru.Danbooru("safebooru")
+CHUNK_SIZE = 8 * 1024 ** 2  # 8 MiB
 
-logging.basicConfig(level=logging.INFO)
+log.basicConfig(level=log.INFO)
 
 # Must be effective ASAP, hide traceback when hitting CTRL-C (SIGINT).
 signal.signal(signal.SIGINT, lambda signal_nbr, _: sys.exit(128 + signal_nbr))

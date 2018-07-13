@@ -1,4 +1,4 @@
-"""kana2 exceptions"""
+"""kana2 exceptions."""
 
 from pybooru.resources import HTTP_STATUS_CODE as HTTP_BOORU_CODES
 

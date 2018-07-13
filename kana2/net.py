@@ -1,4 +1,4 @@
-"""Pybooru and requests lib call wrappers"""
+"""Pybooru and requests lib call wrappers."""
 
 import time
 

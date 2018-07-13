@@ -2,68 +2,48 @@
 
 import hashlib
 import json
-import logging
+import logging as log
+import os
 import re
-import sys
 
-from . import CLIENT, net
-
-
-class Stream(object):
-    """Context manager to open any file or standard stream.
-
-    Args:
-        stream: File path, `sys.stdin`, `sys.stdout` or `sys.stderr`.
-        mode (str, optional): Specify the mode to open files in.
-            See :func:`~open`. Defaults to `"r"`.
-
-    Attributes:
-        stream (obj): Opened file or standard stream.
-        is_file (bool): If the opened stream is a file or standard stream.
-
-    Examples:
-        >>> with utils.Stream(sys.stdout) as stream: stream.write("Test\n")
-        ...
-        Test
-
-        >>> with utils.Stream("new.txt", "w") as stream: stream.write("123\n")
-        ...
-        >>> with utils.Stream("new.txt") as stream: print(stream.read())
-        ...
-        123
-    """
-
-    def __init__(self, stream, mode="r"):
-        if stream in (sys.stdin, sys.stdout, sys.stderr):
-            self.stream  = stream
-            self.is_file = False
-        else:
-            self.stream  = open(stream, mode)
-            self.is_file = True
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type_, value, traceback):
-        if self.is_file:
-            self.stream.close()
+from . import CHUNK_SIZE, CLIENT, net
 
 
-def write(content, stream, mode="w"):
-    with Stream(stream, mode) as output:
-        if output.is_file or "b" not in mode:
-            output.stream.write(str(content))
-        else:
-            output.stream.buffer.write(str(content))
+def _check_can_write(can_overwrite, path):
+    if not can_overwrite and os.path.exists(path):
+        log.warning(f"File {path} already exists, will not overwrite.")
+        return False
+    return True
 
 
-def chunk_write(content_iter, stream, mode="w"):
-    with Stream(stream, mode) as output:
+def write(content, to_path, mode="w", overwrite=False):
+    if not _check_can_write(overwrite, to_path):
+        return False
+
+    with open(to_path, mode) as output:
+        output.write(content)
+
+    return True
+
+
+def write_chunk(content_iter, to_path, mode="w", overwrite=False):
+    if not _check_can_write(overwrite, to_path):
+        return False
+
+    with open(to_path, mode) as output:
         for chunk in content_iter:
-            if chunk and output.is_file or "b" not in mode:
-                output.stream.write(chunk)
-            elif chunk:
-                output.stream.buffer.write(chunk)
+            output.write(chunk)
+
+    return True
+
+
+def load_file(in_path, mode="r", chunk_size=CHUNK_SIZE):
+    with open(in_path, mode) as input_:
+        while True:
+            data = input_.read(chunk_size)
+            if not data:
+                break
+            yield data
 
 
 def filter_duplicate_dicts(list_):
@@ -181,7 +161,7 @@ def bytes2human(size, prefix="", suffix=""):
     return "%.1f%s%s%s" % (size, prefix, "Y", suffix)
 
 
-def get_file_md5(file_path, chunk_size=16 * 1024 ** 2):
+def get_file_md5(file_path, chunk_size=CHUNK_SIZE):
     """Calculate a file's MD5 hash.
 
     Args:
@@ -220,7 +200,7 @@ def log_error(error):
     except AttributeError:  # If error has no print_err (not a kana2 error)
         pass
 
-    logging.error(error.message)
+    log.error(error.message)
     return error.message
 
 
