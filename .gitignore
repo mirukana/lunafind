@@ -2,3 +2,4 @@
 .pylintrc
 test_*.py
 tmp-*
+kana2/old
