@@ -8,12 +8,14 @@ import requests
 
 from . import errors, utils
 
+# TODO: refactor
+
 # Don't waste time for errors that won't go away by retrying,
 # like Unauthorized/Forbidden/Not Found/Invalid Parameters/etc.
 FATAL_HTTP_CODES = (401, 403, 410, 404, 422, 423, 424)
 MAX_TRIES        = 5
 
-def pybooru_api(function, *args, **kwargs):
+def booru_api(function, *args, **kwargs):
     # Build the actual parameter dict for the API query URL:
     # Filter out "random" and "raw" parameters if their value is False
     # because Danbooru will see them as true (bug?);

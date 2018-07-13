@@ -1,52 +1,12 @@
-"""General useful classes, functions and others used in kana2."""
-import argparse
+"""Various global variables, functions and others specially used for kana2."""
+
 import hashlib
 import json
 import logging
-import os
 import re
-import signal
 import sys
 
-# Must be effective ASAP, hide traceback when hitting CTRL-C (SIGINT).
-signal.signal(signal.SIGINT, lambda signal_nbr, _: sys.exit(128 + signal_nbr))
-
-
-class CapitalisedHelpFormatter(argparse.HelpFormatter):
-    """ Display argparse's help with a capitalized "usage:".
-
-    Example:
-        argparse.ArgumentParser(formatter_class=CapitalisedHelpFormatter)
-    """
-    def add_usage(self, usage, actions, groups, prefix=None):
-        if prefix is None:
-            prefix = "Usage: "
-
-        return super(CapitalisedHelpFormatter, self).add_usage(
-            usage, actions, groups, prefix)
-
-
-# https://codereview.stackexchange.com/q/25417/25471#25471
-class DiscardStdStreams(object):
-    def __init__(self, stdout = None, stderr = None):
-        self.devnull = open(os.devnull, "w")
-        self._stdout = stdout or self.devnull or sys.stdout
-        self._stderr = stderr or self.devnull or sys.stderr
-        self.old_stdout = sys.stdout
-        self.old_stderr = sys.stderr
-
-    def __enter__(self):
-        self.old_stdout.flush()
-        self.old_stderr.flush()
-        sys.stdout = self._stdout
-        sys.stderr = self._stderr
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self._stdout.flush()
-        self._stderr.flush()
-        sys.stdout = self.old_stdout
-        sys.stderr = self.old_stderr
-        self.devnull.close()
+from . import CLIENT, net
 
 
 class Stream(object):
@@ -122,6 +82,72 @@ def filter_duplicate_dicts(list_):
 
     json_set = {json.dumps(dict_, sort_keys=True) for dict_ in list_}
     return [json.loads(dict_) for dict_ in json_set]
+
+
+
+# TODO: Move this to filter.py
+def filter_duplicates(posts):
+    """Return a list of unique posts, duplicates are detected by post id.
+
+    Args:
+        posts (list): Post information dictionaries.
+
+    Returns:
+        posts (list): Post dictionaries without duplicates.
+
+    Examples:
+        >>> utils.filter_duplicates([{"id": 1}, {"id": 1}, {"id": 2}])
+        [{'id': 1}, {'id': 2}]
+    """
+
+    id_seen = [None]
+    for i, post in enumerate(posts):
+        if post["id"] in id_seen:
+            del posts[i]
+        else:
+            id_seen.append(post["id"])
+    return posts
+
+
+def count_posts(tags=None, client=CLIENT):
+    """Return the number of posts for given tags.
+
+    Args:
+        tags (str, optional): The desired tag search to get a count for.
+            If this is None, the post count for the entire booru will be shown.
+            Default: None.
+
+    Returns:
+        (int): The number of existing posts with given tags.
+            If the number of tags used exceeds the maximum limit
+            (2 for visitors and normal members on Danbooru), return `0`.
+
+    Examples:
+        >>> utils.count_posts() > 1000
+        True
+
+        >>> utils.count_posts("hakurei_reimu date:2017-09-17")
+        5
+
+        >>> utils.count_posts("hakurei_reimu maribel_hearn usami_renko")
+        0
+    """
+
+    return net.booru_api(client.count_posts, tags)["counts"]["posts"]
+
+
+def replace_keys(post, string):
+    if not isinstance(string, str):
+        return string
+
+    # Unless \ escaped: {foo} → Capture foo; {foo, bar} Capture foo and bar.
+    return re.sub(r"(?<!\\)(?:\\\\)*{(.+?)(?:, ?(.+?))?}",
+                  lambda match: str(post.get(match.group(1), match.group(2))),
+                  string)
+
+
+def client_return(normal_returns, client):
+    return normal_returns if client is CLIENT else normal_returns, client
 
 
 def bytes2human(size, prefix="", suffix=""):
@@ -203,3 +229,7 @@ def jsonify(obj, indent=False):
         return json.dumps(obj, sort_keys=True, ensure_ascii=False)
 
     return json.dumps(obj, sort_keys=True, ensure_ascii=False, indent=4)
+
+
+def dict_has(dict_, *keys):
+    return set(keys) <= set(dict_)

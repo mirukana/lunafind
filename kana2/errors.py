@@ -2,7 +2,7 @@
 
 from pybooru.resources import HTTP_STATUS_CODE as HTTP_BOORU_CODES
 
-from . import reqwrap
+from . import net
 
 
 def get_post_id(post):
@@ -14,37 +14,6 @@ class Kana2Error(Exception):
         self.message   = message
         self.print_err = print_err
         super().__init__(self.message)
-
-# Keys errors
-
-class CriticalKeyError(Kana2Error):
-    def __init__(self, post, missing_key, msg_end="skipping", print_err=True):
-        self.post        = post
-        self.missing_key = missing_key
-        self.msg_end     = msg_end
-        self.message     = "Post %s is missing critical %s key, %s" % \
-                           (get_post_id(post), missing_key, msg_end)
-        super().__init__(self.message, print_err)
-
-    # Those __reduce__ overrides are neccesary when calling the base class with
-    # super() and all the positional arguments from __init__ are not passed,
-    # else pickling/multiprocessing will fail.
-    # See https://stackoverflow.com/a/36342588/9739343
-    def __reduce__(self):
-        return CriticalKeyError, (self.post, self.missing_key, self.msg_end)
-
-
-class AddExtraKeyError(Kana2Error):
-    def __init__(self, post, missing_key, cannot_add, print_err=True):
-        self.post        = post
-        self.missing_key = missing_key
-        self.cannot_add  = cannot_add
-        self.message     = "Post %s is missing %s key, cannot add %s" % \
-                           (get_post_id(post), missing_key, cannot_add)
-        super().__init__(self.message, print_err)
-
-    def __reduce__(self):
-        return AddExtraKeyError, (self.post, self.missing_key, self.cannot_add)
 
 # Network errors
 
@@ -59,7 +28,7 @@ class RetryError(Kana2Error):
         self.giving_up   = giving_up
 
         wait         = "giving up" if giving_up else "retrying in %ss" % \
-                            reqwrap.get_retrying_in_time(tried_times)
+                            net.get_retrying_in_time(tried_times)
         short_msg    = HTTP_BOORU_CODES[err_code][0]
         details      = HTTP_BOORU_CODES[err_code][1]
         self.message = (f"Request failed, {wait} ({tried_times}/{max_tries}): "
