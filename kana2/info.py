@@ -1,5 +1,7 @@
 """Get post information."""
 
+import logging as log
+import os
 import re
 from urllib.parse import parse_qs, urlparse
 
@@ -35,4 +37,39 @@ def from_search_url(url, client=CLIENT):
 
 
 def from_file(path):
-    yield from utils.load_json(path)
+    posts = utils.load_json(path)
+    if not isinstance(posts, list):  # i.e. one post not wrapped in a list
+        posts = [posts]
+    yield from posts
+
+
+def from_auto(*args, **kwargs):
+    # Usage: like from_search(), or with one positional argument to detect.
+    if len(args) + len(kwargs) > 1:
+        yield from from_search(*args, **kwargs)
+        return
+
+    query = kwargs.get("query") or args[0]
+
+    if not isinstance(query, (str, int)):
+        log.error("Unknown query type, expected str or int.")
+        return
+
+    regexes = {
+        r"^[a-fA-F\d]{32}$":                        from_md5,
+        r"^\d+$":                                   from_id,
+        r"^%s/posts/(\d+)\?*.*$" % CLIENT.site_url: from_post_url,
+        r"^%s" % CLIENT.site_url:                   from_search_url
+    }
+
+    query = str(query)
+    for regex, function in regexes.items():
+        if re.match(regex, query):
+            yield from function(query)
+            return
+
+    if os.path.isfile(query):
+        yield from from_file(query)
+        return
+
+    yield from from_search(query)
