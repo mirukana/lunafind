@@ -1,10 +1,11 @@
 # kana2 TODO list
 
-- import Post and PostStore into globale namespace
 - Log info functions
 
 - Refactor net and errors modules
 - Clean up utils.py
+
+- Multiple pages search
 
 - Prettier logging
 
@@ -12,6 +13,8 @@
 - Enforce static variable types
   - Maybe with [mypy](https://github.com/python/mypy)?
 - See about CPython and Pipy
+
+- Multiprocessing
 
 - filter.py
     - Duplicates

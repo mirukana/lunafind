@@ -1,25 +1,20 @@
-"""Danbooru-related CLI tools.
+"""Danbooru CLI tools"""
 
-Attributes:
-    CLIENT: Booru client. See :class:`~pybooru.danbooru.Danbooru`
-"""
-
+import importlib
 import logging as log
 import signal
 import sys
 
-import pybooru
+from .post import Post
+from .store import Store
 
-__all__ = ["info", "post", "store", "net", "errors", "utils"]
+from . import config, errors, info, net, post, store, utils
 
 __author__  = "kana"
 __license__ = "Private"
 __version__ = "0.3.5"
 __email__   = "ym96@protonmail.ch"
 __status__  = "Development"
-
-CLIENT     = pybooru.Danbooru("safebooru")
-CHUNK_SIZE = 8 * 1024 ** 2  # 8 MiB
 
 log.basicConfig(level=log.INFO)
 

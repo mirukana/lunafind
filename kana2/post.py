@@ -8,7 +8,7 @@ import arrow
 import attr
 import whratio
 
-from . import CHUNK_SIZE, CLIENT, info, net, utils
+from . import config, info, net, utils
 
 RESOURCES_JSON  = set(("info", "extra", "artcom", "notes"))
 RESOURCES       = RESOURCES_JSON | set(("media",))
@@ -21,7 +21,7 @@ class Post(object):
                                              repr=False, cmp=False)
 
     init_get = attr.ib(default=True, repr=False, cmp=False)
-    client   = attr.ib(default=CLIENT, repr=False, cmp=False)
+    client   = attr.ib(default=config.CLIENT, repr=False, cmp=False)
 
     # User won't be able to use self keys before the object is initialized,
     # so set_paths() is the only way to change paths.
@@ -168,7 +168,7 @@ class Post(object):
         return True
 
 
-    def get_media(self, chunk_size=CHUNK_SIZE):
+    def get_media(self, chunk_size=config.CHUNK_SIZE):
         if not self._has_extra("verify media"):
             return False
 

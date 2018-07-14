@@ -5,30 +5,30 @@ import os
 import re
 from urllib.parse import parse_qs, urlparse
 
-from . import CLIENT, net, utils
+from . import config, net, utils
 
 
 def from_search(tags=None, page=1, limit=200, random=False, raw=False,
-                client=CLIENT):
+                client=config.CLIENT):
     # pylint: disable=unused-argument
     # No md5 param because it won't return a proper list, use tags="md5:...".
     yield from net.booru_api(client.post_list, **locals())
 
 
-def from_id(id_, client=CLIENT):
+def from_id(id_, client=config.CLIENT):
     yield from from_search(tags=f"id:{id_}", client=client)
 
 
-def from_md5(md5, client=CLIENT):
+def from_md5(md5, client=config.CLIENT):
     yield from from_search(tags=f"md5:{md5}", client=client)
 
 
-def from_post_url(url, client=CLIENT):
+def from_post_url(url, client=config.CLIENT):
     id_ = re.search(r"/posts/(\d+)\??.*$", url).group(1)
     yield from from_id(id_, client=client)
 
 
-def from_search_url(url, client=CLIENT):
+def from_search_url(url, client=config.CLIENT):
     search          = parse_qs(urlparse(url).query)
     search["limit"] = int(search.get("limit")[0]) or 20
     yield from from_search(
@@ -57,10 +57,10 @@ def from_auto(query):
         return
 
     regexes = {
-        r"^[a-fA-F\d]{32}$":                        from_md5,
-        r"^\d+$":                                   from_id,
-        r"^%s/posts/(\d+)\?*.*$" % CLIENT.site_url: from_post_url,
-        r"^%s" % CLIENT.site_url:                   from_search_url
+        r"^[a-fA-F\d]{32}$":                               from_md5,
+        r"^\d+$":                                          from_id,
+        r"^%s/posts/(\d+)\?*.*$" % config.CLIENT.site_url: from_post_url,
+        r"^%s" % config.CLIENT.site_url:                   from_search_url
     }
 
     query = str(query)

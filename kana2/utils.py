@@ -6,7 +6,7 @@ import logging as log
 import os
 import re
 
-from . import CHUNK_SIZE, CLIENT, net
+from . import config, net
 
 
 def _check_can_write(can_overwrite, path):
@@ -37,7 +37,7 @@ def write_chunk(content_iter, to_path, mode="w", overwrite=False):
     return True
 
 
-def load_file(in_path, mode="r", chunk_size=CHUNK_SIZE):
+def load_file(in_path, mode="r", chunk_size=config.CHUNK_SIZE):
     with open(in_path, mode) as input_:
         while True:
             data = input_.read(chunk_size)
@@ -94,7 +94,7 @@ def filter_duplicates(posts):
     return posts
 
 
-def count_posts(tags=None, client=CLIENT):
+def count_posts(tags=None, client=config.CLIENT):
     """Return the number of posts for given tags.
 
     Args:
@@ -131,10 +131,6 @@ def replace_keys(post, string):
                   string)
 
 
-def client_return(normal_returns, client):
-    return normal_returns if client is CLIENT else normal_returns, client
-
-
 def bytes2human(size, prefix="", suffix=""):
     """Return byte sizes as a human-readable number.
 
@@ -166,7 +162,7 @@ def bytes2human(size, prefix="", suffix=""):
     return "%.1f%s%s%s" % (size, prefix, "Y", suffix)
 
 
-def get_file_md5(file_path, chunk_size=CHUNK_SIZE):
+def get_file_md5(file_path, chunk_size=config.CHUNK_SIZE):
     """Calculate a file's MD5 hash.
 
     Args:
