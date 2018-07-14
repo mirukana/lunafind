@@ -2,12 +2,13 @@
 
 import logging as log
 import os
+import pprint
 
 import arrow
 import attr
 import whratio
 
-from . import CHUNK_SIZE, CLIENT, net, utils
+from . import CHUNK_SIZE, CLIENT, info, net, utils
 
 RESOURCES_JSON  = set(("info", "extra", "artcom", "notes"))
 RESOURCES       = RESOURCES_JSON | set(("media",))
@@ -16,7 +17,8 @@ RESOURCES       = RESOURCES_JSON | set(("media",))
 @attr.s
 class Post(object):
     info  = attr.ib(repr=False)
-    extra = media = artcom = notes = attr.ib(default=None, repr=False)
+    extra = media = artcom = notes = attr.ib(default=None,
+                                             repr=False, cmp=False)
 
     init_get = attr.ib(default=True, repr=False, cmp=False)
     client   = attr.ib(default=CLIENT, repr=False, cmp=False)
@@ -28,12 +30,24 @@ class Post(object):
 
 
     def __attrs_post_init__(self):
+        got_post_info = isinstance(self.info, dict) and "id" in self.info
+        is_query      = isinstance(self.info, (str, int, list, tuple, dict))
+        if not got_post_info:
+            if is_query:
+                self.info = next(info.from_auto(self.info))
+            else:
+                raise TypeError("Invalid info or query for Post.")
+
         self.id = self.info["id"]
         self.set_paths()
 
         if self.init_get:
             # Do not overwrite user args; use the already fetched extra.
             self.get_all(overwrite=False, excludes="extra")
+
+
+    def __str__(self):
+        return pprint.pformat(self.__dict__["id"])
 
 
     def _log_retrieving(self, resource, doing="Retrieving"):
@@ -96,13 +110,15 @@ class Post(object):
             if self.paths.get(res) is not None:
                 continue
 
-            ext = None
             # Set a default value, i.e. <id>/<resource>.<ext>
             if res in RESOURCES_JSON:
                 ext = "json"
-            elif res == "media":
-                if self.extra or (not self.extra and self.get_extra()):
-                    ext = self.extra["dl_ext"]
+            elif res == "media" and \
+                 self.extra or (not self.extra and self.get_extra()):
+                ext = self.extra["dl_ext"]
+            else:
+                log.warning(f"Can't determine media ext for post {self.id}.")
+                ext = None
 
             self.paths[res] = (f"{self.client.site_name}-{self.id}"
                                f"{os.sep}{res}.{ext}")

@@ -10,11 +10,11 @@ import sys
 
 import pybooru
 
-__all__ = ["post", "info", "net", "errors", "utils"]
+__all__ = ["info", "post", "store", "net", "errors", "utils"]
 
 __author__  = "kana"
 __license__ = "Private"
-__version__ = "0.3.3"
+__version__ = "0.3.5"
 __email__   = "ym96@protonmail.ch"
 __status__  = "Development"
 

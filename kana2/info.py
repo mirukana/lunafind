@@ -9,7 +9,7 @@ from . import CLIENT, net, utils
 
 
 def from_search(tags=None, page=1, limit=200, random=False, raw=False,
-                client=CLIENT, **_):
+                client=CLIENT):
     # pylint: disable=unused-argument
     # No md5 param because it won't return a proper list, use tags="md5:...".
     yield from net.booru_api(client.post_list, **locals())

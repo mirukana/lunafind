@@ -1,6 +1,7 @@
 # kana2 TODO list
 
-- Mass Post object creator
+- import Post and PostStore into globale namespace
+- Log info functions
 
 - Refactor net and errors modules
 - Clean up utils.py
