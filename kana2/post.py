@@ -2,7 +2,6 @@
 
 import logging as log
 import os
-import pprint
 
 import arrow
 import attr
@@ -30,16 +29,11 @@ class Post(object):
 
     def __attrs_post_init__(self):
         self.id = self.info["id"]
-        self.get_extra()
         self.set_paths()
 
         if self.init_get:
             # Do not overwrite user args; use the already fetched extra.
             self.get_all(overwrite=False, excludes="extra")
-
-
-    def __str__(self):
-        return pprint.pformat(self.__dict__)
 
 
     def _log_retrieving(self, resource, doing="Retrieving"):
@@ -105,7 +99,9 @@ class Post(object):
             # Set a default value, i.e. <id>/<resource>.<ext>
             if res in RESOURCES_JSON:
                 ext = "json"
-            elif res == "media" and self.extra:
+            elif res == "media":
+                if not self.extra:
+                    self.get_extra()
                 ext = self.extra["dl_ext"]
             else:
                 ext = None
