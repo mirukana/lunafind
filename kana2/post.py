@@ -96,15 +96,13 @@ class Post(object):
             if self.paths.get(res) is not None:
                 continue
 
+            ext = None
             # Set a default value, i.e. <id>/<resource>.<ext>
             if res in RESOURCES_JSON:
                 ext = "json"
             elif res == "media":
-                if not self.extra:
-                    self.get_extra()
-                ext = self.extra["dl_ext"]
-            else:
-                ext = None
+                if self.extra or (not self.extra and self.get_extra()):
+                    ext = self.extra["dl_ext"]
 
             self.paths[res] = (f"{self.client.site_name}-{self.id}"
                                f"{os.sep}{res}.{ext}")
