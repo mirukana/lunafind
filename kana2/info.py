@@ -43,16 +43,17 @@ def from_file(path):
     yield from posts
 
 
-def from_auto(*args, **kwargs):
-    # Usage: like from_search(), or with one positional argument to detect.
-    if len(args) + len(kwargs) > 1:
-        yield from from_search(*args, **kwargs)
+def from_auto(query):
+    if isinstance(query, (tuple, list)):
+        yield from from_search(*query)
         return
 
-    query = kwargs.get("query") or args[0]
+    if isinstance(query, dict):
+        yield from from_search(**query)
+        return
 
     if not isinstance(query, (str, int)):
-        log.error("Unknown query type, expected str or int.")
+        log.error("Unknown query type. Expected str, int, tuple or dict.")
         return
 
     regexes = {
