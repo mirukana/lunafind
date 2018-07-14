@@ -14,7 +14,7 @@ __all__ = ["post", "info", "net", "errors", "utils"]
 
 __author__  = "kana"
 __license__ = "Private"
-__version__ = "0.3.2"
+__version__ = "0.3.3"
 __email__   = "ym96@protonmail.ch"
 __status__  = "Development"
 

@@ -1,8 +1,9 @@
 # kana2 TODO list
 
-- Refactor net and errors modules
+- Mass Post object creator
 
-- Post object creator from ID, URL, search, folder, md5, etc
+- Refactor net and errors modules
+- Clean up utils.py
 
 - Prettier logging
 

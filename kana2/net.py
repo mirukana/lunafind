@@ -13,17 +13,20 @@ from . import errors, utils
 FATAL_HTTP_CODES = (401, 403, 410, 404, 422, 423, 424)
 MAX_TRIES        = 5
 
+
+def boorify_url_params(params):
+    new = {}
+    for k, v in params.items():
+        # Filter out "random" and "raw" parameters if their value is False
+        # because Danbooru will see them as true (bug?).
+        if not (k in ("random", "raw") and v is False):
+            # Lowercase booleans:
+            new[k] = "true" if v is True else "false" if v is False else v
+    return new
+
+
 def booru_api(function, *args, **kwargs):
-    # Build the actual parameter dict for the API query URL:
-    # Filter out "random" and "raw" parameters if their value is False
-    # because Danbooru will see them as true (bug?);
-    # Filter out kana2-specific parameters like "posts_to_get";
-    # Replace boolean parameters by lowercase strings equivalents
-    # so they can be interpreted correctly by Danbooru.
-    kwargs = {k: "true" if v is True else "false" if v is False else v
-              for k, v in kwargs.items()
-              if not (k in ("random", "raw") and v is False) and \
-                 not k in ("posts_to_get", "total_pages", "type")}
+    kwargs = boorify_url_params(kwargs)
 
     for tries in range(1, MAX_TRIES + 1):
         try:

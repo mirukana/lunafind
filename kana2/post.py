@@ -254,6 +254,7 @@ class Post(object):
                 # mode    = "rb" if res in RESOURCES_MEDIA else "r"
 
                 # self._log_loading(res, in_path)
+                # USE load_json() when needed!
                 # setattr(self, res, utils.load_file(in_path, mode))
 
 

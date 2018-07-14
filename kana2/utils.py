@@ -46,6 +46,11 @@ def load_file(in_path, mode="r", chunk_size=CHUNK_SIZE):
             yield data
 
 
+def load_json(in_path):
+    with open(in_path, "r") as json_file:
+        return json.load(json_file)
+
+
 def filter_duplicate_dicts(list_):
     """Return a list of dictionaries without duplicates.
 
@@ -213,6 +218,7 @@ def jsonify(obj, indent=False):
 
 def dict_has(dict_, *keys):
     return set(keys) <= set(dict_)
+
 
 def expand_path(path):
     try:
