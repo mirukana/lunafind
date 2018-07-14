@@ -118,6 +118,7 @@ class Post(object):
 
     def get_extra(self):
         def manual_get_size(self, media_url):
+            print("CALLED")
             return int(net.http("head", media_url, self.client.client).headers[
                 "content-length"])
 
@@ -131,7 +132,7 @@ class Post(object):
 
         if ext != "zip":
             is_ugoira = False
-            size      = self.info.get("file_size", manual_get_size(self, url))
+            size = self.info.get("file_size") or manual_get_size(self, url)
         else:
             is_ugoira = True
             url       = self.info["large_file_url"]  # Video URL
