@@ -1,13 +1,18 @@
 # kana2 TODO list
 
+- Store ideas:
+    - x = Store(...); x[all].function → operates on all posts
+    - Store filtering: x.filter(tags or other stuff), or with operators?
+    - Chaining, e.g. x = Store(...).filter("tag1 tag2").get\_all().write()
+    - Manage both local and remote booru posts
+
+- Prettier logging
 - Log info functions
 
 - Refactor net and errors modules
 - Clean up utils.py
 
 - Multiple pages search
-
-- Prettier logging
 
 - Expore more possibilities of the attr lib
 - Enforce static variable types

@@ -19,4 +19,7 @@ __status__  = "Development"
 log.basicConfig(level=log.INFO)
 
 # Must be effective ASAP, hide traceback when hitting CTRL-C (SIGINT).
-signal.signal(signal.SIGINT, lambda signal_nbr, _: sys.exit(128 + signal_nbr))
+try:
+    signal.signal(signal.SIGINT, lambda sig_nbr, _: sys.exit(128 + sig_nbr))
+except ValueError: # Happens if we're imported from a thread:
+    pass
