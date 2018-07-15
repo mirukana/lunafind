@@ -1,25 +1,26 @@
 # kana2 TODO list
 
 - Store ideas:
-    - x = Store(...); x[all].function → operates on all posts
+    - Cleaner implementation of Post functions
+    - x = Store(...); x[all].function → operates on all posts?
     - Store filtering: x.filter(tags or other stuff), or with operators?
-    - Chaining, e.g. x = Store(...).filter("tag1 tag2").get\_all().write()
-    - Manage both local and remote booru posts
+    - Manage both local .writen() and remote booru posts?
 
 - Prettier logging
 - Log info functions
 
 - Refactor net and errors modules
+    - See about HTTPAdaptor and urllib Timer
 - Clean up utils.py
+- Is attr lib for Post really useful?
 
 - Multiple pages search
-
-- Expore more possibilities of the attr lib
 - Enforce static variable types
   - Maybe with [mypy](https://github.com/python/mypy)?
 - See about CPython and Pipy
 
 - Multiprocessing
+  - requests-threads, requests-futures, grequests, zproc, async/await?
 
 - filter.py
     - Duplicates

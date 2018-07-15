@@ -19,8 +19,6 @@ class Post(object):
     info  = attr.ib(repr=False)
     extra = media = artcom = notes = attr.ib(default=None,
                                              repr=False, cmp=False)
-
-    init_get = attr.ib(default=True, repr=False, cmp=False)
     client   = attr.ib(default=config.CLIENT, repr=False, cmp=False)
 
     # User won't be able to use self keys before the object is initialized,
@@ -40,10 +38,6 @@ class Post(object):
 
         self.id = self.info["id"]
         self.set_paths()
-
-        if self.init_get:
-            # Do not overwrite user args; use the already fetched extra.
-            self.get_all(overwrite=False, excludes="extra")
 
 
     def __str__(self):
@@ -122,12 +116,14 @@ class Post(object):
 
             self.paths[res] = (f"{self.client.site_name}-{self.id}"
                                f"{os.sep}{res}.{ext}")
+        return self
 
 
     def get_all(self, overwrite=True, excludes=()):
         for res in RESOURCES - set(("info",)):
             if (overwrite or not getattr(self, res)) and res not in excludes:
                 getattr(self, f"get_{res}")()
+        return self
 
 
     def get_extra(self):
@@ -253,6 +249,7 @@ class Post(object):
                 self.verify_media()
                 # Get a new media generator, since the current one was emptied.
                 self.get_media()
+        return self
 
     def load(self, overwrite=True):
         raise NotImplementedError("Need to write post from disk/id/etc loader")

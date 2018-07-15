@@ -10,7 +10,7 @@ POST_USABLE_FUNCTIONS = [
 
 
 class Store(dict):
-    def __init__(self, *values, store_dict=None, init_get=False):
+    def __init__(self, *values, store_dict=None)
         if store_dict:
             super().__init__(store_dict)
             return
@@ -21,10 +21,7 @@ class Store(dict):
                 continue
 
             for post_info in info.from_auto(value):
-                self[post_info["id"]] = Post(post_info, init_get=False)
-
-        if init_get:
-            self.map("get_all")
+                self[post_info["id"]] = Post(post_info)
 
     # Store merges:
 
@@ -42,6 +39,7 @@ class Store(dict):
         for value in to_merge:
             store = value if isinstance(value, Store) else Store(value)
             self.update(store)
+            return self
 
     # Store items removals:
 
@@ -61,6 +59,7 @@ class Store(dict):
             store = value if isinstance(value, Store) else Store(value)
             for key in store:
                 self.pop(key, None)
+        return self
 
     # Adding single Post objects:
 
@@ -106,6 +105,7 @@ class Store(dict):
     def map(self, method, *args, **kwargs):
         for post_obj in self.values():
             getattr(post_obj, method)(*args, **kwargs)
+        return self
 
 
 # Hack to make functions that operate on all posts,
@@ -113,5 +113,5 @@ class Store(dict):
 for function in POST_USABLE_FUNCTIONS:
     # pylint: disable=w0122
     exec(f"def {function}(self, *args, **kwargs):\n"
-         f"    self.map('{function}', *args, **kwargs)\n"
+         f"    return self.map('{function}', *args, **kwargs)\n"
          f"Store.{function} = {function}", globals())
