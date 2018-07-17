@@ -8,17 +8,27 @@ import os
 from . import config
 
 
-def write(content, to_path, mode="w", msg=None, chunk=False, overwrite=False):
-    os.makedirs(os.path.dirname(to_path), exist_ok=True)
+def _must_exist(path, must_exist, msg=None, force=False):
+    if not must_exist and os.path.exists(path) and not force:
+        log.warning(f"File '{path}' already exists, will not overwrite.")
+        return False
 
-    if os.path.exists(to_path) and not overwrite:
-        log.warning(f"File '{to_path}' already exists, will not overwrite.")
+    if must_exist and not os.path.exists(path) and not force:
+        log.error(f"File '{path}' does not exist.")
         return False
 
     if msg:
         log.info(msg)
+    return True
 
-    with open(to_path, mode) as output:
+
+def write(content, path, mode="w", msg=None, chunk=False, overwrite=False):
+    if not _must_exist(path, False, msg, overwrite):
+        return False
+
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+
+    with open(path, mode) as output:
         if not chunk:
             output.write(content)
             return True
@@ -28,8 +38,11 @@ def write(content, to_path, mode="w", msg=None, chunk=False, overwrite=False):
     return True
 
 
-def load_file(in_path, mode="r", chunk_size=config.CHUNK_SIZE):
-    with open(in_path, mode) as input_:
+def load_file(path, mode="r", msg=None, chunk_size=config.CHUNK_SIZE):
+    if not _must_exist(path, True, msg):
+        return False
+
+    with open(path, mode) as input_:
         while True:
             data = input_.read(chunk_size)
             if not data:
@@ -37,12 +50,15 @@ def load_file(in_path, mode="r", chunk_size=config.CHUNK_SIZE):
             yield data
 
 
-def load_json(in_path):
-    with open(in_path, "r") as json_file:
+def load_json(path, msg=None):
+    if not _must_exist(path, True, msg):
+        return False
+
+    with open(path, "r") as json_file:
         return json.load(json_file)
 
 
-def get_file_md5(file_path, chunk_size=config.CHUNK_SIZE):
+def get_file_md5(path, msg=None, chunk_size=config.CHUNK_SIZE):
     """Calculate a file's MD5 hash.
 
     Args:
@@ -57,9 +73,12 @@ def get_file_md5(file_path, chunk_size=config.CHUNK_SIZE):
         >>> utils.get_file_md5("/dev/null")
         'd41d8cd98f00b204e9800998ecf8427e'
     """
+    if not _must_exist(path, True, msg):
+        return False
+
     hash_md5 = hashlib.md5()
 
-    with open(file_path, "rb") as file_:
+    with open(path, "rb") as file_:
         while True:
             data = file_.read(chunk_size)
             if not data:

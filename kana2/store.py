@@ -1,5 +1,7 @@
 """Store class"""
 
+import logging as log
+
 from . import Post, info, utils
 
 POST_USABLE_FUNCTIONS = [
@@ -15,15 +17,28 @@ class Store(dict):
             super().__init__(store_dict)
             return
 
+        posts_found = 0
         for value in values:
             if isinstance(value, Post):
                 self[value.id] = value
+                posts_found   += 1
+                log.info(f"Added post {value.id}, total: {posts_found}.")
+                utils.blank_line()
                 continue
 
+            query_found = 0
             for post_info in info.from_auto(value):
-                self[post_info["id"]] = Post(post_info)
+                query_found += 1
+                self[post_info["id"]] = Post(post_info, blank_line=False)
 
-        utils.blank_line()  # After set_paths() → get_extra() calls
+            posts_found += query_found
+            if query_found > 0:
+                log.info(f"Found {query_found} posts, total: {posts_found}.")
+
+            utils.blank_line()  # After each set_paths() → get_extra() calls
+
+        log.info(f"Found {posts_found} total posts.")
+        utils.blank_line()
 
     # Store merges:
 

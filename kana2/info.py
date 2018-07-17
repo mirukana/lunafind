@@ -5,13 +5,18 @@ import os
 import re
 from urllib.parse import parse_qs, urlparse
 
-from . import config, net, io
+from . import config, net, io, utils
 
 
-def from_search(tags=None, page=1, limit=200, random=False, raw=False,
+def from_search(tags="", page=1, limit=200, random=False, raw=False,
                 client=config.CLIENT):
     # pylint: disable=unused-argument
-    # No md5 param because it won't return a proper list, use tags="md5:...".
+    if re.match(r"^(id|md5):[a-fA-F\d]+$", tags):
+        log_info = {"tags": tags}
+    else:
+        log_info = {k: v for k, v in locals().items() if k != "client" and v}
+
+    log.info("Retrieving post info - %s", utils.simple_str_dict(log_info))
     yield from net.booru_api(client.post_list, **locals())
 
 
@@ -37,7 +42,7 @@ def from_search_url(url, client=config.CLIENT):
 
 
 def from_file(path):
-    posts = io.load_json(path)
+    posts = io.load_json(path, f"Loading post info from '{path}'...")
     if not isinstance(posts, list):  # i.e. one post not wrapped in a list
         posts = [posts]
     yield from posts

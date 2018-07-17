@@ -16,6 +16,7 @@
 - Is attr lib for Post really useful?
 
 - Multiple pages search
+  - Estimate posts total for a search
 - Enforce static variable types
   - Maybe with [mypy](https://github.com/python/mypy)?
 - See about CPython and Pipy

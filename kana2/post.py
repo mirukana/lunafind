@@ -22,6 +22,8 @@ class Post(object):
                                              repr=False, cmp=False)
     client = attr.ib(default=config.CLIENT, repr=False, cmp=False)
 
+    _blank_line = attr.ib(default=True, repr=False, cmp=False)
+
     # User won't be able to use self keys before the object is initialized,
     # so set_paths() is the only way to change paths.
     paths = attr.ib(init=False, factory=dict, repr=False, cmp=False)
@@ -40,6 +42,9 @@ class Post(object):
 
         self.id = self.info["id"]
         self.set_paths()
+
+        if self._blank_line:
+            utils.blank_line()
 
 
     def __str__(self):

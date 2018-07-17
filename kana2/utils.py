@@ -56,6 +56,13 @@ def flatten_list(list_):
     return [item for sublist in list_ for item in sublist]
 
 
+def simple_str_dict(dict_):
+    # Returns something like   foo: "bar", lor: "em", 1: 2
+    strs = [f"{k}: %s" % (f'"{v}"' if isinstance(v, str) else str(v))
+            for k, v in dict_.items()]
+    return ", ".join(strs)
+
+
 def expand_path(path):
     if path is False:
         return path
