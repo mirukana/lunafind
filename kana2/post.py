@@ -9,7 +9,7 @@ import attr
 import whratio
 from orderedset import OrderedSet
 
-from . import config, info, net, utils
+from . import config, info, io, net, utils
 
 RESOURCES      = OrderedSet(("info", "extra", "artcom", "notes", "media"))
 RESOURCES_JSON = RESOURCES - set(("media",))
@@ -203,7 +203,7 @@ class Post(object):
 
             path  = self.paths[res]
             msg   = f"{action} {res} to '{path}' for post {self.id}..."
-            wrote = utils.write(content, path, mode, msg, chunk, overwrite)
+            wrote = io.write(content, path, mode, msg, chunk, overwrite)
 
             if res == "media" and wrote:
                 self.verify_media()
@@ -235,7 +235,7 @@ class Post(object):
             use      = "MD5"
             log_verifying()
             expected = self.info["md5"]
-            actual   = utils.get_file_md5(self.paths["media"])
+            actual   = io.get_file_md5(self.paths["media"])
         else:
             use      = "File size"
             log_verifying()

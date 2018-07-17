@@ -13,7 +13,6 @@
 
 - Refactor net and errors modules
     - See about HTTPAdaptor and urllib Timer
-- Clean up utils.py
 - Is attr lib for Post really useful?
 
 - Multiple pages search

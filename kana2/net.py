@@ -6,7 +6,7 @@ import pybooru
 
 import requests
 
-from . import errors, utils
+from . import errors
 
 # Don't waste time for errors that won't go away by retrying,
 # like Unauthorized/Forbidden/Not Found/Invalid Parameters/etc.
@@ -37,7 +37,7 @@ def booru_api(function, *args, **kwargs):
             if code in FATAL_HTTP_CODES:
                 raise errors.RetryError(code, url, 1, 1, giving_up=True)
 
-            try_again(code, url, tries)
+            try_again(tries)
 
     raise errors.RetryError(code, url, MAX_TRIES, MAX_TRIES, giving_up=True)
 
@@ -55,13 +55,13 @@ def http(method, url, session=requests.Session(), **kwargs):
         if req.status_code in FATAL_HTTP_CODES:
             raise errors.RetryError(code, url, 1, 1, giving_up=True)
 
-        try_again(code, url, tries)
+        try_again(tries)
 
     raise errors.RetryError(code, url, MAX_TRIES, MAX_TRIES, giving_up=True)
 
 
-def try_again(code, url, tries, max_tries=MAX_TRIES):
-    utils.log_error(errors.RetryError(code, url, tries, max_tries))
+def try_again(tries):
+    # utils.log_error(errors.RetryError(code, url, tries, max_tries))
     time.sleep(get_retrying_in_time(tries))
 
 

@@ -5,7 +5,7 @@ import os
 import re
 from urllib.parse import parse_qs, urlparse
 
-from . import config, net, utils
+from . import config, net, io
 
 
 def from_search(tags=None, page=1, limit=200, random=False, raw=False,
@@ -37,7 +37,7 @@ def from_search_url(url, client=config.CLIENT):
 
 
 def from_file(path):
-    posts = utils.load_json(path)
+    posts = io.load_json(path)
     if not isinstance(posts, list):  # i.e. one post not wrapped in a list
         posts = [posts]
     yield from posts

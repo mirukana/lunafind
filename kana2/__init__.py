@@ -5,10 +5,11 @@ import logging as log
 import signal
 import sys
 
+# Must be before other relative imports to work
 from .post import Post
 from .store import Store
 
-from . import config, errors, info, net, post, store, utils
+from . import config, errors, info, io, net, post, store, utils
 
 __author__  = "kana"
 __license__ = "Private"
