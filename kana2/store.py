@@ -1,6 +1,6 @@
 """Store class"""
 
-from . import Post, info
+from . import Post, info, utils
 
 POST_USABLE_FUNCTIONS = [
     "get_all", "get_extra", "get_media", "get_artcom", "get_notes",
@@ -10,7 +10,7 @@ POST_USABLE_FUNCTIONS = [
 
 
 class Store(dict):
-    def __init__(self, *values, store_dict=None)
+    def __init__(self, *values, store_dict=None):
         if store_dict:
             super().__init__(store_dict)
             return
@@ -22,6 +22,8 @@ class Store(dict):
 
             for post_info in info.from_auto(value):
                 self[post_info["id"]] = Post(post_info)
+
+        utils.blank_line()  # After set_paths() → get_extra() calls
 
     # Store merges:
 
@@ -103,8 +105,8 @@ class Store(dict):
         return Store(store_dict={k: p for k, p in self.items()})
 
     def map(self, method, *args, **kwargs):
-        for post_obj in self.values():
-            getattr(post_obj, method)(*args, **kwargs)
+        for store_post in self.values():
+            getattr(store_post, method)(*args, **kwargs)
         return self
 
 

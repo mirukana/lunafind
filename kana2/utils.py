@@ -5,35 +5,28 @@ import json
 import logging as log
 import os
 import re
+import sys
 
 from . import config, net
 
 
-def _check_can_write(can_overwrite, path):
-    if not can_overwrite and os.path.exists(path):
-        log.warning(f"File {path} already exists, will not overwrite.")
-        return False
-    return True
+def write(content, to_path, mode="w", msg=None, chunk=False, overwrite=False):
+    os.makedirs(os.path.dirname(to_path), exist_ok=True)
 
-
-def write(content, to_path, mode="w", overwrite=False):
-    if not _check_can_write(overwrite, to_path):
+    if os.path.exists(to_path) and not overwrite:
+        log.warning(f"File '{to_path}' already exists, will not overwrite.")
         return False
+
+    if msg:
+        log.info(msg)
 
     with open(to_path, mode) as output:
-        output.write(content)
+        if not chunk:
+            output.write(content)
+            return True
 
-    return True
-
-
-def write_chunk(content_iter, to_path, mode="w", overwrite=False):
-    if not _check_can_write(overwrite, to_path):
-        return False
-
-    with open(to_path, mode) as output:
-        for chunk in content_iter:
-            output.write(chunk)
-
+        for chunk_data in content:
+            output.write(chunk_data)
     return True
 
 
@@ -206,6 +199,11 @@ def log_error(error):
 
 
 def jsonify(obj, indent=False):
+    # Serialize Arrow date object:
+    if "fetch_date" in obj:
+        obj["fetch_date"] = (obj["fetch_date"]
+                             .format("YYYY-MM-DDTHH:mm:ss.SSSZZ"))
+
     if not indent:
         return json.dumps(obj, sort_keys=True, ensure_ascii=False)
 
@@ -221,3 +219,7 @@ def expand_path(path):
         return os.path.expandvars(os.path.expanduser(path))
     except TypeError:  # e.g. Post.set_paths(something=False) → Bool, error
         return path
+
+
+def blank_line():
+    print(file=sys.stderr)

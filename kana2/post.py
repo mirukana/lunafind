@@ -7,11 +7,12 @@ import pprint
 import arrow
 import attr
 import whratio
+from orderedset import OrderedSet
 
 from . import config, info, net, utils
 
-RESOURCES_JSON  = set(("info", "extra", "artcom", "notes"))
-RESOURCES       = RESOURCES_JSON | set(("media",))
+RESOURCES      = OrderedSet(("info", "extra", "artcom", "notes", "media"))
+RESOURCES_JSON = RESOURCES - set(("media",))
 
 
 @attr.s
@@ -19,7 +20,7 @@ class Post(object):
     info  = attr.ib(repr=False)
     extra = media = artcom = notes = attr.ib(default=None,
                                              repr=False, cmp=False)
-    client   = attr.ib(default=config.CLIENT, repr=False, cmp=False)
+    client = attr.ib(default=config.CLIENT, repr=False, cmp=False)
 
     # User won't be able to use self keys before the object is initialized,
     # so set_paths() is the only way to change paths.
@@ -30,6 +31,7 @@ class Post(object):
     def __attrs_post_init__(self):
         got_post_info = isinstance(self.info, dict) and "id" in self.info
         is_query      = isinstance(self.info, (str, int, list, tuple, dict))
+
         if not got_post_info:
             if is_query:
                 self.info = next(info.from_auto(self.info))
@@ -48,51 +50,10 @@ class Post(object):
         log.info(f"{doing} {resource} for post {self.id}...")
 
 
-    def _log_writing(self, resource, out_path, doing="Writing"):
-        log.info(f"{doing} {resource} to '{out_path}' for post {self.id}...")
-
-
-    def _log_loading(self, resource, in_path, doing="Loading"):
-        log.info(f"{doing} {resource} from '{in_path}' for post {self.id}...")
-
-
-    def _log_verify_media(self, verify_type):
-        log.info(f"Verifying media using {verify_type} for post {self.id}...")
-
-
-    def _log_verify_media_fail(self, verify_type, expected, got):
-        log.warning(f"{verify_type} media verification for post {self.id} "
-                    f"failed! Expected {expected} bytes, got {got}.")
-
-
-    def _has_extra(self, to_do):
-        if not self.extra:
-            log.warning(f"Extra informations required to {to_do} for "
-                        f"post {self.id}.")
-            return False
-        return True
-
-
     def _empty_result_to_none(self, resource, result_list):
         if not result_list or result_list == []:
             log.info(f"No {resource} found for post {self.id}.")
             setattr(self, resource, None)
-
-
-    def _validate_info(self, resource):
-        required_keys = {
-            "extra":  ("file_url", "large_file_url",
-                       "image_width", "image_height"),
-            "artcom": ("tag_string_meta", "created_at"),
-            "notes":  ()
-        }
-
-        if utils.dict_has(self.info, *required_keys[resource]):
-            return True
-
-        log.warning(f"Post {self.id} is missing one of "
-                    f"{required_keys[resource]} needed to get {resource}.")
-        return False
 
 
     def set_paths(self, **user_paths):
@@ -104,68 +65,78 @@ class Post(object):
             if self.paths.get(res) is not None:
                 continue
 
+            ext = None
+
             # Set a default value, i.e. <id>/<resource>.<ext>
             if res in RESOURCES_JSON:
                 ext = "json"
-            elif res == "media" and \
-                 self.extra or (not self.extra and self.get_extra()):
+
+            elif res == "media":
+                if not self.extra:
+                    self.get_extra()
                 ext = self.extra["dl_ext"]
+
             else:
                 log.warning(f"Can't determine media ext for post {self.id}.")
-                ext = None
 
             self.paths[res] = (f"{self.client.site_name}-{self.id}"
                                f"{os.sep}{res}.{ext}")
         return self
 
 
-    def get_all(self, overwrite=True, excludes=()):
+    def get_all(self, overwrite=False, excludes=()):
         for res in RESOURCES - set(("info",)):
-            if (overwrite or not getattr(self, res)) and res not in excludes:
+            if (not getattr(self, res) or overwrite) and res not in excludes:
                 getattr(self, f"get_{res}")()
+
+        utils.blank_line()
         return self
 
 
     def get_extra(self):
-        def manual_get_size(self, media_url):
-            print("CALLED")
-            return int(net.http("head", media_url, self.client.client).headers[
-                "content-length"])
-
-        if not self._validate_info("extra"):
-            return False
-
+        # pylint: disable=unused-variable
         self._log_retrieving("extra info", "Generating")
 
-        url = self.info.get("file_url")
-        ext = url.split(".")[-1]
+        w_h         = (self.info["image_width"], self.info["image_height"])
+        ratio_int   = whratio.ratio_int(*w_h)
+        ratio_float = whratio.ratio_float(*w_h)
+        fetch_date  = arrow.now()
 
-        if ext != "zip":
+        is_broken = False
+
+        if "file_ext" not in self.info:
+            log.warning(f"Can't get extra media info for post {self.id}.")
+            is_broken = True
+
+        elif self.info["file_ext"] != "zip":
             is_ugoira = False
-            size = self.info.get("file_size") or manual_get_size(self, url)
+            dl_url    = self.info["file_url"]
+            dl_ext    = self.info["file_ext"]
+            dl_size   = self.info["file_size"]
+
         else:
             is_ugoira = True
-            url       = self.info["large_file_url"]  # Video URL
-            ext       = url.split(".")[-1]
-            size      = manual_get_size(self, url)
+            dl_url    = self.info["large_file_url"]  # webm URL
+            dl_ext    = dl_url.split(".")[-1]
+            dl_size   = int(net
+                            .http("head", dl_url, self.client.client)
+                            .headers["content-length"])
 
-        self.extra = {
-            "dl_url":      url,
-            "dl_ext":      ext,
-            "dl_size":     size,
-            "is_ugoira":   is_ugoira,
-            "ratio_int":   whratio.ratio_int(self.info["image_width"],
-                                             self.info["image_height"]),
-            "ratio_float": whratio.ratio_float(self.info["image_width"],
-                                               self.info["image_height"]),
-            "fetch_date":  arrow.now().format("YYYY-MM-DDTHH:mm:ss.SSSZZ")
-        }
+        self.extra, defineds = {}, locals()
 
-        return True
+        for key in ("ratio_int", "ratio_float", "fetch_date",
+                    "is_broken", "is_ugoira", "dl_url", "dl_ext", "dl_size"):
+            self.extra[key] = defineds.get(key, None)
+
+        return self
 
 
     def get_media(self, chunk_size=config.CHUNK_SIZE):
-        if not self._has_extra("verify media"):
+        if not self.extra:
+            self.get_extra()
+
+        if self.extra["is_broken"]:
+            log.warning(f"Can't get media for broken post {self.id}.")
             return False
 
         self._log_retrieving("media generator (%s, %s)" % (
@@ -174,14 +145,10 @@ class Post(object):
 
         self.media = net.http("get", self.extra["dl_url"], self.client.client,
                               stream=True).iter_content(chunk_size)
-
         return True
 
 
     def get_artcom(self):
-        if not self._validate_info("artcom"):
-            return False
-
         # Post should have an artcom if it has commentary(_request) tag.
         meta_tags   = f" {self.info['tag_string_meta']} "
         has_com_tag = " commentary "         in meta_tags or \
@@ -194,6 +161,7 @@ class Post(object):
 
         if created_in_last_24h and not has_com_tag:
             self._log_retrieving("potential artist commentary")
+
         elif has_com_tag:
             self._log_retrieving("artist commentary")
 
@@ -202,99 +170,80 @@ class Post(object):
                                         post_id=self.info["id"])
 
         self._empty_result_to_none("artcom", self.artcom)
-
-        return True
+        return True if self.artcom else False
 
 
     def get_notes(self):
-        if not self._validate_info("notes"):
-            return False
-
         # If last_noted_at doesn't exist or is null, the post has no notes.
         if self.info.get("last_noted_at"):
             self._log_retrieving("notes")
             self.notes = net.booru_api(self.client.note_list, post_id=self.id)
 
         self._empty_result_to_none("notes", self.notes)
-
-        return True
+        return True if self.notes else False
 
 
     def write(self, overwrite=False):
         for res in RESOURCES:
-            # Skip if this resource hasn't been fetched;
-            # or the user specified False as path.
+            # Not fetched or user specified False as path:
             if not getattr(self, res) or self.paths[res] is False:
                 continue
 
-            function = utils.write
-            content  = getattr(self, res)
-            out_path = self.paths.get(res, self.paths[res])
-            mode     = "w"
-
-            if res == "media":
-                log_action = "Downloading"  # Since it's a lazy generator
-                function   = utils.write_chunk
-                mode       = "wb"
-
             if res in RESOURCES_JSON:
-                log_action = "Writing"  # Got the actual data, not a generator.
-                content    = utils.jsonify(getattr(self, res)) \
+                action  = "Writing"  # Got the actual data, not a generator.
+                content = utils.jsonify(getattr(self, res))
+                mode    = "w"
+                chunk   = False
 
-            self._log_writing(res, out_path, doing=log_action)
-            os.makedirs(os.path.dirname(out_path), exist_ok=True)
-            function(content, out_path, mode, overwrite)
+            elif res == "media":
+                action  = "Downloading"  # Since it's a lazy generator
+                content = getattr(self, res)
+                mode    = "wb"
+                chunk   = True
 
-            if res == "media":
+            path  = self.paths[res]
+            msg   = f"{action} {res} to '{path}' for post {self.id}..."
+            wrote = utils.write(content, path, mode, msg, chunk, overwrite)
+
+            if res == "media" and wrote:
                 self.verify_media()
                 # Get a new media generator, since the current one was emptied.
                 self.get_media()
+
+        utils.blank_line()
         return self
+
 
     def load(self, overwrite=True):
         raise NotImplementedError("Need to write post from disk/id/etc loader")
 
-        # for res in RESOURCES:
-            # can_write = overwrite or not getattr(self, res)
-
-            # if can_write and self.paths[res] is not False:
-                # in_path = self.paths[res]
-                # mode    = "rb" if res in RESOURCES_MEDIA else "r"
-
-                # self._log_loading(res, in_path)
-                # USE load_json() when needed!
-                # setattr(self, res, utils.load_file(in_path, mode))
-
 
     def verify_media(self):
-        if not self._has_extra("verify media"):
+        def log_verifying():
+            log.info(f"{use} media verification for post {self.id}...")
+
+        def log_failed():
+            log.warning(f"{use} verification for post {self.id} failed!"
+                        f"Expected {expected}, got {actual}.")
+
+        if not os.path.exists(self.paths["media"]):
+            log.warning(f"File {self.paths['media']} doesn't exist, "
+                        f"can't verify media.")
             return False
 
-        if "md5" in self.info and not self.extra["is_ugoira"]:
-            return self.verify_media_by_md5()
+        if not self.extra["is_ugoira"]:
+            use      = "MD5"
+            log_verifying()
+            expected = self.info["md5"]
+            actual   = utils.get_file_md5(self.paths["media"])
+        else:
+            use      = "File size"
+            log_verifying()
+            expected = self.extra["dl_size"]
+            actual   = os.path.getsize(self.paths["media"])
 
-        return self.verify_media_by_filesize()
+        if expected == actual:
+            return True
 
-
-    def verify_media_by_md5(self):
-        self._log_verify_media("MD5")
-        expected = self.info.get("md5")
-        actual   = utils.get_file_md5(self.paths["media"])
-
-        if expected != actual:
-            self._log_verify_media_fail("MD5", expected, actual)
-            return False
-
-        return True
-
-
-    def verify_media_by_filesize(self):
-        self._log_verify_media("file size")
-        expected = self.extra["dl_size"]
-        actual   = os.path.getsize(self.paths["media"])
-
-        if expected != actual:
-            self._log_verify_media_fail("File size", expected, actual)
-            return False
-
-        return True
+        log_failed()
+        return False

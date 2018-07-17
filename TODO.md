@@ -1,13 +1,15 @@
 # kana2 TODO list
 
 - Store ideas:
-    - Cleaner implementation of Post functions
-    - x = Store(...); x[all].function → operates on all posts?
-    - Store filtering: x.filter(tags or other stuff), or with operators?
-    - Manage both local .writen() and remote booru posts?
+  - Cleaner implementation of Post functions
+  - x = Store(...); x[all].function → operates on all posts?
+  - Store filtering: x.filter(tags or other stuff), or with operators?
+  - Manage both local .writen() and remote booru posts?
+    - Make sure tuples (lists in json) are parsed back as tuples     
 
 - Prettier logging
 - Log info functions
+- Retry download on verify failure
 
 - Refactor net and errors modules
     - See about HTTPAdaptor and urllib Timer
