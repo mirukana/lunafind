@@ -2,21 +2,26 @@
 
 - Store ideas:
   - Cleaner implementation of Post functions
-  - x = Store(...); x[all].function → operates on all posts?
   - Store filtering: x.filter(tags or other stuff), or with operators?
+    - Blacklist
+    - Tag and JSON conditions
+    - Sort by specific key, ascending or descending
+    - Max number of posts
+  - Optionally use generators to avoid storing in RAM
   - Manage both local .writen() and remote booru posts?
     - Make sure tuples (lists in json) are parsed back as tuples     
 
 - Prettier logging
-- Log info functions
-- Retry download on verify failure
+- Is attr lib for Post really useful?
 
 - Refactor net and errors modules
     - See about HTTPAdaptor and urllib Timer
-- Is attr lib for Post really useful?
+- Retry download on verify failure
 
 - Multiple pages search
   - Estimate posts total for a search
+
+- ujson, simplejson
 - Enforce static variable types
   - Maybe with [mypy](https://github.com/python/mypy)?
 - See about CPython and Pipy
@@ -24,15 +29,7 @@
 - Multiprocessing
   - requests-threads, requests-futures, grequests, zproc, async/await?
 
-- filter.py
-    - Duplicates
-    - Blacklist
-    - Tag conditions
-    - "JSON" conditions
-    - Sort by specific key, ascending or descending
-    - Max number of posts
-
-- Thumbnail script
+- Thumbnails?
 
 - Do something about parent/child posts
 
@@ -42,6 +39,7 @@
 
 - CLI script
     - [termcolor](https://pypi.python.org/pypi/termcolor), used in **halo**
+      - Or maybe blessings?
     - zplug-like UI for multiprocess downloading?
     - Use [doctopt](https://docopt.readthedocs.io/en/latest/)
     - Config system
