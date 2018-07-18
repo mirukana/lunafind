@@ -4,16 +4,14 @@ import json
 import os
 import sys
 
-import arrow
-
 from . import config, net
 
 
 def jsonify(obj, indent=False):
     # Serialize Arrow date object:
-    for key in obj:
-        if isinstance(obj[key], arrow.Arrow):
-            obj[key] = obj[key].format("YYYY-MM-DDTHH:mm:ss.SSSZZ")
+    if "fetch_date" in obj:
+        obj["fetch_date"] = (obj["fetch_date"]
+                             .format("YYYY-MM-DDTHH:mm:ss.SSSZZ"))
 
     if not indent:
         return json.dumps(obj, sort_keys=True, ensure_ascii=False)

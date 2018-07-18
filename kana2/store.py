@@ -27,9 +27,9 @@ class Store(dict):
                 continue
 
             query_found = 0
-            for post_info in info.from_auto(value):
-                query_found += 1
-                self[post_info["id"]] = Post(post_info, blank_line=False)
+            for post in info.from_auto(value):
+                query_found     += 1
+                self[post["id"]] = Post(info=post, _blank_line=False)
 
             posts_found += query_found
             if query_found > 0:
@@ -107,8 +107,8 @@ class Store(dict):
         if len(self.keys()) != len(other_store.keys()):
             return False
 
-        for key, post_ in self.items():
-            if post_ != other_store.get(key):
+        for key, post in self.items():
+            if post != other_store.get(key):
                 return False
 
         return True

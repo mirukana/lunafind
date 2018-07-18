@@ -2,54 +2,58 @@
 
 import logging as log
 import os
-import pprint
 
 import arrow
-import attr
 import whratio
 from orderedset import OrderedSet
 
-from . import config, info, io, net, utils
+from . import config, io, net, utils
+from . import info as get_info
 
 RESOURCES      = OrderedSet(("info", "extra", "artcom", "notes", "media"))
 RESOURCES_JSON = RESOURCES - set(("media",))
 
 
-@attr.s
 class Post(object):
-    info  = attr.ib(repr=False)
-    extra = media = artcom = notes = attr.ib(default=None,
-                                             repr=False, cmp=False)
-    client = attr.ib(default=config.CLIENT, repr=False, cmp=False)
+    def __init__(self, query=None,
+                 info=None, extra=None, artcom=None, notes=None, media=None,
+                 client = config.CLIENT, _blank_line=True):
+        self.info   = info
+        self.extra  = extra
+        self.artcom = artcom
+        self.notes  = notes
+        self.media  = media
+        self.client = client
 
-    _blank_line = attr.ib(default=True, repr=False, cmp=False)
-
-    # User won't be able to use self keys before the object is initialized,
-    # so set_paths() is the only way to change paths.
-    paths = attr.ib(init=False, factory=dict, repr=False, cmp=False)
-    id    = attr.ib(init=False)
-
-
-    def __attrs_post_init__(self):
-        got_post_info = isinstance(self.info, dict) and "id" in self.info
-        is_query      = isinstance(self.info, (str, int, list, tuple, dict))
-
-        if not got_post_info:
-            if is_query:
-                self.info = next(info.from_auto(self.info))
-            else:
-                raise TypeError("Invalid info or query for Post.")
+        if query:
+            self.info = next(get_info.from_auto(query))
+        elif not self.info:
+            raise TypeError("No query or info parameter was passed.")
 
         self.id = self.info["id"]
+
+        # User can't pass self keys as init args, use set_paths().
+        self.paths = None
         self.set_paths()
 
-        if self._blank_line:
+        if _blank_line:
             utils.blank_line()
 
+    # Magic methods:
+
+    def __repr__(self):
+        return f"Post(id={self.id})"
 
     def __str__(self):
-        return pprint.pformat(self.__dict__["id"])
+        return str(self.__dict__)
 
+    def __eq__(self, other_post):
+        for res in ("id", *RESOURCES):
+            if getattr(self, res) != getattr(other_post, res):
+                return False
+        return True
+
+    # Resource retrieval:
 
     def _log_retrieving(self, resource, doing="Retrieving"):
         log.info(f"{doing} {resource} for post {self.id}...")
@@ -59,34 +63,6 @@ class Post(object):
         if not result_list or result_list == []:
             log.info(f"No {resource} found for post {self.id}.")
             setattr(self, resource, None)
-
-
-    def set_paths(self, **user_paths):
-        for res in RESOURCES:
-            if res in user_paths:
-                self.paths[res] = utils.expand_path(user_paths[res])
-
-            # Was set by the above if, or already set by a previous set_paths()
-            if self.paths.get(res) is not None:
-                continue
-
-            ext = None
-
-            # Set a default value, i.e. <id>/<resource>.<ext>
-            if res in RESOURCES_JSON:
-                ext = "json"
-
-            elif res == "media":
-                if not self.extra:
-                    self.get_extra()
-                ext = self.extra["dl_ext"]
-
-            else:
-                log.warning(f"Can't determine media ext for post {self.id}.")
-
-            self.paths[res] = (f"{self.client.site_name}-{self.id}"
-                               f"{os.sep}{res}.{ext}")
-        return self
 
 
     def get_all(self, overwrite=False, excludes=()):
@@ -136,23 +112,6 @@ class Post(object):
         return self
 
 
-    def get_media(self, chunk_size=config.CHUNK_SIZE):
-        if not self.extra:
-            self.get_extra()
-
-        if self.extra["is_broken"]:
-            log.warning(f"Can't get media for broken post {self.id}.")
-            return False
-
-        self._log_retrieving("media generator (%s, %s)" % (
-            self.extra["dl_ext"],
-            utils.bytes2human(self.extra["dl_size"])))
-
-        self.media = net.http("get", self.extra["dl_url"], self.client.client,
-                              stream=True).iter_content(chunk_size)
-        return True
-
-
     def get_artcom(self):
         # Post should have an artcom if it has commentary(_request) tag.
         meta_tags   = f" {self.info['tag_string_meta']} "
@@ -188,6 +147,53 @@ class Post(object):
         return True if self.notes else False
 
 
+    def get_media(self, chunk_size=config.CHUNK_SIZE):
+        if not self.extra:
+            self.get_extra()
+
+        if self.extra["is_broken"]:
+            log.warning(f"Can't get media for broken post {self.id}.")
+            return False
+
+        self._log_retrieving("media generator (%s, %s)" % (
+            self.extra["dl_ext"],
+            utils.bytes2human(self.extra["dl_size"])))
+
+        self.media = net.http("get", self.extra["dl_url"], self.client.client,
+                              stream=True).iter_content(chunk_size)
+        return True
+
+    # I/O:
+
+    def set_paths(self, **user_paths):
+        self.paths = {}
+
+        for res in RESOURCES:
+            if res in user_paths:  # Passed in kwargs
+                self.paths[res] = utils.expand_path(user_paths[res])
+
+            # Was set by the above if, or already set by a previous set_paths()
+            if self.paths.get(res) is not None:
+                continue
+
+            ext = None
+            # Set a default value, i.e. <id>/<resource>.<ext>
+            if res in RESOURCES_JSON:
+                ext = "json"
+
+            elif res == "media":
+                if not self.extra:
+                    self.get_extra()
+                ext = self.extra["dl_ext"]
+
+            else:
+                log.warning(f"Can't determine media ext for post {self.id}.")
+
+            self.paths[res] = (f"{self.client.site_name}-{self.id}"
+                               f"{os.sep}{res}.{ext}")
+        return self
+
+
     def write(self, overwrite=False):
         for res in RESOURCES:
             # Not fetched or user specified False as path:
@@ -201,7 +207,7 @@ class Post(object):
                 chunk   = False
 
             elif res == "media":
-                action  = "Downloading"  # Since it's a lazy generator
+                action  = "Downloading"  # Since it's a lazy generator.
                 content = getattr(self, res)
                 mode    = "wb"
                 chunk   = True
@@ -217,10 +223,6 @@ class Post(object):
 
         utils.blank_line()
         return self
-
-
-    def load(self, overwrite=True):
-        raise NotImplementedError("Need to write post from disk/id/etc loader")
 
 
     def verify_media(self):
