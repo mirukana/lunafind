@@ -25,6 +25,8 @@ class Post(object):
         self.media  = media
         self.client = client
 
+        self._blank_line = _blank_line
+
         if query:
             self.info = next(get_info.from_auto(query))
         elif not self.info:
@@ -36,7 +38,7 @@ class Post(object):
         self.paths = None
         self.set_paths()
 
-        if _blank_line:
+        if self._blank_line:
             utils.blank_line()
 
     # Magic methods:
@@ -52,6 +54,10 @@ class Post(object):
             if getattr(self, res) != getattr(other_post, res):
                 return False
         return True
+
+    def __copy__(self):
+        return Post(None, self.info, self.extra, self.artcom, self.notes,
+                    self.media, self.client, self._blank_line)
 
     # Resource retrieval:
 

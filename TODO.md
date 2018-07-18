@@ -12,7 +12,6 @@
     - Make sure tuples (lists in json) are parsed back as tuples     
 
 - Prettier logging
-- Is attr lib for Post really useful?
 
 - Refactor net and errors modules
     - See about HTTPAdaptor and urllib Timer

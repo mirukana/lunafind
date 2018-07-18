@@ -125,6 +125,8 @@ class Store(dict):
         return self
 
 
+Store.__copy__ = Store.copy
+
 # Hack to make functions that operate on all posts,
 # e.g. Store.get_all() calls Post.get_all on all Post objects.
 for function in POST_USABLE_FUNCTIONS:

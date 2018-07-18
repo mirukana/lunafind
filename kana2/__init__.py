@@ -13,7 +13,7 @@ from . import config, errors, info, io, net, post, store, utils
 
 __author__  = "kana"
 __license__ = "Private"
-__version__ = "0.3.5"
+__version__ = "0.3.6"
 __email__   = "ym96@protonmail.ch"
 __status__  = "Development"
 
