@@ -6,8 +6,7 @@ from . import Post, info, utils
 
 POST_USABLE_FUNCTIONS = [
     "get_all", "get_extra", "get_media", "get_artcom", "get_notes",
-    "set_paths", "write", "load",
-    "verify_media", "verify_media_by_md5", "verify_media_by_filesize"
+    "set_paths", "write", "verify_media"
 ]
 
 
@@ -56,7 +55,7 @@ class Store(dict):
         for value in to_merge:
             store = value if isinstance(value, Store) else Store(value)
             self.update(store)
-            return self
+        return self
 
     # Store items removals:
 
