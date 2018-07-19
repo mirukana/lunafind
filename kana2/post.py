@@ -163,10 +163,15 @@ class Post(object):
 
         self._log_retrieving("media generator (%s, %s)" % (
             self.extra["dl_ext"],
-            utils.bytes2human(self.extra["dl_size"])))
+            utils.bytes2human(self.extra["dl_size"]) \
+            if self.extra["dl_size"] else "Unknown size"))
 
-        self.media = net.http("get", self.extra["dl_url"], self.client.client,
-                              stream=True).iter_content(chunk_size)
+        response = net.http("get", self.extra["dl_url"], self.client.session,
+                            stream=True)
+        if not response:
+            return False
+
+        self.media = response.iter_content(chunk_size)
         return True
 
     # I/O:
@@ -249,11 +254,14 @@ class Post(object):
             log_verifying()
             expected = self.info["md5"]
             actual   = io.get_file_md5(self.paths["media"])
-        else:
+        elif self.extra["dl_size"]:
             use      = "File size"
             log_verifying()
             expected = self.extra["dl_size"]
             actual   = os.path.getsize(self.paths["media"])
+        else:
+            log.warning(f"No MD5 or dl_size to verify post {self.id} media.")
+            return False
 
         if expected == actual:
             return True

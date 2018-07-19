@@ -94,4 +94,7 @@ def count_posts(tags=None, client=config.CLIENT):
         >>> utils.count_posts("hakurei_reimu maribel_hearn usami_renko")
         0
     """
-    return net.booru_api(client.count_posts, tags)["counts"]["posts"]
+    response = net.booru_api(client.count_posts, tags)
+    if response != []:
+        return response["counts"]["posts"]
+    return None

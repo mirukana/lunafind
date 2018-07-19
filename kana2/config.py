@@ -1,6 +1,6 @@
 """kana2 global variables"""
 
-import pybooru
+from . import net
 
-CLIENT     = pybooru.Danbooru("safebooru")
+CLIENT     = net.get_booru_client("safebooru")
 CHUNK_SIZE = 8 * 1024 ** 2  # 8 MiB

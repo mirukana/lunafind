@@ -57,18 +57,21 @@ def from_auto(query):
         yield from from_search(**query)
         return
 
-    if not isinstance(query, (str, int)):
+    if isinstance(query, int):
+        yield from from_id(query)
+        return
+
+    if not isinstance(query, str):
         log.error("Unknown query type. Expected str, int, tuple or dict.")
+        yield from []
         return
 
     regexes = {
         r"^[a-fA-F\d]{32}$":                               from_md5,
-        r"^\d+$":                                          from_id,
         r"^%s/posts/(\d+)\?*.*$" % config.CLIENT.site_url: from_post_url,
-        r"^%s" % config.CLIENT.site_url:                   from_search_url
+        r"^%s"                   % config.CLIENT.site_url: from_search_url
     }
 
-    query = str(query)
     for regex, function in regexes.items():
         if re.match(regex, query):
             yield from function(query)
