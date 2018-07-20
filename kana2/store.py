@@ -4,12 +4,6 @@ import logging as log
 
 from . import Post, client, utils
 
-POST_USABLE_FUNCTIONS = [
-    "get_all", "get_extra", "get_media", "get_artcom", "get_notes",
-    "set_paths", "write", "verify_media"
-]
-
-
 class Store(dict):
     def __init__(self, *values, store_dict=None, _client=client.DEFAULT):
         self._client = _client
@@ -132,10 +126,15 @@ class Store(dict):
 
 Store.__copy__ = Store.copy
 
-# Hack to make functions that operate on all posts,
-# e.g. Store.get_all() calls Post.get_all on all Post objects.
-for function in POST_USABLE_FUNCTIONS:
-    # pylint: disable=w0122
-    exec(f"def {function}(self, *args, **kwargs):\n"
-         f"    return self.map('{function}', *args, **kwargs)\n"
-         f"Store.{function} = {function}", globals())
+def new_post_map_function(target_post_function):
+    def template(self, *args, **kwargs):
+        return self.map(target_post_function, *args, **kwargs)
+    return template
+
+_POST_USABLE_FUNCTIONS = (
+    "get_all", "get_extra", "get_media", "get_artcom", "get_notes",
+    "set_paths", "write", "verify_media"
+)
+
+for function in _POST_USABLE_FUNCTIONS:
+    setattr(Store, function, new_post_map_function(function))

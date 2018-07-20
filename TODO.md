@@ -2,13 +2,14 @@
 
 - Prettier logging
 
+- Save errors in Post
+
 - Multiple pages search
-  - Estimate posts total for a search
+- Estimate posts total for a search
 
 - Store ideas:
-  - Cleaner implementation of Post functions
-  - Store filtering: x.filter(tags or other stuff), or with operators?
-    - Blacklist
+- Store filtering: x.filter(tags or other stuff), or with operators?
+- Blacklist
     - Tag and JSON conditions
     - Sort by specific key, ascending or descending
     - Max number of posts
