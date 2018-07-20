@@ -121,8 +121,12 @@ class Store(dict):
         return Store(store_dict={k: p for k, p in self.items()})
 
     def map(self, method, *args, **kwargs):
-        for store_post in self.values():
-            getattr(store_post, method)(*args, **kwargs)
+        in_store = len(self.keys())
+
+        for i, post in enumerate(self.values()):
+            log.info(f"Applying {method}() on post {i + 1}/{in_store}: "
+                     f"{post.id}")
+            getattr(post, method)(*args, **kwargs)
         return self
 
 

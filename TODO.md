@@ -34,7 +34,7 @@
 - CLI script
     - [termcolor](https://pypi.python.org/pypi/termcolor), used in **halo**
       - Or maybe blessings?
-    - zplug-like UI for multiprocess downloading?
+    - zplug/emerge-like UI for multiprocess downloading?
     - Use [doctopt](https://docopt.readthedocs.io/en/latest/)
     - Config system
     - Auto filter
