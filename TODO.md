@@ -1,7 +1,11 @@
 # kana2 TODO list
 
 - Write Post as one json file
-- utils.blank_line() without having to have \_blank\_line function params?
+- Do something about media generator
+  - Lazy parameter to use generators for all get... functions
+- Manage both local .writen() and remote booru posts
+- Make sure tuples (lists in json) are parsed back as tuples     
+- utils.blank\_line() without having to have \_blank\_line function params?
 
 - Prettier logging
 
@@ -18,9 +22,6 @@
     - Tag and JSON conditions
     - Sort by specific key, ascending or descending
     - Max number of posts
-  - Lazy parameter to use generators for all get... functions
-  - Manage both local .writen() and remote booru posts
-    - Make sure tuples (lists in json) are parsed back as tuples     
 
 - Multiprocessing
   - requests-threads, requests-futures, grequests, zproc, async/await?
