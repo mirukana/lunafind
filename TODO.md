@@ -1,7 +1,5 @@
 # kana2 TODO list
 
-- Client class
-
 - Prettier logging
 
 - ujson, simplejson

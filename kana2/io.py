@@ -5,8 +5,6 @@ import json
 import logging as log
 import os
 
-from . import config
-
 
 def _must_exist(path, must_exist, msg=None, force=False):
     if not must_exist and os.path.exists(path) and not force:
@@ -38,7 +36,7 @@ def write(content, path, mode="w", msg=None, chunk=False, overwrite=False):
     return True
 
 
-def load_file(path, mode="r", msg=None, chunk_size=config.CHUNK_SIZE):
+def load_file(path, mode="r", msg=None, chunk_size=8 * 1024 ** 2):  # 8M
     if not _must_exist(path, True, msg):
         return False
 
@@ -58,21 +56,7 @@ def load_json(path, msg=None):
         return json.load(json_file)
 
 
-def get_file_md5(path, msg=None, chunk_size=config.CHUNK_SIZE):
-    """Calculate a file's MD5 hash.
-
-    Args:
-        file_path (str): Path of the file to calculate hash.
-        chunk_size (int, optional): Maximum size of a chunk to be loaded in
-            RAM. Defaults to `16 * 1024 ** 2` (16 MB).
-
-    Returns:
-        (str): The MD5 hash of the given file.
-
-    Examples:
-        >>> utils.get_file_md5("/dev/null")
-        'd41d8cd98f00b204e9800998ecf8427e'
-    """
+def get_file_md5(path, msg=None, chunk_size=8 * 1024 ** 2):  # 8M
     if not _must_exist(path, True, msg):
         return False
 

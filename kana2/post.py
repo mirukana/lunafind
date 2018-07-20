@@ -7,8 +7,7 @@ import arrow
 import whratio
 from orderedset import OrderedSet
 
-from . import config, io, net, utils
-from . import info as get_info
+from . import client, io, utils
 
 RESOURCES      = OrderedSet(("info", "extra", "artcom", "notes", "media"))
 RESOURCES_JSON = RESOURCES - set(("media",))
@@ -17,18 +16,18 @@ RESOURCES_JSON = RESOURCES - set(("media",))
 class Post(object):
     def __init__(self, query=None,
                  info=None, extra=None, artcom=None, notes=None, media=None,
-                 client = config.CLIENT, _blank_line=True):
-        self.info   = info
-        self.extra  = extra
-        self.artcom = artcom
-        self.notes  = notes
-        self.media  = media
-        self.client = client
+                 _client = client.DEFAULT, _blank_line=True):
+        self.info    = info
+        self.extra   = extra
+        self.artcom  = artcom
+        self.notes   = notes
+        self.media   = media
 
+        self._client     = _client
         self._blank_line = _blank_line
 
         if query:
-            self.info = next(get_info.from_auto(query))
+            self.info = next(self._client.info_auto(query))
         elif not self.info:
             raise TypeError("No query or info parameter was passed.")
 
@@ -57,7 +56,7 @@ class Post(object):
 
     def __copy__(self):
         return Post(None, self.info, self.extra, self.artcom, self.notes,
-                    self.media, self.client, self._blank_line)
+                    self.media, self._client, self._blank_line)
 
     # Resource retrieval:
 
@@ -105,8 +104,8 @@ class Post(object):
             is_ugoira = True
             dl_url    = self.info["large_file_url"]  # webm URL
             dl_ext    = dl_url.split(".")[-1]
-            dl_size   = int(net
-                            .http("head", dl_url, self.client.client)
+            dl_size   = int(self._client
+                            .http("head", dl_url)
                             .headers["content-length"])
 
         self.extra, defineds = {}, locals()
@@ -136,8 +135,8 @@ class Post(object):
             self._log_retrieving("artist commentary")
 
         if has_com_tag or created_in_last_24h:
-            self.artcom = net.booru_api(self.client.artist_commentary_list,
-                                        post_id=self.info["id"])
+            self.artcom = self._client.api("artist_commentary_list",
+                                           post_id=self.info["id"])
 
         self._empty_result_to_none("artcom", self.artcom)
         return True if self.artcom else False
@@ -147,13 +146,13 @@ class Post(object):
         # If last_noted_at doesn't exist or is null, the post has no notes.
         if self.info.get("last_noted_at"):
             self._log_retrieving("notes")
-            self.notes = net.booru_api(self.client.note_list, post_id=self.id)
+            self.notes = self._client.api("note_list", post_id=self.id)
 
         self._empty_result_to_none("notes", self.notes)
         return True if self.notes else False
 
 
-    def get_media(self, chunk_size=config.CHUNK_SIZE):
+    def get_media(self, chunk_size=8 * 1024 ** 2):  # 8M
         if not self.extra:
             self.get_extra()
 
@@ -166,8 +165,7 @@ class Post(object):
             utils.bytes2human(self.extra["dl_size"]) \
             if self.extra["dl_size"] else "Unknown size"))
 
-        response = net.http("get", self.extra["dl_url"], self.client.session,
-                            stream=True)
+        response = self._client.http("get", self.extra["dl_url"], stream=True)
         if not response:
             return False
 
@@ -200,7 +198,7 @@ class Post(object):
             else:
                 log.warning(f"Can't determine media ext for post {self.id}.")
 
-            self.paths[res] = (f"{self.client.site_name}-{self.id}"
+            self.paths[res] = (f"{self._client.name}-{self.id}"
                                f"{os.sep}{res}.{ext}")
         return self
 

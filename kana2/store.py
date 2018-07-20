@@ -2,7 +2,7 @@
 
 import logging as log
 
-from . import Post, info, utils
+from . import Post, client, utils
 
 POST_USABLE_FUNCTIONS = [
     "get_all", "get_extra", "get_media", "get_artcom", "get_notes",
@@ -11,7 +11,9 @@ POST_USABLE_FUNCTIONS = [
 
 
 class Store(dict):
-    def __init__(self, *values, store_dict=None):
+    def __init__(self, *values, store_dict=None, _client=client.DEFAULT):
+        self._client = _client
+
         if store_dict:
             super().__init__(store_dict)
             return
@@ -26,7 +28,7 @@ class Store(dict):
                 continue
 
             query_found = 0
-            for post in info.from_auto(value):
+            for post in self._client.info_auto(value):
                 query_found     += 1
                 self[post["id"]] = Post(info=post, _blank_line=False)
 

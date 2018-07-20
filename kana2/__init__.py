@@ -5,15 +5,13 @@ import logging as log
 import signal
 import sys
 
-# Must be before other relative imports to work.
-from .post import Post
-from .store import Store
-
-from . import config, info, io, net, post, store, utils
+from .client import Danbooru
+from .post   import Post
+from .store  import Store
 
 __author__  = "kana"
 __license__ = "Private"
-__version__ = "0.3.6"
+__version__ = "0.3.7"
 __email__   = "ym96@protonmail.ch"
 __status__  = "Development"
 
