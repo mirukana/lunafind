@@ -2,11 +2,6 @@
 
 - Prettier logging
 
-- ujson, simplejson
-- Enforce static variable types
-  - Maybe with [mypy](https://github.com/python/mypy)?
-- See about CPython and Pipy
-
 - Multiple pages search
   - Estimate posts total for a search
 
@@ -48,3 +43,6 @@
 
 - Other programs
     - Tag subs management
+    - Tag aliases and relations
+
+- See about PyPy when it will support Python 3.6

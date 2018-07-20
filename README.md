@@ -6,7 +6,7 @@
 
     sudo pip3 install \
         https://github.com/ccc032/pybooru/archive/http-codes.zip \
-        requests arrow whratio orderedset --upgrade
+        requests arrow whratio orderedset ujson --upgrade
 
 ## kanarip incompatibilities
 

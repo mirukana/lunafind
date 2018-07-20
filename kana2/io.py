@@ -1,9 +1,10 @@
 """Functions to work with files."""
 
 import hashlib
-import json
 import logging as log
 import os
+
+import ujson
 
 
 def _must_exist(path, must_exist, msg=None, force=False):
@@ -53,7 +54,7 @@ def load_json(path, msg=None):
         return False
 
     with open(path, "r") as json_file:
-        return json.load(json_file)
+        return ujson.load(json_file)
 
 
 def get_file_md5(path, msg=None, chunk_size=8 * 1024 ** 2):  # 8M

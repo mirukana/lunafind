@@ -1,8 +1,9 @@
 """Misc useful functions."""
 
-import json
 import os
 import sys
+
+import ujson
 
 
 def jsonify(obj, indent=False):
@@ -11,10 +12,12 @@ def jsonify(obj, indent=False):
         obj["fetch_date"] = (obj["fetch_date"]
                              .format("YYYY-MM-DDTHH:mm:ss.SSSZZ"))
 
-    if not indent:
-        return json.dumps(obj, sort_keys=True, ensure_ascii=False)
+    dumps_kwargs = {"sort_keys": True,     "double_precision": 2,
+                    "ensure_ascii": False, "escape_forward_slashes": False}
+    if indent:
+        dumps_kwargs["indent"] = 4
 
-    return json.dumps(obj, sort_keys=True, ensure_ascii=False, indent=4)
+    return ujson.dumps(obj, **dumps_kwargs)
 
 
 def bytes2human(size, prefix="", suffix=""):
