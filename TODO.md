@@ -1,5 +1,8 @@
 # kana2 TODO list
 
+- Write Post as one json file
+- utils.blank_line() without having to have \_blank\_line function params?
+
 - Prettier logging
 
 - Save errors in Post
@@ -8,8 +11,10 @@
 - Estimate posts total for a search
 
 - Store ideas:
-- Store filtering: x.filter(tags or other stuff), or with operators?
-- Blacklist
+  - Rename get functions to fetch.., to avoid setters/getters confusion
+  - Post.paths as property with setter
+  - Store filtering: x.filter(tags or other stuff), or with operators?
+  - Blacklist
     - Tag and JSON conditions
     - Sort by specific key, ascending or descending
     - Max number of posts

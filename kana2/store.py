@@ -2,11 +2,13 @@
 
 import logging as log
 
-from . import Post, client, utils
+from . import Post, utils
+from .client import DEFAULT as CLIENT_DEFAULT
+
 
 class Store(dict):
-    def __init__(self, *values, store_dict=None, _client=client.DEFAULT):
-        self._client = _client
+    def __init__(self, *values, store_dict=None, client=CLIENT_DEFAULT):
+        self._client = client
 
         if store_dict:
             super().__init__(store_dict)

@@ -7,7 +7,8 @@ import arrow
 import whratio
 from orderedset import OrderedSet
 
-from . import client, io, utils
+from . import io, utils
+from . import client as client_m
 
 RESOURCES      = OrderedSet(("info", "extra", "artcom", "notes", "media"))
 RESOURCES_JSON = RESOURCES - set(("media",))
@@ -16,14 +17,14 @@ RESOURCES_JSON = RESOURCES - set(("media",))
 class Post(object):
     def __init__(self, query=None,
                  info=None, extra=None, artcom=None, notes=None, media=None,
-                 _client = client.DEFAULT, _blank_line=True):
+                 client = client_m.DEFAULT, _blank_line=True):
         self.info    = info
         self.extra   = extra
         self.artcom  = artcom
         self.notes   = notes
         self.media   = media
 
-        self._client     = _client
+        self._client     = client
         self._blank_line = _blank_line
 
         if query:
@@ -201,6 +202,20 @@ class Post(object):
             self.paths[res] = (f"{self._client.name}-{self.id}"
                                f"{os.sep}{res}.{ext}")
         return self
+
+
+    def json_dict(self):
+        """Return a JSON-serializable dict of self."""
+        data = self.__dict__.copy()
+
+        for path in utils.dict_find(data, types=(client_m.Danbooru,)):
+            utils.dict_path_set(data, path[:-1], path[-1].json_dict())
+
+        for path in utils.dict_find(data, types=(arrow.Arrow,)):
+            utils.dict_path_set(
+                data, path[:-1], path[-1].format("YYYY-MM-DDTHH:mm:ss.SSSZZ"))
+
+        return data
 
 
     def write(self, overwrite=False):

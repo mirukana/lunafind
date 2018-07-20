@@ -158,6 +158,9 @@ class Danbooru(object):
             return response["counts"]["posts"]
         return None
 
+    def json_dict(self):
+        return {"name": self.name, "url": self.url}
+
 
 def _format_url_params(param_dict):
     new = {}
