@@ -42,6 +42,14 @@ class Danbooru(object):
         for scheme in ("http://", "https://"):
             self.client.session.mount(scheme, HTTPAdapter(max_retries=RETRY))
 
+    # Display:
+
+    def __repr__(self):
+        return f"Danbooru(name='{self.name}', url='{self.url}')"
+
+    def __str__(self):
+        return str(self.__dict__)
+
     # Network requests:
 
     def api(self, client_function, *args, **kwargs):

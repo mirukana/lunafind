@@ -1,7 +1,5 @@
 # kana2 TODO list
 
-- client.Danbooru __repr__
-
 - Write Post as one json file
 - Do something about media generator
   - Lazy parameter to use generators for all get... functions
