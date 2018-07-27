@@ -1,6 +1,5 @@
 """Danbooru CLI tools"""
 
-import importlib
 import logging as log
 import signal
 import sys

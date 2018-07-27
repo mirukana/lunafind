@@ -1,5 +1,7 @@
 # kana2 TODO list
 
+- Make dict_find return a ([path keys], value) tuple
+
 - Write Post as one json file
 - Do something about media generator
   - Lazy parameter to use generators for all get... functions

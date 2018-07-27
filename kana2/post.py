@@ -10,6 +10,8 @@ from orderedset import OrderedSet
 from . import io, utils
 from . import client as client_m
 
+# When looping on RESOURCES, logging calls would end up in any random order
+# with normal sets since they are unordoned.
 RESOURCES      = OrderedSet(("info", "extra", "artcom", "notes", "media"))
 RESOURCES_JSON = RESOURCES - set(("media",))
 
@@ -18,16 +20,20 @@ class Post(object):
     def __init__(self, query=None,
                  info=None, extra=None, artcom=None, notes=None, media=None,
                  client = client_m.DEFAULT, _blank_line=True):
-        self.info    = info
-        self.extra   = extra
-        self.artcom  = artcom
-        self.notes   = notes
-        self.media   = media
+        self.info   = info
+        self.extra  = extra
+        self.artcom = artcom
+        self.notes  = notes
+        self.media  = media
 
         self._client     = client
         self._blank_line = _blank_line
 
         if query:
+            # Get only the first result returned by the generator,
+            # since Post object = one post.
+            # Making a Post object directly only makes sense for a single ID.
+            # Store should be used for MD5 because of MD5 collisions.
             self.info = next(self._client.info_auto(query))
         elif not self.info:
             raise TypeError("No query or info parameter was passed.")
@@ -43,13 +49,13 @@ class Post(object):
 
     # Magic methods:
 
-    def __repr__(self):
+    def __repr__(self):  # e.g. when showing the object in interpreter
         return f"Post(id={self.id})"
 
-    def __str__(self):
+    def __str__(self):  # str(object) return
         return str(self.__dict__)
 
-    def __eq__(self, other_post):
+    def __eq__(self, other_post):  # Equality check
         for res in ("id", *RESOURCES):
             if getattr(self, res) != getattr(other_post, res):
                 return False
@@ -66,13 +72,14 @@ class Post(object):
 
 
     def _empty_result_to_none(self, resource, result_list):
-        if not result_list or result_list == []:
+        if not result_list:  # Remember [] evalutes to False too.
             log.info(f"No {resource} found for post {self.id}.")
             setattr(self, resource, None)
 
 
     def get_all(self, overwrite=False, excludes=()):
         for res in RESOURCES - set(("info",)):
+            # If resource is None, or it isn't and we can overwrite.
             if (not getattr(self, res) or overwrite) and res not in excludes:
                 getattr(self, f"get_{res}")()
 
@@ -120,6 +127,8 @@ class Post(object):
 
     def get_artcom(self):
         # Post should have an artcom if it has commentary(_request) tag.
+        # Put things between spaces so that the matching works even if
+        # a tag was the first or last in the string.
         meta_tags   = f" {self.info['tag_string_meta']} "
         has_com_tag = " commentary "         in meta_tags or \
                       " commentary_request " in meta_tags
@@ -131,7 +140,6 @@ class Post(object):
 
         if created_in_last_24h and not has_com_tag:
             self._log_retrieving("potential artist commentary")
-
         elif has_com_tag:
             self._log_retrieving("artist commentary")
 
@@ -164,40 +172,44 @@ class Post(object):
         self._log_retrieving("media generator (%s, %s)" % (
             self.extra["dl_ext"],
             utils.bytes2human(self.extra["dl_size"]) \
-            if self.extra["dl_size"] else "Unknown size"))
+            if self.extra["dl_size"] else "unknown size"))
 
         response = self._client.http("get", self.extra["dl_url"], stream=True)
         if not response:
             return False
 
-        self.media = response.iter_content(chunk_size)
+        self.media = response.iter_content(chunk_size)  # Generator
         return True
 
-    # I/O:
+    # I/O-related:
 
     def set_paths(self, **user_paths):
         self.paths = {}
 
         for res in RESOURCES:
-            if res in user_paths:  # Passed in kwargs
+            # User passed a path for this resource in arguments:
+            if res in user_paths:
                 self.paths[res] = utils.expand_path(user_paths[res])
+                continue
 
-            # Was set by the above if, or already set by a previous set_paths()
+            # Nothing passed but the path was already set to something:
             if self.paths.get(res) is not None:
                 continue
 
+            # Else, set a default value for this resource path;
+            # i.e. <booru namme>-<id>/<resource>.<ext>
+
             ext = None
-            # Set a default value, i.e. <id>/<resource>.<ext>
             if res in RESOURCES_JSON:
                 ext = "json"
 
             elif res == "media":
                 if not self.extra:
                     self.get_extra()
-                ext = self.extra["dl_ext"]
+                ext = self.extra["dl_ext"]  # None if couldn't determine.
 
-            else:
-                log.warning(f"Can't determine media ext for post {self.id}.")
+            if ext is None:  # Unknown resource or no self.extra["dl_ext"].
+                log.warning(f"Unknown {res} extension for post {self.id}.")
 
             self.paths[res] = (f"{self._client.name}-{self.id}"
                                f"{os.sep}{res}.{ext}")
@@ -208,12 +220,14 @@ class Post(object):
         """Return a JSON-serializable dict of self."""
         data = self.__dict__.copy()
 
-        for path in utils.dict_find(data, types=(client_m.Danbooru,)):
-            utils.dict_path_set(data, path[:-1], path[-1].json_dict())
+        # Set client.Danbooru objects to the result of their .json_dict() func.
+        for path, client in utils.dict_find(data, types=(client_m.Danbooru,)):
+            utils.dict_path_set(data, path, client.json_dict())
 
-        for path in utils.dict_find(data, types=(arrow.Arrow,)):
+        # Set Arrow objects to a string representation of their date.
+        for path, arrow_obj in utils.dict_find(data, types=(arrow.Arrow,)):
             utils.dict_path_set(
-                data, path[:-1], path[-1].format("YYYY-MM-DDTHH:mm:ss.SSSZZ"))
+                data, path, arrow_obj.format("YYYY-MM-DDTHH:mm:ss.SSSZZ"))
 
         return data
 
@@ -236,6 +250,10 @@ class Post(object):
                 mode    = "wb"
                 chunk   = True
 
+            else:
+                log.warning(f"Unknown resource {res} for post {self.id}.")
+                continue
+
             path  = self.paths[res]
             msg   = f"{action} {res} to '{path}' for post {self.id}..."
             wrote = io.write(content, path, mode, msg, chunk, overwrite)
@@ -254,7 +272,7 @@ class Post(object):
             log.info(f"{use} media verification for post {self.id}...")
 
         def log_failed():
-            log.warning(f"{use} verification for post {self.id} failed!"
+            log.warning(f"{use} verification for post {self.id} failed! "
                         f"Expected {expected}, got {actual}.")
 
         if not os.path.exists(self.paths["media"]):
@@ -273,7 +291,7 @@ class Post(object):
             expected = self.extra["dl_size"]
             actual   = os.path.getsize(self.paths["media"])
         else:
-            log.warning(f"No MD5 or dl_size to verify post {self.id} media.")
+            log.warning(f"No dl_size to verify ugoira {self.id} media.")
             return False
 
         if expected == actual:

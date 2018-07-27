@@ -51,8 +51,9 @@ class Danbooru(object):
             return client_function(*args, **_format_url_params(kwargs))
 
         except PybooruHTTPError as e:
-            code = BOORU_CODES[e.args[1]]
-            log.error(f"{e.args[1]}: {code[0]} - {code[1]} - URL: {e.args[2]}")
+            code = e.args[1]
+            short_desc, long_desc = BOORU_CODES[code]
+            log.error(f"{code}: {short_desc} - {long_desc} - URL: {e.args[2]}")
 
         except (PybooruError, RequestException) as e:
             log.error(str(e))
@@ -60,18 +61,20 @@ class Danbooru(object):
         return []
 
 
-    def http(self, method, url, **request_method_kwargs):
+    def http(self, http_method, url, **request_method_kwargs):
         try:
-            req = self.client.session.request(
-                method, url, timeout=6.5, **request_method_kwargs)
+            result = self.client.session.request(
+                http_method, url, timeout=6.5, **request_method_kwargs)
         except RequestException as e:
             log.error(str(e))
 
-        if req.status_code in BOORU_CODE_GROUPS["OK"]:
-            return req
+        code = result.status_code
+        short_desc, long_desc = BOORU_CODES[code]
 
-        code = BOORU_CODES[req.status_code]
-        log.error(f"{req.codeus_code}: {code[0]}, {code[1]} - URL: {req.url}")
+        if code in BOORU_CODE_GROUPS["OK"]:
+            return result
+
+        log.error(f"{code}: {short_desc}, {long_desc} - URL: {result.url}")
         return []
 
     # Get post info:
@@ -105,10 +108,14 @@ class Danbooru(object):
 
 
     def info_search_url(self, url):
-        params          = parse_qs(urlparse(url).query)
+        params = parse_qs(urlparse(url).query)
+        # No limit specified in url = 20 results, not 200;
+        # we want to get exactly what the user sees on his browser.
+        # limit parameter is extracted as a string in a list, don't know why.
         params["limit"] = int(params.get("limit")[0]) or 20
+
         yield from self.search(
-            params.get("tags"), params.get("page", 1), params.get("limit", 20),
+            params.get("tags"), params.get("page", 1), params["limit"],
             params.get("random", False), params.get("raw", False))
 
 
@@ -173,4 +180,5 @@ def _format_url_params(param_dict):
     return new
 
 
+# For use by modules when user doesn't specify his own.
 DEFAULT = Danbooru("safebooru")

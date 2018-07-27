@@ -39,15 +39,13 @@ def dict_find(dict_, keys=(), values=(), types=(), path=None):
 
     for k, v in dict_.items():
         if k in keys or v in values or isinstance(v, types):
-            yield path + [k, v]
+            yield (path + [k], v)
 
         if isinstance(v, dict):
             for found in dict_find(v, keys, values, types, path + [k]):
                 yield found
 
 
-# Remove the last value from dict_find() when passing it as key_path,
-# e.g. dict_path_set(d, next(dict_find(...)[:-1], new_val)
 # https://stackoverflow.com/a/13688108
 def dict_path_set(dict_, key_path, value):
     """Set the value for a nested list of keys for a dict, return it."""

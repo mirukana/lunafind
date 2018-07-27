@@ -11,11 +11,13 @@ class Store(dict):
         self._client = client
 
         if store_dict:
-            super().__init__(store_dict)
+            # Make a Store from the Store __dict__ received.
+            super().__init__(store_dict)  # dict(store_dict)
             return
 
         posts_found = 0
         for value in values:
+            # The value is a Post object:
             if isinstance(value, Post):
                 self[value.id] = value
                 posts_found   += 1
@@ -23,29 +25,32 @@ class Store(dict):
                 utils.blank_line()
                 continue
 
+            # Else, the value is a query to call _client.info_auto() on:
             query_found = 0
             for post in self._client.info_auto(value):
                 query_found     += 1
                 self[post["id"]] = Post(info=post, _blank_line=False)
-
             posts_found += query_found
+
             if query_found > 0:
-                log.info(f"Found {query_found} posts, total: {posts_found}.")
+                log.info(f"Found {query_found} posts from query '{value}', "
+                         f"total: {posts_found}.")
 
             utils.blank_line()  # After each set_paths() → get_extra() calls
 
-        log.info(f"Found {posts_found} total posts.")
-        utils.blank_line()
+        if posts_found > 1:
+            log.info(f"Found {posts_found} total posts.")
+            utils.blank_line()
 
-    # Store merges:
+    # Store operations:
 
-    def __add__(self, to_add):  # +
+    def __add__(self, to_add):  # + operator
         store = to_add if isinstance(to_add, Store) else Store(to_add)
         new   = self.copy()
         new.update(store)
         return new
 
-    def __iadd__(self, to_add):  # +=
+    def __iadd__(self, to_add):  # += operator
         self = self + to_add
         return self
 
@@ -113,7 +118,7 @@ class Store(dict):
     # Others:
 
     def copy(self):
-        """Override dict append to return a Store()."""
+        """Override dict.copy() to return a Store()."""
         return Store(store_dict={k: p for k, p in self.items()})
 
     def map(self, method, *args, **kwargs):
@@ -126,17 +131,20 @@ class Store(dict):
         return self
 
 
+def _set_post_map_functions():
+    def new(target_post_function):
+        def template(self, *args, **kwargs):
+            return self.map(target_post_function, *args, **kwargs)
+        return template
+
+    functions = (
+        "get_all", "get_extra", "get_media", "get_artcom", "get_notes",
+        "set_paths", "write", "verify_media"
+    )
+
+    for function in functions:
+        setattr(Store, function, new(function))
+
+
 Store.__copy__ = Store.copy
-
-def new_post_map_function(target_post_function):
-    def template(self, *args, **kwargs):
-        return self.map(target_post_function, *args, **kwargs)
-    return template
-
-_POST_USABLE_FUNCTIONS = (
-    "get_all", "get_extra", "get_media", "get_artcom", "get_notes",
-    "set_paths", "write", "verify_media"
-)
-
-for function in _POST_USABLE_FUNCTIONS:
-    setattr(Store, function, new_post_map_function(function))
+_set_post_map_functions()
