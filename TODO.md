@@ -1,10 +1,14 @@
 # kana2 TODO list
 
-- Make dict_find return a ([path keys], value) tuple
+- client.Danbooru __repr__
 
 - Write Post as one json file
 - Do something about media generator
   - Lazy parameter to use generators for all get... functions
+  - Always used requests chunked transfers
+  - Get rid of verify file size thing since chunked transfers will error on
+    incomplete data?
+  - Catch errors in io.write() for chunked transfers
 - Manage both local .writen() and remote booru posts
 - Make sure tuples (lists in json) are parsed back as tuples     
 - utils.blank\_line() without having to have \_blank\_line function params?

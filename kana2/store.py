@@ -8,7 +8,7 @@ from .client import DEFAULT as CLIENT_DEFAULT
 
 class Store(dict):
     def __init__(self, *values, store_dict=None, client=CLIENT_DEFAULT):
-        self._client = client
+        self.client = client
 
         if store_dict:
             # Make a Store from the Store __dict__ received.
@@ -25,9 +25,9 @@ class Store(dict):
                 utils.blank_line()
                 continue
 
-            # Else, the value is a query to call _client.info_auto() on:
+            # Else, the value is a query to call client.info_auto() on:
             query_found = 0
-            for post in self._client.info_auto(value):
+            for post in self.client.info_auto(value):
                 query_found     += 1
                 self[post["id"]] = Post(info=post, _blank_line=False)
             posts_found += query_found

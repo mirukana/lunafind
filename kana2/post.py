@@ -26,7 +26,7 @@ class Post(object):
         self.notes  = notes
         self.media  = media
 
-        self._client     = client
+        self.client      = client
         self._blank_line = _blank_line
 
         if query:
@@ -34,7 +34,7 @@ class Post(object):
             # since Post object = one post.
             # Making a Post object directly only makes sense for a single ID.
             # Store should be used for MD5 because of MD5 collisions.
-            self.info = next(self._client.info_auto(query))
+            self.info = next(self.client.info_auto(query))
         elif not self.info:
             raise TypeError("No query or info parameter was passed.")
 
@@ -63,7 +63,7 @@ class Post(object):
 
     def __copy__(self):
         return Post(None, self.info, self.extra, self.artcom, self.notes,
-                    self.media, self._client, self._blank_line)
+                    self.media, self.client, self._blank_line)
 
     # Resource retrieval:
 
@@ -112,7 +112,7 @@ class Post(object):
             is_ugoira = True
             dl_url    = self.info["large_file_url"]  # webm URL
             dl_ext    = dl_url.split(".")[-1]
-            dl_size   = int(self._client
+            dl_size   = int(self.client
                             .http("head", dl_url)
                             .headers["content-length"])
 
@@ -144,8 +144,8 @@ class Post(object):
             self._log_retrieving("artist commentary")
 
         if has_com_tag or created_in_last_24h:
-            self.artcom = self._client.api("artist_commentary_list",
-                                           post_id=self.info["id"])
+            self.artcom = self.client.api("artist_commentary_list",
+                                          post_id=self.info["id"])
 
         self._empty_result_to_none("artcom", self.artcom)
         return True if self.artcom else False
@@ -155,7 +155,7 @@ class Post(object):
         # If last_noted_at doesn't exist or is null, the post has no notes.
         if self.info.get("last_noted_at"):
             self._log_retrieving("notes")
-            self.notes = self._client.api("note_list", post_id=self.id)
+            self.notes = self.client.api("note_list", post_id=self.id)
 
         self._empty_result_to_none("notes", self.notes)
         return True if self.notes else False
@@ -174,7 +174,7 @@ class Post(object):
             utils.bytes2human(self.extra["dl_size"]) \
             if self.extra["dl_size"] else "unknown size"))
 
-        response = self._client.http("get", self.extra["dl_url"], stream=True)
+        response = self.client.http("get", self.extra["dl_url"], stream=True)
         if not response:
             return False
 
@@ -211,7 +211,7 @@ class Post(object):
             if ext is None:  # Unknown resource or no self.extra["dl_ext"].
                 log.warning(f"Unknown {res} extension for post {self.id}.")
 
-            self.paths[res] = (f"{self._client.name}-{self.id}"
+            self.paths[res] = (f"{self.client.name}-{self.id}"
                                f"{os.sep}{res}.{ext}")
         return self
 
