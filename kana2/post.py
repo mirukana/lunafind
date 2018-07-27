@@ -186,33 +186,35 @@ class Post(object):
     def set_paths(self, **user_paths):
         self.paths = {}
 
-        for res in RESOURCES:
+        # data.json will be output of Post.json_dict().
+        for kind in ("data", *RESOURCES):
             # User passed a path for this resource in arguments:
-            if res in user_paths:
-                self.paths[res] = utils.expand_path(user_paths[res])
+            if kind in user_paths:
+                self.paths[kind] = utils.expand_path(user_paths[kind])
                 continue
 
             # Nothing passed but the path was already set to something:
-            if self.paths.get(res) is not None:
+            if self.paths.get(kind):
                 continue
 
             # Else, set a default value for this resource path;
-            # i.e. <booru namme>-<id>/<resource>.<ext>
+            # i.e. <booru name>-<id>/<resource>.<ext>
 
             ext = None
-            if res in RESOURCES_JSON:
+
+            if kind == "data" or kind in RESOURCES_JSON:
                 ext = "json"
 
-            elif res == "media":
+            elif kind == "media":
                 if not self.extra:
                     self.get_extra()
-                ext = self.extra["dl_ext"]  # None if couldn't determine.
+                ext = self.extra.get("dl_ext")
 
             if ext is None:  # Unknown resource or no self.extra["dl_ext"].
-                log.warning(f"Unknown {res} extension for post {self.id}.")
+                log.warning(f"Unknown {kind} extension for post {self.id}.")
 
-            self.paths[res] = (f"{self.client.name}-{self.id}"
-                               f"{os.sep}{res}.{ext}")
+            self.paths[kind] = (f"{self.client.name}-{self.id}"
+                                f"{os.sep}{kind}.{ext}")
         return self
 
 
@@ -229,36 +231,42 @@ class Post(object):
             utils.dict_path_set(
                 data, path, arrow_obj.format("YYYY-MM-DDTHH:mm:ss.SSSZZ"))
 
+        # Refer to self.extra["dl_url"] (can't serialize generator).
+        data["media"] = None
+
         return data
 
 
-    def write(self, overwrite=False):
-        for res in RESOURCES:
-            # Not fetched or user specified False as path:
-            if not getattr(self, res) or self.paths[res] is False:
+    def write(self, to_write=("data", "media"), overwrite=False):
+        for kind in to_write:
+            if kind in RESOURCES and not getattr(self, kind):  # Not fetched:
                 continue
 
-            if res in RESOURCES_JSON:
-                action  = "Writing"  # Got the actual data, not a generator.
-                content = utils.jsonify(getattr(self, res))
-                mode    = "w"
-                chunk   = False
+            action = "Writing"
+            mode   = "w"
+            chunk  = False
 
-            elif res == "media":
+            if kind == "data":
+                content = utils.jsonify(self.json_dict())
+
+            elif kind in RESOURCES_JSON:
+                content = utils.jsonify(getattr(self, kind))
+
+            elif kind == "media":
                 action  = "Downloading"  # Since it's a lazy generator.
-                content = getattr(self, res)
+                content = getattr(self, kind)
                 mode    = "wb"
                 chunk   = True
 
             else:
-                log.warning(f"Unknown resource {res} for post {self.id}.")
+                log.warning(f"Unknown resource {kind} for post {self.id}.")
                 continue
 
-            path  = self.paths[res]
-            msg   = f"{action} {res} to '{path}' for post {self.id}..."
+            path  = self.paths[kind]
+            msg   = f"{action} {kind} to '{path}' for post {self.id}..."
             wrote = io.write(content, path, mode, msg, chunk, overwrite)
 
-            if res == "media" and wrote:
+            if kind == "media" and wrote:
                 self.verify_media()
                 # Get a new media generator, since the current one was emptied.
                 self.get_media()
