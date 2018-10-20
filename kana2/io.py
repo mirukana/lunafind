@@ -1,73 +1,36 @@
-"""Functions to work with files."""
+# Copyright 2018 miruka
+# This file is part of kana2, licensed under LGPLv3.
 
-import hashlib
-import logging as log
+"Functions to work with files."
+
 import os
+from types import GeneratorType
 
 import simplejson
+from zenlog import log
 
 
-def _must_exist(path, must_exist, msg=None, force=False):
-    if not must_exist and os.path.exists(path) and not force:
-        log.warning(f"File '{path}' already exists, will not overwrite.")
-        return False
-
-    if must_exist and not os.path.exists(path) and not force:
-        log.error(f"File '{path}' does not exist.")
-        return False
-
-    if msg:
-        log.info(msg)
-    return True
-
-
-def write(content, path, mode="w", msg=None, chunk=False, overwrite=False):
-    if not _must_exist(path, False, msg, overwrite):
+def write(content, path, binary=False, overwrite=False):
+    if os.path.exists(path) and not overwrite:
+        log.warn("File %r already exists, will not overwrite.", path)
         return False
 
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
-    with open(path, mode) as output:
-        if not chunk:
-            output.write(content)
-            return True
+    with open(path, "wb" if binary else "w") as out_file:
+        if isinstance(content, GeneratorType):
+            for chunk in content:
+                out_file.write(chunk)
+        else:
+            out_file.write(content)
 
-        for chunk_data in content:
-            output.write(chunk_data)
     return True
 
 
-def load_file(path, mode="r", msg=None, chunk_size=8 * 1024 ** 2):  # 8M
-    if not _must_exist(path, True, msg):
-        return False
+def load_file(path, mode="r", json=False):
+    if not os.path.exists(path):
+        log.error("File %r does not exist.", path)
+        return None
 
-    with open(path, mode) as input_:
-        while True:
-            data = input_.read(chunk_size)
-            if not data:
-                break
-            yield data
-
-
-def load_json(path, msg=None):
-    if not _must_exist(path, True, msg):
-        return False
-
-    with open(path, "r") as json_file:
-        return simplejson.load(json_file)
-
-
-def get_file_md5(path, msg=None, chunk_size=8 * 1024 ** 2):  # 8M
-    if not _must_exist(path, True, msg):
-        return False
-
-    hash_md5 = hashlib.md5()
-
-    with open(path, "rb") as file_:
-        while True:
-            data = file_.read(chunk_size)
-            if not data:
-                break
-            hash_md5.update(data)
-
-    return hash_md5.hexdigest()
+    with open(path, mode) as in_file:
+        return simplejson.load(in_file) if json else in_file.read()

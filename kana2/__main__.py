@@ -1,9 +1,8 @@
-"""Future CLI interaction module."""
+# Copyright 2018 miruka
+# This file is part of kana2, licensed under LGPLv3.
 
-def main():
-    """Work in progress."""
-    print("hi")
-    raise NotImplementedError("bye")
+"Call cli.main() when this package is executed from 'python -m <pkgname>'."
 
+from . import cli
 
-main()
+cli.main()

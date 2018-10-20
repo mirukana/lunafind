@@ -1,3 +1,9 @@
-**/__pycache__
+__pycache__
+build
+dist
+*.egg-info
+*.pyc
+
 .pylintrc
-tmp*
+
+tmp-*
