@@ -9,8 +9,8 @@ from .post import Post
 from .resources import Artcom, Info, Media, Notes
 
 
-def single(query: AutoQueryType, client: Client = DEFAULT) -> Post:
-    info = Info(client.info_auto(query), client)
+def one(query: AutoQueryType, client: Client = DEFAULT) -> Post:
+    info = Info(next(client.info_auto(query)), client)
     return Post(info, Artcom(info), Media(info), Notes(info))
 
 
@@ -31,9 +31,4 @@ def generator(*queries: AutoQueryType, prefer: Client = DEFAULT
 
 
 def album(*queries: AutoQueryType, prefer: Client = DEFAULT) -> Album:
-    alb = Album()
-
-    for post in generator(*queries, prefer=prefer):
-        alb.put(post)
-
-    return alb
+    return Album(*generator(*queries, prefer=prefer))
