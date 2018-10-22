@@ -22,42 +22,8 @@ class AttrIndexedDict(collections.UserDict, abc.ABC):
             setattr(cls, method, func)
 
 
-    def __setattr__(self, key, value) -> None:
-        # Required for collections __init__ and copy
-        if key == "data":
-            super().__setattr__(key, value)
-            return
-
+    def __setitem__(self, key, value) -> None:
         raise RuntimeError("Use %s.put() to add items." % type(self).__name__)
-
-
-    def copy(self) -> "AttrIndexedDict":
-        return copy.copy(self)
-
-
-    def put(self, *items) -> "AttrIndexedDict":
-        "Add items to the dict that will be indexed by self.attr."
-        for item in items:
-            self.data[getattr(item, self.attr)] = item
-        return self
-
-
-    def __add__(self, other: "AttrIndexedDict") -> "AttrIndexedDict":
-        new = self.copy()
-        new.data.update(other)
-        return new
-
-
-    def __sub__(self, other: "AttrIndexedDict") -> "AttrIndexedDict":
-        new = self.copy()
-
-        for key in other:
-            try:
-                del new[key]
-            except KeyError:
-                pass
-
-        return new
 
 
     def map(self, method: str, *args, _quiet: bool = True, **kwargs
@@ -74,3 +40,39 @@ class AttrIndexedDict(collections.UserDict, abc.ABC):
             num += 1
 
         return self
+
+
+    def copy(self) -> "AttrIndexedDict":
+        return copy.copy(self)
+
+
+    def put(self, *items) -> "AttrIndexedDict":
+        "Add items to the dict that will be indexed by self.attr."
+        for item in items:
+            self.data[getattr(item, self.attr)] = item
+        return self
+
+    __lt__ = lambda self, item: self.put(item)
+
+
+    def merge(self, *others: "AttrIndexedDict") -> "AttrIndexedDict":
+        for other in others:
+            self.data.update(other)
+        return self
+
+    def __add__(self, other: "AttrIndexedDict") -> "AttrIndexedDict":
+        return self.copy().merge(other)
+
+
+    def difference(self, *others: "AttrIndexedDict") -> "AttrIndexedDict":
+        new = self.copy()
+        for other in others:
+            for key in other:
+                try:
+                    del new[key]
+                except KeyError:
+                    pass
+        return new
+
+    def __sub__(self, other: "AttrIndexedDict") -> "AttrIndexedDict":
+        return self.copy().difference(other)

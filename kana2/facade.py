@@ -5,7 +5,7 @@ from typing import Optional
 
 from zenlog import log
 
-from .album import Album
+from .albums import Album
 from .clients import DEFAULT, AutoQueryType, Client, InfoGenType, info_auto
 from .post import Post
 from .resources import Artcom, Info, Media, Notes

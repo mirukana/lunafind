@@ -1,9 +1,11 @@
 # kana2 TODO list
 
+- Finish implementing filter meta-tags
+
+- Implement all set operators for attridict
+
 - Manage both local .writen() and remote booru posts
   - Make sure tuples (lists in json) are parsed back as tuples     
-
-- Store filtering: x.filter(tags or other stuff), or with operators?
 
 - Some form of asynchronicity
   - requests-threads, requests-futures, grequests, zproc, async/await?
