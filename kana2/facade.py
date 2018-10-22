@@ -1,6 +1,8 @@
 # Copyright 2018 miruka
 # This file is part of kana2, licensed under LGPLv3.
 
+from typing import Optional
+
 from zenlog import log
 
 from .album import Album
@@ -9,8 +11,13 @@ from .post import Post
 from .resources import Artcom, Info, Media, Notes
 
 
-def one(query: AutoQueryType, client: Client = DEFAULT) -> Post:
-    info = Info(next(client.info_auto(query)), client)
+def one(query: AutoQueryType, client: Client = DEFAULT) -> Optional[Post]:
+    try:
+        info = Info(next(client.info_auto(query)), client)
+    except StopIteration:
+        log.warn("No post found for query %r.", query)
+        return None
+
     return Post(info, Artcom(info), Media(info), Notes(info))
 
 

@@ -6,7 +6,7 @@ from typing import Any, Dict
 import arrow
 from zenlog import log
 
-from whratio import ratio
+import whratio
 
 from .base import JsonResource
 
@@ -36,9 +36,17 @@ class Info(JsonResource):
 
         new["fetch_date"] = arrow.now().format("YYYY-MM-DDTHH:mm:ss.SSSZZ")
 
+        try:
+            new["children_num"] = len(self.info["children_ids"].split())
+        except AttributeError:
+            new["children_num"] = 0
+
+        new["mpixels"] = \
+            (self.info["image_width"] * self.info["image_height"]) / 1_000_000
+
         w_h = (self.info["image_width"], self.info["image_height"])
-        new["ratio_int"]   = ratio.as_int(*w_h)
-        new["ratio_float"] = ratio.as_float(*w_h)
+        new["ratio_int"]   = whratio.as_int(*w_h)
+        new["ratio_float"] = whratio.as_float(*w_h)
 
         if "file_ext" not in self.info:
             log.warn("Broken post: %d, no media info.", self.post_id)
