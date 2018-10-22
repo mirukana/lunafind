@@ -11,7 +11,7 @@ from .post import Post
 from .resources import Artcom, Info, Media, Notes
 
 
-def one(query: AutoQueryType, client: Client = DEFAULT) -> Optional[Post]:
+def one(query: AutoQueryType = "", client: Client = DEFAULT) -> Optional[Post]:
     try:
         info = Info(next(client.info_auto(query)), client)
     except StopIteration:
@@ -23,6 +23,9 @@ def one(query: AutoQueryType, client: Client = DEFAULT) -> Optional[Post]:
 
 def generator(*queries: AutoQueryType, prefer: Client = DEFAULT
              ) -> InfoGenType:
+
+    if not queries:
+        queries = ("",)  # latest posts/home page on booru
 
     for query in queries:
         found = 0
