@@ -63,7 +63,7 @@ class Resource(abc.ABC):
 
     @property
     def post_id(self) -> int:
-        return self.info["id"]
+        return self.info.id
 
 
     @property

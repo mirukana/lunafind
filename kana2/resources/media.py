@@ -12,15 +12,15 @@ class Media(Resource, binary=True):
     # Lazify ext to not have to fetch infos as soon as a post is created.
     @property
     def ext(self):
-        return self.info["dl_ext"] if not self.info["is_broken"] else None
+        return self.info.dl_ext if not self.info.is_broken else None
 
 
     def get_if_post_has_resource(self) -> bool:
-        return False if self.info["is_broken"] else True
+        return False if self.info.is_broken else True
 
 
     def get_data(self) -> Generator[bytes, None, None]:
-        response = self.client.http("get", self.info["dl_url"], stream=True)
+        response = self.client.http("get", self.info.dl_url, stream=True)
 
         if not response:
             return None

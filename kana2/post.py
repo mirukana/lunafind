@@ -24,12 +24,12 @@ class Post(AttrIndexedDict, attr="title", sugar_map=("update", "write")):
 
     @property
     def id(self) -> int:
-        return self["info"]["id"]
+        return self.info.id
 
 
     @property
     def title(self) -> str:
-        kinds = {k: join_comma_and(*self["info"][f"tag_string_{k}"].split())
+        kinds = {k: join_comma_and(*self.info[f"tag_string_{k}"].split())
                  for k in ("character", "copyright", "artist")}
 
         return "{character} ({copyright}) drawn by {artist}".format(**kinds)

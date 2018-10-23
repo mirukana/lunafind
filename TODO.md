@@ -2,6 +2,8 @@
 
 - Finish implementing filter meta-tags
 
+- Lazy ugoira dl size header request
+
 - Human-readable repls, show what resource posts have
 
 - Implement all set operators for attridict

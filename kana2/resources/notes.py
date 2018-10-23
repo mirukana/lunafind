@@ -10,7 +10,7 @@ class Notes(JsonResource):
     "Bubbles over images (e.g. translations)."
 
     def get_if_post_has_resource(self) -> bool:
-        return bool(self.info["last_noted_at"])
+        return bool(self.info.last_noted_at)
 
 
     def get_data(self) -> List[Dict[str, Any]]:

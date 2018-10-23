@@ -42,7 +42,7 @@ META_NUM_TAGS = {
 
 
 def _source_match(post: Post, value: str) -> bool:
-    info_v = post["info"]["source"]
+    info_v = post.info.source
 
     if value == "none":
         return not info_v
@@ -59,12 +59,12 @@ def _source_match(post: Post, value: str) -> bool:
 
 
 META_STR_TAGS_FUNCS = {
-    "md5":        lambda p, v: p["info"]["md5"]      == v,
-    "filetype":   lambda p, v: p["info"]["file_ext"] == v,
-    "dltype":     lambda p, v: p["info"]["dl_ext"]   == v,  # non-standard
-    "rating":     lambda p, v: p["info"]["rating"].startswith(v),
-    "locked":     lambda p, v: p["info"][f"is_{v}_locked"],
-    "status":     lambda p, v: v in ("any", "all") or p["info"][f"is_{v}"],
+    "md5":        lambda p, v: p.info.md5             == v,
+    "filetype":   lambda p, v: p.info.get("file_ext") == v,
+    "dltype":     lambda p, v: p.info.get("dl_ext")   == v,  # non-standard
+    "rating":     lambda p, v: p.info.rating.startswith(v),
+    "locked":     lambda p, v: p.info[f"is_{v}_locked"],
+    "status":     lambda p, v: v in ("any", "all") or p.info[f"is_{v}"],
     "source":     _source_match,
     "order":      None,
 }
@@ -72,7 +72,7 @@ META_STR_TAGS_FUNCS = {
 
 def _tag_present(post: Post, tag: str) -> bool:
     # TODO: remove namespaces
-    return f" {tag} " in " %s " % post["info"]["tag_string"]
+    return f" {tag} " in " %s " % post.info.tag_string
 
 
 def _meta_num_match(post:Post, tag: str, value: str) -> bool:
@@ -129,7 +129,7 @@ def _meta_num_match(post:Post, tag: str, value: str) -> bool:
         raise ValueError(f"Invalid search term value: '{tag}:{value}'.")
 
     convert     = META_NUM_TAGS[tag][1]
-    info_v      = convert(post["info"][META_NUM_TAGS[tag][0]])
+    info_v      = convert(post.info[META_NUM_TAGS[tag][0]])
     eq_fuzzy_20 = "eq_fuzzy_20" in META_NUM_TAGS[tag]
     reverse_cmp = "reverse_cmp" in META_NUM_TAGS[tag]
 
@@ -141,18 +141,20 @@ def _filter_post(post:           Post,
                  simple_tags:    Set[str],
                  meta_num:       Set[str],
                  meta_str:       Set[str]) -> bool:
-    presences = {}
+
+    no_prefix = lambda tag: tag[1:] if tag[0] in ("-", "~") else tag
+    presences    = {}
 
     for tag in simple_tags:
-        presences[tag] = _tag_present(post, tag)
+        presences[tag] = _tag_present(post, no_prefix(tag))
 
     for tag_val in meta_num:
         tag, value         = tag_val.split(":", maxsplit=1)
-        presences[tag_val] = _meta_num_match(post, tag.rstrip("~-"), value)
+        presences[tag_val] = _meta_num_match(post, no_prefix(tag), value)
 
     for tag_val in meta_str:
         tag, value         = tag_val.split(":", maxsplit=1)
-        presences[tag_val] = META_STR_TAGS_FUNCS[tag](post, value)
+        presences[tag_val] = META_STR_TAGS_FUNCS[no_prefix(tag)](post, value)
 
     tilde_tag_in_search   = False
     one_tilde_tag_present = False
@@ -161,7 +163,7 @@ def _filter_post(post:           Post,
         if term[0] == "-" and present:
             return False
 
-        if term[0] != "~" and not present:
+        if term[0] not in ("-", "~") and not present:
             return False
 
         if term[0] == "~":
@@ -177,9 +179,13 @@ def _filter_post(post:           Post,
 
 
 def search(posts: Sequence[Post], terms: str) -> Generator[Post, None, None]:
+    def raw_tag(term: str) -> str:
+        tag = term.split(":")[0]
+        return tag[1:] if tag[0] in ("-", "~") else tag
+
     terms     = set(shlex.split(terms))
-    meta_num  = set(t for t in terms if t.split(":")[0] in META_NUM_TAGS)
-    meta_str  = set(t for t in terms if t.split(":")[0] in META_STR_TAGS_FUNCS)
+    meta_num  = set(t for t in terms if raw_tag(t) in META_NUM_TAGS)
+    meta_str  = set(t for t in terms if raw_tag(t) in META_STR_TAGS_FUNCS)
     tags      = terms - set(meta_num) - set(meta_str)
 
     term_args = (tags, meta_num, meta_str)

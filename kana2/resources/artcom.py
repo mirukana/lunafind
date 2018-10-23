@@ -20,14 +20,14 @@ class Artcom(JsonResource):
 
     def get_if_post_has_resource(self) -> bool:
         check = ("commentary", "commentary_request")
-        meta  = self.info["tag_string_meta"]
+        meta  = self.info.tag_string_meta
         # Make matching works if a tag is the first or last in the string
         # by putting things between spaces.
         self.has_artcom_tag = any(f" {tag} " in f" {meta} " for tag in check)
 
         # Posts made in last 24h may have not been auto-tagged yet.
         self.created_last_24h = (
-            arrow.get(self.info["created_at"]) >= arrow.now().shift(hours=-24)
+            arrow.get(self.info.created_at) >= arrow.now().shift(hours=-24)
         )
 
         if self.has_artcom_tag:
