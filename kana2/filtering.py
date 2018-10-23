@@ -25,9 +25,10 @@ META_NUM_TAGS = {
     "chartags": ["tag_count_character", int],
     "copytags": ["tag_count_copyright", int],
     "metatags": ["tag_count_meta",      int],
-    "ratio":    ["ratio_float",         utils.ratio2float],
     "date":     ["created_at",
                  lambda v: arrow.get(v).replace(tzinfo="local").to("UTC-4")],
+    # Non-standard addition: supports int:int *and* float ratio.
+    "ratio":    ["ratio_float", utils.ratio2float],
     # Non-standard addition: supports microseconds and more units aliases.
     "age": ["created_at",  utils.age2date, "reverse_cmp"],
     # none, any, or the post number the post should be a child of.

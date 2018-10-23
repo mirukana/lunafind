@@ -1,10 +1,11 @@
 # kana2 TODO list
 
 - Finish implementing filter meta-tags
+  - Order
+  - kana2 tags: site, fetch\_date, is\_broken
+  - Danbooru hard stuff that needs users/etc info
 
 - Lazy ugoira dl size header request
-
-- Human-readable repls, show what resource posts have
 
 - Implement all set operators for attridict
 

@@ -3,6 +3,8 @@
 
 import abc
 import os
+import pprint
+import textwrap
 from typing import Any, Dict, Optional, Union
 
 from dataclasses import dataclass, field
@@ -35,8 +37,15 @@ class Resource(abc.ABC):
 
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}(client.name={self.client.name!r}, " \
-               f"post_id={self.post_id}, data={self.data})"
+        data  = pprint.pformat(self.data, width=80 - 4)
+        lines = len(data.splitlines())
+
+        return "%s(client.name=%r, post_id=%r, data=%s)" % (
+            type(self).__name__,
+            self.client.name,
+            self.post_id,
+            "\\\n%s\n" % textwrap.indent(data, "   ") if lines > 1 else data
+        )
 
 
     def __init_subclass__(cls,

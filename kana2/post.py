@@ -35,5 +35,8 @@ class Post(AttrIndexedDict, attr="title", sugar_map=("update", "write")):
         return "{character} ({copyright}) drawn by {artist}".format(**kinds)
 
 
-    def __repr__(self) -> None:
-        return f"%s(id={self.id}, title='{self.title}')" % type(self).__name__
+    def __repr__(self) -> str:
+        return f"%s(id={self.id}, title='{self.title}', has: %s)" % (
+            type(self).__name__,
+            ", ".join((k for k, r in self.data.items() if r.detected_resource))
+        )

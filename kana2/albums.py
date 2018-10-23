@@ -15,8 +15,11 @@ class Album(AttrIndexedDict, attr="id", sugar_map=("update", "write")):
         self.put(*posts)
 
 
-    def __repr__(self) -> None:
-        return f"%s(%s)" % (type(self).__name__, super().__repr__())
+    def __repr__(self) -> str:
+        return "%s({\n%s\n})" % (
+            type(self).__name__,
+            "\n".join((f"    {i!r}: {p.title!r}," for i, p in self.items()))
+        )
 
 
     @property
