@@ -1,7 +1,7 @@
 # Copyright 2018 miruka
 # This file is part of kana2, licensed under LGPLv3.
 
-from typing import Dict, Generator, List, Tuple, Union
+from typing import Generator, List, Union
 
 from . import facade, filtering
 from .attridict import AttrIndexedDict
@@ -42,10 +42,6 @@ class Album(AttrIndexedDict, attr="id", sugar_map=("update", "write")):
 
     def find_lazy(self, search: str) -> Generator[Post, None, None]:
         yield from filtering.search(self.list, search)
-
-    def find_analyze(self, search: str
-                    ) -> Generator[Tuple[Post, Dict[str, bool]], None, None]:
-        yield from filtering.search(self.list, search, yield_analyze=True)
 
     __truediv__  = lambda self, search: self.find(search)
     __floordiv__ = lambda self, search: self.find_lazy(search)

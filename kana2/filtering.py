@@ -3,7 +3,7 @@
 
 import re
 import shlex
-from typing import Dict, Generator, Sequence, Set, Tuple, Union
+from typing import Generator, Sequence, Set
 
 import arrow
 
@@ -25,20 +25,17 @@ META_NUM_TAGS = {
     "chartags": ["tag_count_character", int],
     "copytags": ["tag_count_copyright", int],
     "metatags": ["tag_count_meta",      int],
-
-    "ratio": ["ratio_float", utils.ratio2float],
-    "age":   ["created_at",  utils.age2date, "reverse_cmp"],
-    "date":  ["created_at",
-              lambda v: arrow.get(v).replace(tzinfo="local").to("UTC-4")],
-
+    "ratio":    ["ratio_float",         utils.ratio2float],
+    "date":     ["created_at",
+                 lambda v: arrow.get(v).replace(tzinfo="local").to("UTC-4")],
+    # Non-standard addition: supports microseconds and more units aliases.
+    "age": ["created_at",  utils.age2date, "reverse_cmp"],
     # none, any, or the post number the post should be a child of.
     "parent": ["parent_id", int],
     # none, any, or (non-standard) a number of possessed children.
     "child": ["children_num", int],
-
     # Non-standard addition: supports units other than b/KB/MB
     "filesize": ["file_size", utils.human2bytes, "eq_fuzzy_20"],
-
     # Non-standard tags:
     "dlsize": ["dl_size", utils.human2bytes]
 }
@@ -143,8 +140,7 @@ def _meta_num_match(post:Post, tag: str, value: str) -> bool:
 def _filter_post(post:           Post,
                  simple_tags:    Set[str],
                  meta_num:       Set[str],
-                 meta_str:       Set[str],
-                 return_analyze: bool = False) -> Union[bool, Dict[str, bool]]:
+                 meta_str:       Set[str]) -> bool:
     presences = {}
 
     for tag in simple_tags:
@@ -157,9 +153,6 @@ def _filter_post(post:           Post,
     for tag_val in meta_str:
         tag, value         = tag_val.split(":", maxsplit=1)
         presences[tag_val] = META_STR_TAGS_FUNCS[tag](post, value)
-
-    if return_analyze:
-        return presences
 
     tilde_tag_in_search   = False
     one_tilde_tag_present = False
@@ -183,20 +176,13 @@ def _filter_post(post:           Post,
     return True
 
 
-def search(posts: Sequence[Post], terms: str, yield_analyze: bool = False
-          ) -> Generator[Union[Post, Tuple[Post, Dict[str, bool]]],
-                         None, None]:
+def search(posts: Sequence[Post], terms: str) -> Generator[Post, None, None]:
     terms     = set(shlex.split(terms))
     meta_num  = set(t for t in terms if t.split(":")[0] in META_NUM_TAGS)
     meta_str  = set(t for t in terms if t.split(":")[0] in META_STR_TAGS_FUNCS)
     tags      = terms - set(meta_num) - set(meta_str)
 
     term_args = (tags, meta_num, meta_str)
-
-    if yield_analyze:
-        for post in posts:
-            yield (post, _filter_post(post, *term_args, return_analyze=True))
-        return
 
     for post in posts:
         if _filter_post(post, *term_args):
