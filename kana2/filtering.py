@@ -1,6 +1,7 @@
 # Copyright 2018 miruka
 # This file is part of kana2, licensed under LGPLv3.
 
+import re
 import shlex
 from typing import Dict, Generator, Sequence, Set, Tuple, Union
 
@@ -42,6 +43,24 @@ META_NUM_TAGS = {
     "dlsize": ["dl_size", utils.human2bytes]
 }
 
+
+def _source_match(post: Post, value: str) -> bool:
+    info_v = post["info"]["source"]
+
+    if value == "none":
+        return not info_v
+
+    if value.startswith("pixiv/"):
+        # If no / at the end, will match artists *starting with* value.
+        return re.match(rf".*pixiv(\.net/img.*(/img)?)?/{value[6:]}.*", info_v,
+                        re.IGNORECASE)
+
+    # Other "source:..." on Danbooru: "match anything that starts with ...".
+    # * in value = .* regex (other regexes get escaped).
+    return re.match(r"%s.*" % re.escape(value).replace(r"\*", r".*"), info_v,
+                    re.IGNORECASE)
+
+
 META_STR_TAGS_FUNCS = {
     "md5":        lambda p, v: p["info"]["md5"]      == v,
     "filetype":   lambda p, v: p["info"]["file_ext"] == v,
@@ -49,7 +68,7 @@ META_STR_TAGS_FUNCS = {
     "rating":     lambda p, v: p["info"]["rating"].startswith(v),
     "locked":     lambda p, v: p["info"][f"is_{v}_locked"],
     "status":     lambda p, v: v in ("any", "all") or p["info"][f"is_{v}"],
-    "source":     None,
+    "source":     _source_match,
     "order":      None,
 }
 
