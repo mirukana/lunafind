@@ -91,8 +91,12 @@ def _meta_num_match(post:Post, tag: str, value: str) -> bool:
             return convert(begin) <= info_v <= convert(end)
 
         if "," in value:
-            # TODO: fuzzy
-            return str(info_v) in value.split(",")
+            if not eq_fuzzy_20:
+                return str(info_v) in value.split(",")
+
+            return bool([v for v in value.split(",") if
+                         v - v / 20 <= info_v <= v + v / 20])
+
 
         try:
             value = convert(value)
