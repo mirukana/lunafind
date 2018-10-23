@@ -7,6 +7,7 @@ import pprint
 import textwrap
 from typing import Any, Dict, Optional, Union
 
+from cached_property import cached_property
 from dataclasses import dataclass, field
 from zenlog import log
 
@@ -32,8 +33,6 @@ class Resource(abc.ABC):
 
     info:   Union["Info", Dict[str, Any]] = field(default_factory=dict)
     client: clients.Client                = field(default=None)
-
-    _data: Any = field(init=False, default=None)
 
 
     def __repr__(self) -> str:
@@ -75,7 +74,7 @@ class Resource(abc.ABC):
         return self.info["id"]
 
 
-    @property
+    @cached_property
     def detected_resource(self) -> Union[bool, str]:
         """If post should have the wanted resource. True, False or 'Maybe'.
         Determined from info and used to avoid useless net requests.
@@ -88,12 +87,9 @@ class Resource(abc.ABC):
         return detected
 
 
-    @property
+    @cached_property
     def data(self) -> Any:
         "Actual resource data, lazy-fetched when this property is accessed."
-        if self._data:
-            return self._data
-
         if not self.detected_resource:
             return None
 
@@ -101,28 +97,36 @@ class Resource(abc.ABC):
             log.info(self.msg_fetching)
 
         # pylint: disable=assignment-from-none
-        self._data = self.get_data()
+        got = self.get_data()
 
-        if self._data in (None, [], (), {}, ""):  # False or 0 are ok
+        if not got and got not in (0, False):
             if self.msg_no_data_found:
                 log.info(self.msg_no_data_found)
             return None
 
-        return self._data
+        return got
+
 
     def update(self, accept_gone: bool = False) -> "Resource":
         """Forget already fetched data and re-fetch, except if
-        accept_gone is False and nothing is found (e.g. post deleted)."""
-        old_data   = self._data
-        # pylint: disable=assignment-from-none
-        self._data = self.get_data()
+        accept_gone is False and nothing is found (e.g. post deleted).
+        """
+        if "data" not in self.__dict__:
+            # pylint: disable=pointless-statement
+            self.data
+            return self
 
-        if self._data in (None, [], (), {}, ""):
+        # pylint: disable=assignment-from-none
+        new_data = self.get_data()
+
+        if not new_data and new_data not in (0, False):
             if self.msg_update_fail:
                 log.warn(self.msg_update_fail)
 
-            if not accept_gone:
-                self._data = old_data
+            if accept_gone:
+                self.__dict__["data"] = new_data
+        else:
+            self.__dict__["data"] = new_data
 
         return self
 

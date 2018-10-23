@@ -1,6 +1,8 @@
 # Copyright 2018 miruka
 # This file is part of kana2, licensed under LGPLv3.
 
+from cached_property import cached_property
+
 from .attridict import AttrIndexedDict
 from .resources import Info, Resource
 from .utils import join_comma_and
@@ -27,7 +29,7 @@ class Post(AttrIndexedDict, attr="title", sugar_map=("update", "write")):
         return self.info["id"]
 
 
-    @property
+    @cached_property
     def title(self) -> str:
         kinds = {k: join_comma_and(*self.info[f"tag_string_{k}"].split())
                  for k in ("character", "copyright", "artist")}
