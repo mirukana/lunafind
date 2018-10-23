@@ -195,9 +195,10 @@ class JsonResource(Resource, binary=False, ext="json"):
 
 
     def __getattr__(self, name: str):
-        "Allow accessing resource data dict with a dot like attributes."
+        """Allow accessing resource data dict with a dot like attributes.
+        Warning: dict items can't be set/edited/deleted when accessed like so.
+        """
         try:
             return self.data[name]
         except KeyError:
-            import pdb; pdb.set_trace()
             raise AttributeError(f"No attribute or dict key named {name!r}.")

@@ -60,7 +60,7 @@ class AttrIndexedDict(collections.UserDict, abc.ABC):
             self.data[getattr(item, self.attr)] = item
         return self
 
-    __lt__ = lambda self, item: self.put(item)
+    __lshift__ = __rrshift__ = lambda self, item: self.put(item)
 
 
     def merge(self, *others: "AttrIndexedDict") -> "AttrIndexedDict":
