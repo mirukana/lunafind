@@ -32,7 +32,14 @@ class Post(AttrIndexedDict, attr="title", sugar_map=("update", "write")):
         kinds = {k: join_comma_and(*self.info[f"tag_string_{k}"].split())
                  for k in ("character", "copyright", "artist")}
 
-        return "{character} ({copyright}) drawn by {artist}".format(**kinds)
+        return (
+            "{character} ({copyright}) drawn by {artist}%".format(**kinds)
+            .replace("() drawn by", "drawn by")
+            .replace("drawn by %", "")
+            .replace("%", "")
+            .strip()
+            or "untitled"
+        )
 
 
     def __repr__(self) -> str:

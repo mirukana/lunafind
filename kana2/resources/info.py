@@ -24,10 +24,6 @@ class Info(JsonResource):
         return self.info
 
 
-    def __getitem__(self, key):
-        return self.data[key]
-
-
     def enhance(self) -> "Info":
         new = {"is_broken": False}
 

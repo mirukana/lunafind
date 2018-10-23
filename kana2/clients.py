@@ -155,7 +155,10 @@ class Client:
                 continue
 
             params["page"] = page
-            log.info("Retrieving page - %s", utils.simple_str_dict(params))
+
+            log.info("Retrieving page - %s",
+                     ", ".join((f"{k}: {v!r}" for k, v in params.items())))
+
             yield from self.api("post_list", **params)
 
 

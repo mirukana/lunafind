@@ -87,13 +87,6 @@ def jsonify(dict_: dict, **dumps_kwargs) -> str:
     return simplejson.dumps(dict_, **kwargs)
 
 
-def simple_str_dict(dict_: dict) -> str:
-    # Returns something like   foo: "bar", lor: "em", 1: 2
-    strs = [f"{k}: %s" % (f'"{v}"' if isinstance(v, str) else str(v))
-            for k, v in dict_.items()]
-    return ", ".join(strs)
-
-
 def join_comma_and(*strings: str) -> str:
     if len(strings) <= 1:
         return ", ".join(strings)

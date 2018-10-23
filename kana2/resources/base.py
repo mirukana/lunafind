@@ -203,6 +203,18 @@ class JsonResource(Resource, binary=False, ext="json"):
         return utils.jsonify(self.data)
 
 
+    def __getitem__(self, key):
+        return self.data[key]
+
+
+    def __setitem__(self, key, value) -> None:
+        self.data[key] = value
+
+
+    def __delitem__(self, key) -> None:
+        del self.data[key]
+
+
     def __getattr__(self, name: str):
         """Allow accessing resource data dict with a dot like attributes.
         Warning: dict items can't be set/edited/deleted when accessed like so.
