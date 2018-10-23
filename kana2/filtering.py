@@ -71,8 +71,12 @@ META_STR_TAGS_FUNCS = {
 
 
 def _tag_present(post: Post, tag: str) -> bool:
-    # TODO: remove namespaces
-    return f" {tag} " in " %s " % post.info.tag_string
+    # Non-standard: support wildcards in "-tag" or "~tag".
+    # "*" in tag → ".*?" regex, escape other regex/special chars
+    # wrap strings in spaces to match tags even if they're at start/end.
+    return re.match(r" %s " % re.escape(tag).replace(r"\*", r".*?"),
+                    r" %s " % post.info.tag_string,
+                    re.IGNORECASE)
 
 
 def _meta_num_match(post:Post, tag: str, value: str) -> bool:
