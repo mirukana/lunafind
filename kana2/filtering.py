@@ -81,6 +81,7 @@ def _tag_present(post: Post, tag: str) -> bool:
 
 def _meta_num_match(post:Post, tag: str, value: str) -> bool:
     def compare(convert, info_v, value, eq_fuzzy_20, reverse_cmp) -> bool:
+        # Non-standard: any/none supported for all meta numeric tags.
         if value == "none":
             return bool(not info_v)
 

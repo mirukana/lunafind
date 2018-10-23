@@ -24,9 +24,6 @@ def one(query: AutoQueryType = "", client: Client = DEFAULT) -> Optional[Post]:
 def generator(*queries: AutoQueryType, prefer: Client = DEFAULT
              ) -> InfoGenType:
 
-    if not queries:
-        queries = ("",)  # latest posts/home page on booru
-
     for query in queries:
         found = 0
 
