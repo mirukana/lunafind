@@ -9,7 +9,6 @@ from .base import Resource
 class Media(Resource, binary=True):
     "Post image or webm."
 
-    # Lazify ext to not have to fetch infos as soon as a post is created.
     @property
     def ext(self):
         return self.info["dl_ext"] if not self.info["is_broken"] else None

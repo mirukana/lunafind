@@ -5,8 +5,6 @@
   - kana2 tags: site, fetch\_date, is\_broken
   - Danbooru hard stuff that needs users/etc info
 
-- Lazy ugoira dl size header request
-
 - Implement all set operators for attridict
 
 - If an http/booru error/ctrl-c happens, still return what was fetched right

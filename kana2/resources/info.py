@@ -1,9 +1,10 @@
 # Copyright 2018 miruka
 # This file is part of kana2, licensed under LGPLv3.
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import arrow
+from lazy_object_proxy import Proxy as LazyProxy
 from zenlog import log
 
 import whratio
@@ -59,13 +60,19 @@ class Info(JsonResource):
             new["dl_url"]    = self.info["large_file_url"]  # video URL
             new["dl_ext"]    = new["dl_url"].split(".")[-1]
 
-            response = self.client.http("head", new["dl_url"])
+            def get_ugoira_size() -> Optional[int]:
+                response = self.client.http("head", new["dl_url"])
 
-            if response:
-                new["dl_size"] = int(response.headers["content-length"])
-            else:
+                if response:
+                    return int(response.headers["content-length"])
+
                 new["is_broken"] = True
                 log.warn("Broken post: %d, cannot get size.", self.post_id)
+                return None
+
+            # Doing this non-lazily makes fetching pages of ugoiras very
+            # slow due to all the requests to do.
+            new["dl_size"] = LazyProxy(get_ugoira_size)
 
         self.info.update(new)
         return self
