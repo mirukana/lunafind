@@ -63,7 +63,7 @@ class Resource(abc.ABC):
 
     @property
     def post_id(self) -> int:
-        return self.info.id
+        return self.info["id"]
 
 
     @property
@@ -199,4 +199,5 @@ class JsonResource(Resource, binary=False, ext="json"):
         try:
             return self.data[name]
         except KeyError:
+            import pdb; pdb.set_trace()
             raise AttributeError(f"No attribute or dict key named {name!r}.")

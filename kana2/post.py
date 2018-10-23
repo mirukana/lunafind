@@ -24,7 +24,7 @@ class Post(AttrIndexedDict, attr="title", sugar_map=("update", "write")):
 
     @property
     def id(self) -> int:
-        return self.info.id
+        return self.info["id"]
 
 
     @property

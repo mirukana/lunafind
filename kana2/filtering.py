@@ -42,7 +42,7 @@ META_NUM_TAGS = {
 
 
 def _source_match(post: Post, value: str) -> bool:
-    info_v = post.info.source
+    info_v = post.info["source"]
 
     if value == "none":
         return not info_v
@@ -59,10 +59,10 @@ def _source_match(post: Post, value: str) -> bool:
 
 
 META_STR_TAGS_FUNCS = {
-    "md5":        lambda p, v: p.info.md5             == v,
+    "md5":        lambda p, v: p.info["md5"]          == v,
     "filetype":   lambda p, v: p.info.get("file_ext") == v,
     "dltype":     lambda p, v: p.info.get("dl_ext")   == v,  # non-standard
-    "rating":     lambda p, v: p.info.rating.startswith(v),
+    "rating":     lambda p, v: p.info["rating"].startswith(v),
     "locked":     lambda p, v: p.info[f"is_{v}_locked"],
     "status":     lambda p, v: v in ("any", "all") or p.info[f"is_{v}"],
     "source":     _source_match,
@@ -75,7 +75,7 @@ def _tag_present(post: Post, tag: str) -> bool:
     # "*" in tag → ".*?" regex, escape other regex/special chars
     # wrap strings in spaces to match tags even if they're at start/end.
     return re.match(r" %s " % re.escape(tag).replace(r"\*", r".*?"),
-                    r" %s " % post.info.tag_string,
+                    r" %s " % post.info["tag_string"],
                     re.IGNORECASE)
 
 
