@@ -192,3 +192,11 @@ class JsonResource(Resource, binary=False, ext="json"):
             return None
 
         return utils.jsonify(self.data)
+
+
+    def __getattr__(self, name: str):
+        "Allow accessing resource data dict with a dot like attributes."
+        try:
+            return self.data[name]
+        except KeyError:
+            raise AttributeError(f"No attribute or dict key named {name!r}.")

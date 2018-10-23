@@ -26,6 +26,14 @@ class AttrIndexedDict(collections.UserDict, abc.ABC):
         raise RuntimeError("Use %s.put() to add items." % type(self).__name__)
 
 
+    def __getattr__(self, name: str):
+        "Allow accessing dict items with a dot like attributes."
+        try:
+            return self.data[name]
+        except KeyError:
+            raise AttributeError(f"No attribute or dict key named {name!r}.")
+
+
     def map(self, method: str, *args, _quiet: bool = True, **kwargs
            ) -> "AttrIndexedDict":
         "Run a method of all stored items with optional args and kwargs."

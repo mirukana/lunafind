@@ -2,6 +2,8 @@
 
 - Finish implementing filter meta-tags
 
+- Human-readable repls, show what resource posts have
+
 - Implement all set operators for attridict
 
 - If an http/booru error/ctrl-c happens, still return what was fetched right
