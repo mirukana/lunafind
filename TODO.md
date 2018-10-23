@@ -4,6 +4,8 @@
 
 - Implement all set operators for attridict
 
+- If an http/booru error/ctrl-c happens, still return what was fetched right
+
 - Manage both local .writen() and remote booru posts
   - Make sure tuples (lists in json) are parsed back as tuples     
 

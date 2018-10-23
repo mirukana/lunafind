@@ -5,10 +5,11 @@
 
 from typing import Union
 
+import arrow
 import simplejson
 
-SIZE_UNITS = "BKMGTPEZY"
 
+SIZE_UNITS = "BKMGTPEZY"
 
 def bytes2human(size: Union[int, float], prefix: str = "", suffix: str = ""
                ) -> str:
@@ -47,9 +48,42 @@ def ratio2float(value: Union[int, float, str]) -> float:
     return float(value)
 
 
+AGE_TO_ARROW_SHIFT_ARG = {
+    ("Y", "y", "year"):                 "years",
+    ("M", "mo", "month"):               "months",
+    ("w", "week"):                       "weeks",
+    ("d", "day"):                       "days",
+    ("h", "hour"):                      "hours",
+    ("m", "mi", "mn", "min", "minute"): "minutes",
+    ("s", "sec", "second"):             "seconds",
+    ("ms", "microsec", "microsecond"):  "microseconds"
+}
+
+def age2date(age: str) -> arrow.Arrow:
+    try:
+        return arrow.get(age)  # If this is already a normal date
+    except arrow.parser.ParserError:
+        pass
+
+    user_unit  = age.lstrip("0123456789.")
+    value      = -abs(float(age.replace(user_unit, "")))
+    found_unit = None
+
+    for units, shift_unit in AGE_TO_ARROW_SHIFT_ARG.items():
+        for unit in units:
+            if user_unit in (unit, f"{unit}s"):
+                found_unit = shift_unit
+
+    if not found_unit:
+        raise ValueError(f"Invalid age unit: {user_unit!r}")
+
+    return arrow.now().shift(**{found_unit: value}).to("UTC-4")
+
+
+JSONIFY_DEFAULT_PARAMS = {"sort_keys": True, "ensure_ascii": False}
+
 def jsonify(dict_: dict, **dumps_kwargs) -> str:
-    kwargs = {"sort_keys": True, "ensure_ascii": False}
-    kwargs.update(dumps_kwargs)
+    kwargs = {**JSONIFY_DEFAULT_PARAMS, **dumps_kwargs}
     return simplejson.dumps(dict_, **kwargs)
 
 
