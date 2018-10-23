@@ -15,6 +15,8 @@
 - Some form of asynchronicity
   - requests-threads, requests-futures, grequests, zproc, async/await?
 
+- Replace zenlog, GPL
+
 - Thumbnails?
 
 - Do something about parent/child posts

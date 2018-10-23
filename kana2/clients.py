@@ -20,7 +20,7 @@ from zenlog import log
 from requests.adapters import HTTPAdapter
 from requests.exceptions import RequestException
 
-from . import io, utils
+from . import io
 
 AutoQueryType = Union[int, str, Sequence, Mapping[str, Any], Path]
 InfoGenType   = Generator[Dict[str, Any], None, None]
