@@ -1,18 +1,18 @@
 # Copyright 2018 miruka
 # This file is part of kana2, licensed under LGPLv3.
 
-from typing import Generator, List, Union
+from typing import Generator, List
 
-from . import facade, filtering, order
+from . import filtering, order
 from .attridict import AttrIndexedDict
-from .clients import DEFAULT, AutoQueryType, Client
 from .post import Post
+from .stream import Stream
 
 
 class Album(AttrIndexedDict, attr="id", sugar_map=("update", "write")):
-    def __init__(self, *posts: Post) -> None:
+    def __init__(self, *stream_args_posts_streams, **stream_kwargs) -> None:
         super().__init__()
-        self.put(*posts)
+        self.put(*stream_args_posts_streams, **stream_kwargs)
 
 
     def __repr__(self) -> str:
@@ -28,14 +28,21 @@ class Album(AttrIndexedDict, attr="id", sugar_map=("update", "write")):
 
 
     # pylint: disable=arguments-differ
-    def put(self, *items: Union[AutoQueryType, Post], prefer: Client = DEFAULT
-           ) -> "Album":
+    def put(self, *stream_args_posts_streams, **stream_kwargs) -> "Album":
+        stream_args = []
 
-        for item in items:
-            if isinstance(item, Post):
-                super().put(item)
+        for arg in stream_args_posts_streams:
+            if isinstance(arg, Post):
+                super().put(arg)
+
+            elif isinstance(arg, Stream):
+                super().put(*list(arg))
+
             else:
-                super().put(*facade.generator(item, prefer=prefer))
+                stream_args.append(arg)
+
+        if stream_args or stream_kwargs:
+            super().put(*list(Stream(*stream_args, **stream_kwargs)))
 
         return self
 

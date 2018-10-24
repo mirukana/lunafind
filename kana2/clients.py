@@ -3,12 +3,9 @@
 
 "Booru clients classes"
 
-import collections
 import math
 import re
-from pathlib import Path
-from typing import (Any, Dict, Generator, Mapping, Optional, Sequence, Tuple,
-                    Union)
+from typing import Any, Dict, Generator, Optional, Sequence, Tuple, Union
 from urllib.parse import parse_qs, urlparse
 
 import pendulum as pend
@@ -22,11 +19,10 @@ from zenlog import log
 from requests.adapters import HTTPAdapter
 from requests.exceptions import RequestException
 
-from . import io
-
-AutoQueryType = Union[int, str, Sequence, Mapping[str, Any], Path]
-InfoGenType   = Generator[Dict[str, Any], None, None]
-PageType      = Union[int, Sequence[int], type(Ellipsis)]
+QueryType         = Union[int, str]
+InfoGenType       = Generator[Dict[str, Any], None, None]
+InfoClientGenType = Generator[Tuple[Dict[str, Any], "Client"], None, None]
+PageType          = Union[int, Sequence[int], type(Ellipsis)]
 
 
 # Missing in Pybooru. Usually Cloudflare saying the target site is down.
@@ -55,8 +51,12 @@ class Client:
     pass
 
 
+class NetClient(Client):
+    pass
+
+
 @dataclass
-class Danbooru:
+class Danbooru(NetClient):
     site_url:  str = "https://danbooru.donmai.us"
     name:      str = "danbooru"
     username:  str = ""
@@ -83,8 +83,6 @@ class Danbooru:
             # pybooru.client is a requests session
             self._pybooru.client.mount(scheme, HTTPAdapter(max_retries=RETRY))
 
-
-    # Network requests:
 
     def api(self, pybooru_method: str, *args, **kwargs):
         try:
@@ -124,8 +122,6 @@ class Danbooru:
 
         return None
 
-
-    # Get post info:
 
     def info_search(self,
                     tags:   str           = "",
@@ -205,40 +201,6 @@ class Danbooru:
         )
 
 
-    @staticmethod
-    def info_file(path) -> InfoGenType:
-        posts = io.load_file(path, json=True)
-
-        if not isinstance(posts, list):  # i.e. one post not wrapped in a list
-            posts = [posts]
-
-        yield from posts
-
-
-    def info_auto(self, *queries: AutoQueryType) -> InfoGenType:
-        for query in queries:
-            if isinstance(query, int):
-                yield from self.info_search(tags=f"id:{query}")
-
-            elif isinstance(query, str) and re.match(r"https?://", query):
-                yield from self.info_url(query)
-
-            elif isinstance(query, str):
-                yield from self.info_search(tags=query)
-
-            elif isinstance(query, collections.Sequence):
-                yield from self.info_search(*query)
-
-            elif isinstance(query, collections.Mapping):
-                yield from self.info_search(**query)
-
-            elif isinstance(query, Path):
-                yield from self.info_file(query)
-
-            else:
-                raise ValueError(f"Invalid query type: {query}")
-
-
     def count_posts(self, tags: str = "") -> int:
         response = self.api("count_posts", tags)
         return response["counts"]["posts"]
@@ -266,17 +228,24 @@ SAFEBOORU = Danbooru("https://safebooru.donmai.us", "safebooru")
 DEFAULT   = SAFEBOORU
 
 
-def info_auto(*queries: AutoQueryType, prefer: Client = DEFAULT
-             ) -> Generator[Tuple[Dict[str, Any], Client], None, None]:
-    for query in queries:
-        client = prefer
+def info_auto(query:  QueryType     = "",
+              pages:  PageType      = 1,
+              limit:  Optional[int] = None,
+              random: bool          = False,
+              raw:    bool          = False,
+              prefer: NetClient     = DEFAULT) -> InfoClientGenType:
 
-        if isinstance(query, str) and re.match(r"https?://", query):
-            parts    = urlparse(query)
-            site_url = f"{parts.scheme}://{parts.netloc}"
+    client = prefer
+    method = client.info_search
+    args   = (query, pages, limit, random, raw)
 
-            if site_url != client.site_url:
-                client = Client(f"{parts.scheme}://{parts.netloc}")
+    if isinstance(query, int):
+        args = (f"id:{query}",)
 
-        for post_info in client.info_auto(query):
-            yield (post_info, client)
+    elif isinstance(query, str) and re.match(r"https?://", query):
+        # TODO: net client subclass keep track
+        method = client.info_url
+        args   = (query,)
+
+    for post_info in method(*args):
+        yield (post_info, client)

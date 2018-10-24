@@ -41,8 +41,8 @@ class Info(JsonResource):
             (self.info["image_width"] * self.info["image_height"]) / 1_000_000
 
         w_h = (self.info["image_width"], self.info["image_height"])
-        new["ratio_int"]   = whratio.as_int(*w_h)
-        new["ratio_float"] = list(whratio.as_float(*w_h))
+        new["ratio_int"]   = list(whratio.as_int(*w_h))
+        new["ratio_float"] = whratio.as_float(*w_h)
 
         if "file_ext" not in self.info:
             log.warn("Broken post: %d, no media info.", self.post_id)

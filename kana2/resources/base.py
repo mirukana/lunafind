@@ -2,6 +2,7 @@
 # This file is part of kana2, licensed under LGPLv3.
 
 import abc
+import inspect
 import os
 import pprint
 import textwrap
@@ -19,20 +20,41 @@ class Resource(abc.ABC):
     """Represent a Post's resource, such as its info, content, or other extras.
 
     Class attributes:
-        title:      Resource name.
-        ext:        Extension for the file to be written.
-        binary:     Whether 'wb' or 'w' mode will be used to write the file.
-        chunk_size: Size of chunks for HTTP transfers.
+        title: Resource name in lowercase.
 
     Attributes:
-        info:   Info resource object corresponding to the post.
-        client: Booru client, object from kana2.clients.
+        info:       Info resource object corresponding to the post.
+        client:     Booru client, object from kana2.clients.
+        ext:        Extension for the file to be written.
+        binary:     Whether 'wb' or 'w' mode will be used to write the file.
+        chunk_size: Size of chunks for HTTP transfers, default is 8 MiB.
     """
 
     subclasses = []
 
     info:   Union["Info", Dict[str, Any]] = field(default_factory=dict)
     client: clients.Client                = field(default=None)
+
+    ext:        Optional[str] = field(default=None,          repr=False)
+    binary:     bool          = field(default=False,         repr=False)
+    chunk_size: int           = field(default=8 * 1024 ** 2, repr=False)
+
+
+    def __init_subclass__(cls, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+
+        if not inspect.isabstract(cls):
+            cls.subclasses.append(cls)
+
+        cls.title: str = cls.__name__.lower()
+
+
+    def __post_init__(self) -> None:
+        assert self.info, "Missing post informations to initialize resource."
+        self.info = self.info or {}  # for pylint - Info *are* subscriptable
+
+        if not self.client:
+            self.client = getattr(self.info, "client", "") or clients.DEFAULT
 
 
     def __repr__(self) -> str:
@@ -45,28 +67,6 @@ class Resource(abc.ABC):
             self.post_id,
             "\\\n%s\n" % textwrap.indent(data, "   ") if lines > 1 else data
         )
-
-
-    def __init_subclass__(cls,
-                          ext:    Optional[str] = None,
-                          binary: bool          = False,
-                          **kwargs) -> None:
-
-        super().__init_subclass__(**kwargs)
-        cls.subclasses.append(cls)
-
-        cls.title:      str           = cls.__name__.lower()
-        cls.ext:        Optional[str] = ext or getattr(cls, "ext", None)
-        cls.binary:     bool          = binary
-        cls.chunk_size: int           = 8 * 10124 ** 2
-
-
-    def __post_init__(self) -> None:
-        assert self.info
-        self.info = self.info or {}  # for pylint - Info *are* subscriptable
-
-        if not self.client:
-            self.client = getattr(self.info, "client", "") or clients.DEFAULT
 
 
     @property
@@ -158,9 +158,10 @@ class Resource(abc.ABC):
         return True
 
 
+    @abc.abstractmethod
     def get_data(self) -> Any:
         "Retrieve and return data from network."
-        return None
+        pass
 
 
     def get_serialized(self) -> Any:
@@ -198,7 +199,12 @@ class Resource(abc.ABC):
         return None
 
 
-class JsonResource(Resource, binary=False, ext="json"):
+class JsonResource(Resource, abc.ABC):
+    @abc.abstractmethod
+    def get_data(self) -> Any:
+        "Retrieve and return data from network."
+        pass
+
     def get_serialized(self) -> str:
         "Return JSONified data to be written to disk."
         if not self.data:

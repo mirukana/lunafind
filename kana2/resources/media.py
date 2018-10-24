@@ -6,12 +6,16 @@ from typing import Generator
 from .base import Resource
 
 
-class Media(Resource, binary=True):
+class Media(Resource):
     "Post image or webm."
 
-    @property
-    def ext(self):
-        return self.info["dl_ext"] if not self.info["is_broken"] else None
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+        self.binary = True
+
+        if not self.info["is_broken"]:
+            self.ext = self.info["dl_ext"]
 
 
     def get_if_post_has_resource(self) -> bool:

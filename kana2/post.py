@@ -1,20 +1,44 @@
 # Copyright 2018 miruka
 # This file is part of kana2, licensed under LGPLv3.
 
+from typing import Optional, List
+
 from cached_property import cached_property
 
+from . import clients
 from .attridict import AttrIndexedDict
 from .resources import Info, Resource
 from .utils import join_comma_and
 
 
+class PostNotFoundError(Exception):
+    def __init__(self, pid: int) -> None:
+        super().__init__(f"Post {pid} not found.")
+
+
 class Post(AttrIndexedDict, attr="title", sugar_map=("update", "write")):
     "Collection of resources belonging to a specific post."
 
-    def __init__(self, *resources: Resource) -> None:
+    def __init__(self,
+                 from_id:   Optional[int]            = None,
+                 prefer:    clients.NetClient        = clients.DEFAULT,
+                 resources: Optional[List[Resource]] = None) -> None:
         super().__init__()
+        resources = list(resources) if resources else []
 
-        passed_info = [r for r in resources if isinstance(r, (dict, Info))]
+        if from_id:
+            try:
+                info, client = next(clients.info_auto(from_id, prefer=prefer))
+            except StopIteration:
+                raise PostNotFoundError(from_id)
+
+            passed_res = [type(r) for r in resources]
+
+            for res in Resource.subclasses:
+                if res not in passed_res:
+                    resources.append(res(info, client))
+
+        passed_info = [r for r in resources if isinstance(r, Info)]
 
         if not passed_info:
             raise TypeError("Info object required to initialize Post.")
@@ -26,7 +50,7 @@ class Post(AttrIndexedDict, attr="title", sugar_map=("update", "write")):
 
     @property
     def id(self) -> int:
-        return self.info["id"]
+        return self["info"]["id"]
 
 
     @cached_property

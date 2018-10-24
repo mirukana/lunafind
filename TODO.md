@@ -1,17 +1,17 @@
 # kana2 TODO list
 
-- Album/Generator|Stream|Factory/Post easy constructors
-  - Generator.filter().write()
-  - write() except parameter, skip if file is present without DL
-
-- Implement all set operators for attridict
-
-- If an http/booru error/ctrl-c happens, still return what was fetched right
-
-- Manage both local .writen() and remote booru posts
+- Get rid of pybooru?
 
 - Some form of asynchronicity
   - requests-threads, requests-futures, grequests, zproc, async/await?
+
+- If an http/booru error/ctrl-c happens, still return what was fetched right
+
+- write() except parameter, skip if file is present without DL
+
+- Implement all set operators for attridict
+
+- Manage both local .writen() and remote booru posts
 
 - Replace zenlog, GPL
 
@@ -31,7 +31,7 @@
     - zplug/emerge-like UI for multiprocess downloading?
     - Config system
     - Auto filter
-      - Use DANBOORU as DEFAULT once this will be done
+      - Use `DANBOORU` as `DEFAULT` once this will be done
     - bash/zsh completitions
 
 - Other programs
