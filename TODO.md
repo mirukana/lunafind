@@ -10,6 +10,8 @@
 - Album/Generator|Stream|Factory/Post easy constructors
   - Generator.filter().write()
 
+- Client → Danbooru
+
 - Implement all set operators for attridict
 
 - If an http/booru error/ctrl-c happens, still return what was fetched right

@@ -51,26 +51,26 @@ RETRY = urllib3.util.Retry(
 )
 
 
-@dataclass
 class Client:
-    site_url: str = ""
-    name:     str = ""
-    username: str = ""
-    api_key:  str = ""
+    pass
+
+
+@dataclass
+class Danbooru:
+    site_url:  str = "https://danbooru.donmai.us"
+    name:      str = "danbooru"
+    username:  str = ""
+    api_key:   str = ""
+
+    default_limit: int = field(default=20, repr=False)
+
+    booru_creation: arrow.Arrow = \
+        field(default=arrow.get("2005-05-24T00:00:00-04:00"), repr=False)
 
     _pybooru: pybooru.Danbooru = field(init=False, default=None, repr=False)
 
-    booru_creation: arrow.Arrow = arrow.get("2005-05-24T00:00:00-04:00")
-    default_limit:  int         = 20
-
 
     def __post_init__(self) -> None:
-        assert self.site_url
-
-        if not self.name:
-            self.name = urlparse(self.site_url).netloc\
-                        .replace(".donmai.us", "").replace("www.", "")
-
         self._pybooru: pybooru.Danbooru = \
             pybooru.Danbooru("", self.site_url, self.username, self.api_key)
 
@@ -257,19 +257,9 @@ class Client:
         return math.log(score, 3) + (post_date - booru_creation) / 35_000
 
 
-class Danbooru(Client):
-    def __init__(self, username: str = "", api_key: str = ""):
-        super().__init__("https://danbooru.donmai.us", "", username, api_key)
-
-
-class Safebooru(Client):
-    def __init__(self, username: str = "", api_key: str = ""):
-        super().__init__("https://safebooru.donmai.us", "", username, api_key)
-
-
-# For use by modules when user doesn't specify his own.
-# TODO: change when autofiltering will be available.
-DEFAULT = Safebooru()
+DANBOORU  = Danbooru()
+SAFEBOORU = Danbooru("https://safebooru.donmai.us", "safebooru")
+DEFAULT   = SAFEBOORU
 
 
 def info_auto(*queries: AutoQueryType, prefer: Client = DEFAULT
