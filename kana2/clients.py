@@ -7,9 +7,11 @@ import collections
 import math
 import re
 from pathlib import Path
-from typing import Any, Dict, Generator, Mapping, Sequence, Tuple, Union
+from typing import (Any, Dict, Generator, Mapping, Optional, Sequence, Tuple,
+                    Union)
 from urllib.parse import parse_qs, urlparse
 
+import arrow
 import pybooru
 import urllib3
 from dataclasses import dataclass, field
@@ -24,6 +26,7 @@ from . import io
 
 AutoQueryType = Union[int, str, Sequence, Mapping[str, Any], Path]
 InfoGenType   = Generator[Dict[str, Any], None, None]
+PageType      = Union[int, Sequence[int], type(Ellipsis)]
 
 
 # Missing in Pybooru. Usually Cloudflare saying the target site is down.
@@ -56,6 +59,10 @@ class Client:
     api_key:  str = ""
 
     _pybooru: pybooru.Danbooru = field(init=False, default=None, repr=False)
+
+    booru_creation: arrow.Arrow = arrow.get("2005-05-24T00:00:00-04:00")
+    default_limit:  int         = 20
+
 
     def __post_init__(self) -> None:
         assert self.site_url
@@ -116,20 +123,24 @@ class Client:
     # Get post info:
 
     def info_search(self,
-                    tags:           str  = "",
-                    pages:       Union[int, Sequence[int], type(Ellipsis)] = 1,
-                    posts_per_page: int  = 200,
-                    random:         bool = False,
-                    raw:            bool = False) -> InfoGenType:
+                    tags:   str           = "",
+                    pages:  PageType      = 1,
+                    limit:  Optional[int] = None,
+                    random: bool          = False,
+                    raw:    bool          = False) -> InfoGenType:
 
         params = {"tags": tags}
 
         # No need for other params if search is just an ID or MD5.
         if re.match(r"^(id|md5):[a-fA-F\d]+$", tags):
+            log.info("Fetching post %s", tags.split(":")[1])
             yield from self.api("post_list", **params)
             return
 
-        params["limit"] = posts_per_page
+        last_page = None
+
+        if limit:
+            params["limit"] = limit
 
         if random is True:
             params["random"] = "true"
@@ -143,11 +154,13 @@ class Client:
 
         elif pages is ...:
             total_posts = self.count_posts(params["tags"])
-            last_page   = math.ceil(total_posts / params["limit"])
-            pages       = range(1, last_page)
+            last_page   = math.ceil(total_posts /
+                                    params.get("limit", self.default_limit))
+            pages       = range(1, last_page + 1)
 
-            log.info("%d pages of %d posts to get for %r.",
-                     last_page, params["limit"], params["tags"])
+            log.info("Found %d posts over %d pages%s",
+                     total_posts, last_page,
+                     "for %r" % params["tags"] if params["tags"] else "")
 
 
         for page in pages:
@@ -156,8 +169,14 @@ class Client:
 
             params["page"] = page
 
-            log.info("Retrieving page - %s",
-                     ", ".join((f"{k}: {v!r}" for k, v in params.items())))
+            log.info(
+                "Fetching posts%s%s%s%s",
+                " for %r"       % params["tags"] if params["tags"] else "",
+                " on page %d%s" % (params["page"],
+                                   f"/{last_page}" if last_page else ""),
+                "  [random]" if "random" in params else "",
+                "  [raw]"    if "raw"    in params else ""
+            )
 
             yield from self.api("post_list", **params)
 
@@ -170,15 +189,14 @@ class Client:
         except AttributeError:  # Not a direct post URL
             pass
 
-        params = parse_qs(urlparse(url).query)
-        # No limit specified in url = 20 results, not 200;
-        # we want to get exactly what the user sees on his browser.
-        # limit parameter is extracted as a string in a list, don't know why.
-        params["limit"] = int(params.get("limit")[0]) or 20
+        parsed = parse_qs(urlparse(url).query)
 
         yield from self.info_search(
-            params.get("tags", ""), params.get("page", 1), params["limit"],
-            params.get("random", False), params.get("raw", False)
+            tags   = parsed.get("tags",      [""]   )[-1],
+            random = parsed.get("random",    [False])[-1],
+            raw    = parsed.get("raw",       [False])[-1],
+            pages  = int(parsed.get("page",  [1]    )[-1]),
+            limit  = int(parsed.get("limit", [self.default_limit])[-1])
         )
 
 
@@ -219,6 +237,24 @@ class Client:
     def count_posts(self, tags: str = "") -> int:
         response = self.api("count_posts", tags)
         return response["counts"]["posts"]
+
+
+    def get_post_rank(self, post: "Post") -> int:
+        score = post["info"]["score"]
+
+        if score < 1:
+            return score
+
+        post_date = arrow.get(post["info"]["created_at"])
+
+        if (post_date - arrow.now().shift(days=-2 - 1)).days <= 0:
+            # "Discard" posts older than 2 days
+            return -1
+
+        post_date      = post_date.timestamp
+        booru_creation = self.booru_creation.timestamp
+
+        return math.log(score, 3) + (post_date - booru_creation) / 35_000
 
 
 class Danbooru(Client):

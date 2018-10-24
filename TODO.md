@@ -1,9 +1,14 @@
 # kana2 TODO list
 
-- Finish implementing filter meta-tags
-  - Order
+- Verify dl\_size ugoira serialization
+
+- Missing filter/order stuff:
+  - Order: artcomm and custom
   - kana2 tags: site, fetch\_date, is\_broken
   - Danbooru hard stuff that needs users/etc info
+
+- Album/Generator|Stream|Factory/Post easy constructors
+  - Generator.filter().write()
 
 - Implement all set operators for attridict
 
@@ -18,6 +23,8 @@
 - Replace zenlog, GPL
 
 - Thumbnails?
+
+- Tag aliases?
 
 - Do something about parent/child posts
 

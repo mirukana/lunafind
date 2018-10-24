@@ -60,6 +60,7 @@ class AttrIndexedDict(collections.UserDict, abc.ABC):
             self.data[getattr(item, self.attr)] = item
         return self
 
+    # album << item, item >> album
     __lshift__ = __rrshift__ = lambda self, item: self.put(item)
 
 

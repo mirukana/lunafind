@@ -28,10 +28,9 @@ class Info(JsonResource):
     def enhance(self) -> "Info":
         new = {"is_broken": False}
 
-        new["site"]      = self.client.name
-        new["site_url"]  = self.client.site_url
-
-        new["fetch_date"] = arrow.now().format("YYYY-MM-DDTHH:mm:ss.SSSZZ")
+        new["site"]       = self.client.name
+        new["site_url"]   = self.client.site_url
+        new["fetched_at"] = arrow.now().format("YYYY-MM-DDTHH:mm:ss.SSSZZ")
 
         try:
             new["children_num"] = len(self.info["children_ids"].split())

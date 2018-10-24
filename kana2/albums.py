@@ -3,7 +3,7 @@
 
 from typing import Generator, List, Union
 
-from . import facade, filtering
+from . import facade, filtering, order
 from .attridict import AttrIndexedDict
 from .clients import DEFAULT, AutoQueryType, Client
 from .post import Post
@@ -40,11 +40,15 @@ class Album(AttrIndexedDict, attr="id", sugar_map=("update", "write")):
         return self
 
 
-    def find(self, search: str) -> "Album":
+    def filter(self, search: str) -> "Album":
         return Album(*self.find_lazy(search))
 
-    def find_lazy(self, search: str) -> Generator[Post, None, None]:
+    def filter_lazy(self, search: str) -> Generator[Post, None, None]:
         yield from filtering.search(self.list, search)
 
-    __truediv__  = lambda self, search: self.find(search)
-    __floordiv__ = lambda self, search: self.find_lazy(search)
+    def order(self, by: str) -> "Album":
+        return Album(*order.sort(self.list, by))
+
+    __truediv__  = lambda self, search: self.find(search)       # /
+    __floordiv__ = lambda self, search: self.find_lazy(search)  # //
+    __mod__      = lambda self, by:     self.order(by)          # %

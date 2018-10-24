@@ -50,8 +50,8 @@ def _source_match(post: Post, value: str) -> bool:
 
     if value.startswith("pixiv/"):
         # If no / at the end, will match artists *starting with* value.
-        return re.match(rf".*pixiv(\.net/img.*(/img)?)?/{value[6:]}.*", info_v,
-                        re.IGNORECASE)
+        return re.search(rf"pixiv(\.net/img.*(/img)?)?/{value[6:]}", info_v,
+                         re.IGNORECASE)
 
     # Other "source:..." on Danbooru: "match anything that starts with ...".
     # * in value = .* regex (other regexes get escaped).
@@ -75,9 +75,9 @@ def _tag_present(post: Post, tag: str) -> bool:
     # Non-standard: support wildcards in "-tag" or "~tag".
     # "*" in tag → ".*?" regex, escape other regex/special chars
     # wrap strings in spaces to match tags even if they're at start/end.
-    return re.match(r" %s " % re.escape(tag).replace(r"\*", r".*?"),
-                    r" %s " % post.info["tag_string"],
-                    re.IGNORECASE)
+    return re.search(r" %s " % re.escape(tag).replace(r"\*", r".*?"),
+                     r" %s " % post.info["tag_string"],
+                     re.IGNORECASE)
 
 
 def _meta_num_match(post:Post, tag: str, value: str) -> bool:
@@ -199,30 +199,3 @@ def search(posts: Sequence[Post], terms: str) -> Generator[Post, None, None]:
     for post in posts:
         if _filter_post(post, *term_args):
             yield post
-
-
-# CHOICES = {
-    # "order": {
-        # ("id", "id_asc"),
-        # "id_desc",
-        # ("score", "score_desc"),
-        # "score_asc",
-        # "favcount",
-        # "favcount_asc",
-        # ("change", "change_desc"),
-        # "change_asc",
-        # ("comment", "comm"),
-        # ("comment_asc", "comm_asc"),
-        # "note",
-        # "note_asc",
-        # "artcomm",
-        # ("mpixels", "mpixels_desc"),
-        # "mpixels_asc",
-        # "portrait",
-        # "landscape",
-        # ("filesize", "filesize_desc"),
-        # "filesize_asc",
-        # "rank",
-        # "random"
-    # }
-# }
