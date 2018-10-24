@@ -137,7 +137,7 @@ class Resource(abc.ABC):
         return self.get_path()
 
 
-    def write(self, overwrite=False) -> "Resource":
+    def write(self, overwrite: bool = False) -> "Resource":
         "Write serialized resource data to disk."
         if self.msg_writing:
             log.info(self.msg_writing)
@@ -200,6 +200,11 @@ class Resource(abc.ABC):
 
 
 class JsonResource(Resource, abc.ABC):
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self.ext = "json"
+
+
     @abc.abstractmethod
     def get_data(self) -> Any:
         "Retrieve and return data from network."

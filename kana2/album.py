@@ -31,30 +31,30 @@ class Album(AttrIndexedDict, attr="id", sugar_map=("update", "write")):
         return list(self.values())
 
 
+    def _put_post(self, post: Post) -> None:
+        try:
+            super().put(post)
+            self._added += 1
+        except StopIteration:
+            raise
+        except Exception:
+            traceback.print_exc()
+            log.error("Unexpected error while handling post %d, "
+                      "trying to recover...", post.id)
+
     def _put_stream(self, stream: Stream) -> None:
-        self._added = 0
-
         for post in stream:
-            try:
-                super().put(post)
-                self._added += 1
-            except StopIteration:
-                raise
-            except Exception:
-                traceback.print_exc()
-                log.error("Unexpected error, trying to recover...")
-
+            self._put_post(post)
 
     # pylint: disable=arguments-differ
     def put(self, *stream_args_posts_streams, **stream_kwargs) -> "Album":
         stream_args = []
-        self._added  = 0
+        self._added = 0
 
         try:
             for arg in stream_args_posts_streams:
                 if isinstance(arg, Post):
-                    super().put(arg)
-                    self._added += 1
+                    self._put_post(arg)
 
                 elif isinstance(arg, Stream):
                     self._put_stream(arg)

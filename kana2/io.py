@@ -7,6 +7,7 @@ import os
 from types import GeneratorType
 
 import simplejson
+from atomicfile import AtomicFile
 from zenlog import log
 
 
@@ -17,7 +18,7 @@ def write(content, path, binary=False, overwrite=False):
 
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
-    with open(path, "wb" if binary else "w") as out_file:
+    with AtomicFile(path, "wb" if binary else "w") as out_file:
         if isinstance(content, GeneratorType):
             for chunk in content:
                 out_file.write(chunk)

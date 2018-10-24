@@ -27,6 +27,8 @@ class Post(AttrIndexedDict, attr="title", sugar_map=("update", "write")):
         resources = list(resources) if resources else []
 
         if from_id:
+            assert isinstance(from_id, int)
+
             try:
                 info, client = next(clients.info_auto(from_id, prefer=prefer))
             except StopIteration:
