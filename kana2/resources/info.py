@@ -3,7 +3,7 @@
 
 from typing import Any, Dict, Optional
 
-import arrow
+import pendulum as pend
 from lazy_object_proxy import Proxy as LazyProxy
 from zenlog import log
 
@@ -30,7 +30,7 @@ class Info(JsonResource):
 
         new["site"]       = self.client.name
         new["site_url"]   = self.client.site_url
-        new["fetched_at"] = arrow.now().format("YYYY-MM-DDTHH:mm:ss.SSSZZ")
+        new["fetched_at"] = pend.now().format(self.client.date_format)
 
         try:
             new["children_num"] = len(self.info["children_ids"].split())

@@ -5,7 +5,7 @@ import re
 import shlex
 from typing import Generator, Sequence, Set
 
-import arrow
+import pendulum as pend
 
 from . import utils
 from .post import Post
@@ -25,8 +25,7 @@ META_NUM_TAGS = {
     "chartags": ["tag_count_character", int],
     "copytags": ["tag_count_copyright", int],
     "metatags": ["tag_count_meta",      int],
-    "date":     ["created_at",
-                 lambda v: arrow.get(v).replace(tzinfo="local").to("UTC-4")],
+    "date":     ["created_at",          lambda v: pend.parse(v, tz="local")],
     # Non-standard addition: supports int:int *and* float ratio.
     "ratio":    ["ratio_float", utils.ratio2float],
     # Non-standard addition: supports microseconds and more units aliases.
@@ -81,8 +80,18 @@ def _tag_present(post: Post, tag: str) -> bool:
 
 
 def _meta_num_match(post:Post, tag: str, value: str) -> bool:
+    def convert(value):
+        value = META_NUM_TAGS[tag][1]
+        if isinstance(value, pend.DateTime):
+            return value.in_tz(post["info"].client.timezone)
+        return value
+
+    info_v      = convert(post.info[META_NUM_TAGS[tag][0]])
+    eq_fuzzy_20 = "eq_fuzzy_20" in META_NUM_TAGS[tag]
+    reverse_cmp = "reverse_cmp" in META_NUM_TAGS[tag]
+
     def compare(convert, info_v, value, eq_fuzzy_20, reverse_cmp) -> bool:
-        # Non-standard: any/none supported for all meta numeric tags.
+        # Non-standard: none/any supported for all meta numeric tags.
         if value == "none":
             return bool(not info_v)
 
@@ -133,11 +142,6 @@ def _meta_num_match(post:Post, tag: str, value: str) -> bool:
             pass
 
         raise ValueError(f"Invalid search term value: '{tag}:{value}'.")
-
-    convert     = META_NUM_TAGS[tag][1]
-    info_v      = convert(post.info[META_NUM_TAGS[tag][0]])
-    eq_fuzzy_20 = "eq_fuzzy_20" in META_NUM_TAGS[tag]
-    reverse_cmp = "reverse_cmp" in META_NUM_TAGS[tag]
 
     result = compare(convert, info_v, value, eq_fuzzy_20, reverse_cmp)
     return result if not reverse_cmp else not result

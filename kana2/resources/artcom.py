@@ -3,7 +3,7 @@
 
 from typing import Any, Dict, List
 
-import arrow
+import pendulum as pend
 
 from .base import JsonResource
 
@@ -27,7 +27,7 @@ class Artcom(JsonResource):
 
         # Posts made in last 24h may have not been auto-tagged yet.
         self.created_last_24h = (
-            arrow.get(self.info["created_at"]) >= arrow.now().shift(hours=-24)
+            pend.parse(self.info["created_at"]) >= pend.yesterday()
         )
 
         if self.has_artcom_tag:

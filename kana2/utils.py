@@ -5,7 +5,7 @@
 
 from typing import Union
 
-import arrow
+import pendulum as pend
 import simplejson
 
 
@@ -48,7 +48,7 @@ def ratio2float(value: Union[int, float, str]) -> float:
     return float(value)
 
 
-AGE_TO_ARROW_SHIFT_ARG = {
+AGE_UNIT_TO_SUBTRACT_ARG = {
     ("Y", "y", "year"):                 "years",
     ("M", "mo", "month"):               "months",
     ("w", "week"):                      "weeks",
@@ -59,17 +59,17 @@ AGE_TO_ARROW_SHIFT_ARG = {
     ("ms", "microsec", "microsecond"):  "microseconds"
 }
 
-def age2date(age: str) -> arrow.Arrow:
+def age2date(age: str) -> pend.DateTime:
     try:
-        return arrow.get(age)  # If this is already a normal date
-    except arrow.parser.ParserError:
+        return pend.parse(age)  # If this is already a normal date
+    except pend.parsing.exceptions.ParserError:
         pass
 
     user_unit  = age.lstrip("0123456789.")
-    value      = -abs(float(age.replace(user_unit, "")))
+    value      = abs(float(age.replace(user_unit, "")))
     found_unit = None
 
-    for units, shift_unit in AGE_TO_ARROW_SHIFT_ARG.items():
+    for units, shift_unit in AGE_UNIT_TO_SUBTRACT_ARG.items():
         for unit in units:
             if user_unit in (unit, f"{unit}s"):
                 found_unit = shift_unit
@@ -77,7 +77,7 @@ def age2date(age: str) -> arrow.Arrow:
     if not found_unit:
         raise ValueError(f"Invalid age unit: {user_unit!r}")
 
-    return arrow.now().shift(**{found_unit: value}).to("UTC-4")
+    return pend.now().subtract(**{found_unit: value})
 
 
 JSONIFY_DEFAULT_PARAMS = {"sort_keys": True, "ensure_ascii": False}

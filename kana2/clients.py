@@ -11,7 +11,7 @@ from typing import (Any, Dict, Generator, Mapping, Optional, Sequence, Tuple,
                     Union)
 from urllib.parse import parse_qs, urlparse
 
-import arrow
+import pendulum as pend
 import pybooru
 import urllib3
 from dataclasses import dataclass, field
@@ -64,13 +64,18 @@ class Danbooru:
 
     default_limit: int = field(default=20, repr=False)
 
-    booru_creation: arrow.Arrow = \
-        field(default=arrow.get("2005-05-24T00:00:00-04:00"), repr=False)
+    date_format: str = field(default="YYYY-MM-DDTHH:mm:ss.SSSZ", repr=False)
+    timezone:    str = field(default="US/Eastern",               repr=False)
+
+    creation: pend.DateTime = field(default=None, repr=False)
 
     _pybooru: pybooru.Danbooru = field(init=False, default=None, repr=False)
 
 
     def __post_init__(self) -> None:
+        if not self.creation:
+            self.creation = pend.datetime(2005, 5, 24, tz=self.timezone)
+
         self._pybooru: pybooru.Danbooru = \
             pybooru.Danbooru("", self.site_url, self.username, self.api_key)
 
@@ -245,16 +250,15 @@ class Danbooru:
         if score < 1:
             return score
 
-        post_date = arrow.get(post["info"]["created_at"])
+        post_date = pend.parse(post["info"]["created_at"])
 
-        if (post_date - arrow.now().shift(days=-2 - 1)).days <= 0:
-            # "Discard" posts older than 2 days
+        if post_date > pend.now().subtract(days=2):
             return -1
 
-        post_date      = post_date.timestamp
-        booru_creation = self.booru_creation.timestamp
+        post_date = post_date.timestamp()
+        creation  = self.creation.timestamp()
 
-        return math.log(score, 3) + (post_date - booru_creation) / 35_000
+        return math.log(score, 3) + (post_date - creation) / 35_000
 
 
 DANBOORU  = Danbooru()

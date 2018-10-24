@@ -4,7 +4,7 @@
 import random
 from typing import List, Sequence
 
-import arrow
+import pendulum as pend
 
 from .post import Post
 
@@ -70,6 +70,6 @@ def sort(posts: Sequence[Post], by: str) -> List[Post]:
 
     def sort_key(post: Post) -> int:
         key = post["info"][in_dict[by_val][1]]
-        return arrow.get(key) if in_dict == ORDER_DATE else key
+        return pend.parse(key) if in_dict == ORDER_DATE else key
 
     return sorted(posts, key=sort_key, reverse=by_full.startswith("desc_"))

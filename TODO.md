@@ -1,7 +1,5 @@
 # kana2 TODO list
 
-- Verify dl\_size ugoira serialization
-
 - Missing filter/order stuff:
   - Order: artcomm and custom
   - kana2 tags: site, fetch\_date, is\_broken
