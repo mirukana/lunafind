@@ -17,6 +17,7 @@ from pybooru.exceptions import PybooruError, PybooruHTTPError
 from pybooru.resources import HTTP_STATUS_CODE as BOORU_CODES
 from zenlog import log
 
+import requests
 from requests.adapters import HTTPAdapter
 from requests.exceptions import RequestException
 
@@ -57,8 +58,35 @@ NET_CLIENTS_ALIVE = []
 
 @dataclass
 class NetClient(Client, abc.ABC):
+    _session: requests.Session = field(init=False, default=None, repr=False)
+
+
     def __post_init__(self) -> None:
         NET_CLIENTS_ALIVE.append(self)
+
+        self._session = requests.Session()
+        for scheme in ("http://", "https://"):
+            self._session.mount(scheme, HTTPAdapter(max_retries=RETRY))
+
+
+    def http(self, http_method: str, url: str, **request_method_kwargs):
+        try:
+            result = self._session.request(
+                http_method, url, timeout=6.5, **request_method_kwargs
+            )
+        except RequestException as err:
+            log.error(str(err))
+
+        code                  = result.status_code
+        short_desc, long_desc = BOORU_CODES[code]
+
+        if code in BOORU_CODE_GROUPS["OK"]:
+            return result
+
+        log.error("%s: %s, %s - URL: %s",
+                  code, short_desc, long_desc, result.url)
+
+        return None
 
 
 @dataclass
@@ -84,7 +112,7 @@ class Danbooru(NetClient):
         if not self.creation:
             self.creation = pend.datetime(2005, 5, 24, tz=self.timezone)
 
-        self._pybooru: pybooru.Danbooru = \
+        self._pybooru = \
             pybooru.Danbooru("", self.site_url, self.username, self.api_key)
 
         for scheme in ("http://", "https://"):
@@ -109,26 +137,6 @@ class Danbooru(NetClient):
 
         # Returning [] instead of None to not crash because of `yield from`s.
         return []
-
-
-    def http(self, http_method: str, url: str, **request_method_kwargs):
-        try:
-            result = self._pybooru.client.request(
-                http_method, url, timeout=6.5, **request_method_kwargs
-            )
-        except RequestException as err:
-            log.error(str(err))
-
-        code                  = result.status_code
-        short_desc, long_desc = BOORU_CODES[code]
-
-        if code in BOORU_CODE_GROUPS["OK"]:
-            return result
-
-        log.error("%s: %s, %s - URL: %s",
-                  code, short_desc, long_desc, result.url)
-
-        return None
 
 
     def info_search(self,
@@ -169,7 +177,7 @@ class Danbooru(NetClient):
 
             log.info("Found %d posts over %d pages%s",
                      total_posts, last_page,
-                     "for %r" % params["tags"] if params["tags"] else "")
+                     " for %r" % params["tags"] if params["tags"] else "")
 
 
         for page in pages:
