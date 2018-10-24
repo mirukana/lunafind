@@ -8,6 +8,8 @@ import functools
 from multiprocessing.pool import ThreadPool
 from typing import Tuple
 
+from zenlog import log
+
 from . import MAX_TOTAL_THREADS_SEMAPHORE
 
 
@@ -46,7 +48,16 @@ class AttrIndexedDict(collections.UserDict, abc.ABC):
 
         if _threaded:
             pool = ThreadPool(processes=8)
-            pool.map(work, self.data.values())
+
+            try:
+                pool.map(work, self.data.values())
+            except KeyboardInterrupt:
+                log.warn("CTRL-C caught, finishing current tasks...")
+                pool.terminate()
+            else:
+                pool.close()
+
+            pool.join()
             return self
 
         for item in self.data.values():
