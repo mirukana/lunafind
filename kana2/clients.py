@@ -3,6 +3,7 @@
 
 "Booru clients classes"
 
+import abc
 import math
 import re
 from typing import Any, Dict, Generator, Optional, Sequence, Tuple, Union
@@ -47,12 +48,17 @@ RETRY = urllib3.util.Retry(
 )
 
 
-class Client:
+class Client(abc.ABC):
     pass
 
 
-class NetClient(Client):
-    pass
+NET_CLIENTS_ALIVE = []
+
+
+@dataclass
+class NetClient(Client, abc.ABC):
+    def __post_init__(self) -> None:
+        NET_CLIENTS_ALIVE.append(self)
 
 
 @dataclass
@@ -73,6 +79,8 @@ class Danbooru(NetClient):
 
 
     def __post_init__(self) -> None:
+        super().__post_init__()
+
         if not self.creation:
             self.creation = pend.datetime(2005, 5, 24, tz=self.timezone)
 
@@ -243,7 +251,22 @@ def info_auto(query:  QueryType     = "",
         args = (f"id:{query}",)
 
     elif isinstance(query, str) and re.match(r"https?://", query):
-        # TODO: net client subclass keep track
+        for cli in NET_CLIENTS_ALIVE:
+            site = cli.site_url
+
+            if query.startswith(site):
+                client = cli
+                break
+
+            if query.startswith("http:") and site.startswith("https:"):
+                query_https = query.replace("http:", "https:")
+                if query_https.startswith(site):
+                    client = cli
+                    query  = query_https
+                    break
+        else:
+            raise RuntimeError(f"No client to work with site {query!r}.")
+
         method = client.info_url
         args   = (query,)
 
