@@ -3,12 +3,18 @@
 
 import re
 import shlex
-from typing import Generator, Sequence, Set
+from typing import Generator, Optional, Sequence, Set
 
 import pendulum as pend
 
 from . import utils
 from .post import Post
+
+
+def parse_date(value) -> pend.DateTime:
+    # tz="local" only applies if there's no tz in the value
+    return pend.parse(value, tz="local")
+
 
 META_NUM_TAGS = {
     "width":    ["image_width",         int],
@@ -18,14 +24,13 @@ META_NUM_TAGS = {
     "favcount": ["fav_count",           int],
     "id":       ["id",                  int],
     "pixiv":    ["pixiv_id",            int],
-    "pixiv_id": ["pixiv_id",            int],
     "tagcount": ["tag_count",           int],
     "gentags":  ["tag_count_general",   int],
     "arttags":  ["tag_count_artist",    int],
     "chartags": ["tag_count_character", int],
     "copytags": ["tag_count_copyright", int],
     "metatags": ["tag_count_meta",      int],
-    "date":     ["created_at",          lambda v: pend.parse(v, tz="local")],
+    "date":     ["created_at",          parse_date],
     # Non-standard addition: supports int:int *and* float ratio.
     "ratio":    ["ratio_float", utils.ratio2float],
     # Non-standard addition: supports microseconds and more units aliases.
@@ -36,13 +41,16 @@ META_NUM_TAGS = {
     "child": ["children_num", int],
     # Non-standard addition: supports units other than b/KB/MB
     "filesize": ["file_size", utils.human2bytes, "eq_fuzzy_20"],
+
     # Non-standard tags:
-    "dlsize": ["dl_size", utils.human2bytes]
+    "dlsize":   ["dl_size",    utils.human2bytes],
+    "fetch":    ["fetched_at", parse_date],
+    "fetchage": ["fetched_at", utils.age2date, "reverse_cmp"],
 }
 
 
-def _source_match(post: Post, value: str) -> bool:
-    info_v = post.info["source"]
+def _source_match(post: Post, value: str, key: str = "source") -> bool:
+    info_v = post.info[key]
 
     if value == "none":
         return not info_v
@@ -58,15 +66,25 @@ def _source_match(post: Post, value: str) -> bool:
                     re.IGNORECASE)
 
 
+def _broken_match(post: Post, value: str) -> bool:
+    assert value in ("any", "none")
+    broken = post["info"]["is_broken"]
+    return broken if value == "any" else not broken
+
+
 META_STR_TAGS_FUNCS = {
-    "md5":        lambda p, v: p.info["md5"]          == v,
-    "filetype":   lambda p, v: p.info.get("file_ext") == v,
-    "dltype":     lambda p, v: p.info.get("dl_ext")   == v,  # non-standard
-    "rating":     lambda p, v: p.info["rating"].startswith(v),
-    "locked":     lambda p, v: p.info[f"is_{v}_locked"],
-    "status":     lambda p, v: v in ("any", "all") or p.info[f"is_{v}"],
-    "source":     _source_match,
-    "order":      None,
+    "md5":      lambda p, v: p["info"]["md5"]          == v,
+    "filetype": lambda p, v: p["info"].get("file_ext") == v,
+    "dltype":   lambda p, v: p["info"].get("dl_ext")   == v,  # non-standard
+    "rating":   lambda p, v: p["info"]["rating"].startswith(v),
+    "locked":   lambda p, v: p["info"][f"is_{v}_locked"],
+    "status":   lambda p, v: v in ("any", "all") or p.info[f"is_{v}"],
+    "source":   _source_match,
+
+    # Non-standard tags:
+    "broken":  _broken_match,
+    "booru":   lambda p, v: _source_match(p, v, key="booru"),
+    "boorurl": lambda p, v: _source_match(p, v, key="booru_url"),
 }
 
 
@@ -80,12 +98,7 @@ def _tag_present(post: Post, tag: str) -> bool:
 
 
 def _meta_num_match(post:Post, tag: str, value: str) -> bool:
-    def convert(value):
-        value = META_NUM_TAGS[tag][1]
-        if isinstance(value, pend.DateTime):
-            return value.in_tz(post["info"].client.timezone)
-        return value
-
+    convert     = META_NUM_TAGS[tag][1]
     info_v      = convert(post.info[META_NUM_TAGS[tag][0]])
     eq_fuzzy_20 = "eq_fuzzy_20" in META_NUM_TAGS[tag]
     reverse_cmp = "reverse_cmp" in META_NUM_TAGS[tag]
@@ -189,7 +202,9 @@ def _filter_post(post:           Post,
 
 
 def search(posts: Sequence[Post], terms: str) -> Generator[Post, None, None]:
-    def raw_tag(term: str) -> str:
+    def raw_tag(term: str) -> Optional[str]:
+        if not ":" in term:
+            return None
         tag = term.split(":")[0]
         return tag[1:] if tag[0] in ("-", "~") else tag
 

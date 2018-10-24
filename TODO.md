@@ -1,10 +1,5 @@
 # kana2 TODO list
 
-- Missing filter/order stuff:
-  - Order: artcomm and custom
-  - kana2 tags: site, fetch\_date, is\_broken
-  - Danbooru hard stuff that needs users/etc info
-
 - Album/Generator|Stream|Factory/Post easy constructors
   - Generator.filter().write()
   - write() except parameter, skip if file is present without DL
@@ -25,6 +20,9 @@
 - Tag aliases?
 - Do something about parent/child posts
 - Integrate Decensooru?
+
+- Order: artcomm and custom
+- Filter: Danbooru hard stuff that needs users/etc info
 
 - D O C S T R I N G S
     - Generate docs and manpages with Sphinx

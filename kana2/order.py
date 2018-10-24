@@ -33,7 +33,10 @@ ORDER_DATE = {
     "comm":           ("desc", "last_commented_at"),
     "comment_bumped": ("desc", "last_commented_bumped_at"),
     "note":           ("desc", "last_noted_at"),
-    "fetched":        ("desc", "fetched_at"),  # non-standard
+
+    # Non-standard:
+    "created": ("desc", "created_at"),
+    "fetched": ("desc", "fetched_at"),
 }
 
 ORDER_FUNCS = {

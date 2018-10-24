@@ -28,8 +28,8 @@ class Info(JsonResource):
     def enhance(self) -> "Info":
         new = {"is_broken": False}
 
-        new["site"]       = self.client.name
-        new["site_url"]   = self.client.site_url
+        new["booru"]      = self.client.name
+        new["booru_url"]  = self.client.site_url
         new["fetched_at"] = pend.now().format(self.client.date_format)
 
         try:

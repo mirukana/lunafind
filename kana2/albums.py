@@ -41,7 +41,7 @@ class Album(AttrIndexedDict, attr="id", sugar_map=("update", "write")):
 
 
     def filter(self, search: str) -> "Album":
-        return Album(*self.find_lazy(search))
+        return Album(*self.filter_lazy(search))
 
     def filter_lazy(self, search: str) -> Generator[Post, None, None]:
         yield from filtering.search(self.list, search)
@@ -49,6 +49,6 @@ class Album(AttrIndexedDict, attr="id", sugar_map=("update", "write")):
     def order(self, by: str) -> "Album":
         return Album(*order.sort(self.list, by))
 
-    __truediv__  = lambda self, search: self.find(search)       # /
-    __floordiv__ = lambda self, search: self.find_lazy(search)  # //
-    __mod__      = lambda self, by:     self.order(by)          # %
+    __truediv__  = lambda self, search: self.filter(search)       # /
+    __floordiv__ = lambda self, search: self.filter_lazy(search)  # //
+    __mod__      = lambda self, by:     self.order(by)            # %
