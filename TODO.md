@@ -1,6 +1,4 @@
-# kana2 TODO list
-
-- write() except parameter, skip if file is present without DL
+# kana2 TODO and idea list
 
 - Implement all set operators for attridict
 
