@@ -4,22 +4,25 @@
 import abc
 import collections
 import copy
+import functools
+from multiprocessing.pool import ThreadPool
 from typing import Tuple
 
-from zenlog import log
+from . import MAX_TOTAL_THREADS_SEMAPHORE
 
 
 class AttrIndexedDict(collections.UserDict, abc.ABC):
     "Dictionary where items are indexed by a specific attribute they possess."
 
-    def __init_subclass__(cls, attr: str, sugar_map: Tuple[str], **kwargs
-                         ) -> None:
+    def __init_subclass__(cls,
+                          attr:         str,
+                          map_partials: Tuple[str] = (),
+                          **kwargs) -> None:
         super().__init_subclass__(**kwargs)
         cls.attr = attr
 
-        for method in sugar_map:
-            func = lambda self, m=method, *a, **kw: cls.map(self, m, *a, **kw)
-            setattr(cls, method, func)
+        for method in map_partials:
+            setattr(cls, method, functools.partialmethod(cls.map, method))
 
 
     def __setitem__(self, key, value) -> None:
@@ -34,19 +37,21 @@ class AttrIndexedDict(collections.UserDict, abc.ABC):
             raise AttributeError(f"No attribute or dict key named {name!r}.")
 
 
-    def map(self, method: str, *args, _quiet: bool = True, **kwargs
+    def map(self, method: str, *args, _threaded: bool = True, **kwargs
            ) -> "AttrIndexedDict":
-        "Run a method of all stored items with optional args and kwargs."
-        num   = 1
-        total = len(self.data)
+        "For all stored items, run a method they possess."
 
-        for k, item in self.data.items():
-            if not _quiet:
-                log.info("Running %s() on %r (%d/%d)", method, k, num, total)
-
+        def work(item) -> None:
             getattr(item, method)(*args, **kwargs)
-            num += 1
 
+        if _threaded:
+            pool = ThreadPool(processes=8)
+            pool.map(work, self.data.values())
+            return self
+
+        for item in self.data.values():
+            with MAX_TOTAL_THREADS_SEMAPHORE:
+                work(item)
         return self
 
 

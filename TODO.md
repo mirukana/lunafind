@@ -1,8 +1,5 @@
 # kana2 TODO list
 
-- Some form of asynchronicity
-  - requests-threads, requests-futures, grequests, zproc, async/await?
-
 - write() except parameter, skip if file is present without DL
 
 - Implement all set operators for attridict

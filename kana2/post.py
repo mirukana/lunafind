@@ -16,7 +16,7 @@ class PostNotFoundError(Exception):
         super().__init__(f"Post {pid} not found.")
 
 
-class Post(AttrIndexedDict, attr="title", sugar_map=("update", "write")):
+class Post(AttrIndexedDict, attr="title", map_partials=("update", "write")):
     "Collection of resources belonging to a specific post."
 
     def __init__(self,
@@ -27,8 +27,6 @@ class Post(AttrIndexedDict, attr="title", sugar_map=("update", "write")):
         resources = list(resources) if resources else []
 
         if from_id:
-            assert isinstance(from_id, int)
-
             try:
                 info, client = next(clients.info_auto(from_id, prefer=prefer))
             except StopIteration:

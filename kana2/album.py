@@ -12,7 +12,7 @@ from .post import Post
 from .stream import Stream
 
 
-class Album(AttrIndexedDict, attr="id", sugar_map=("update", "write")):
+class Album(AttrIndexedDict, attr="id", map_partials=("update", "write")):
     def __init__(self, *stream_args_posts_streams, **stream_kwargs) -> None:
         super().__init__()
         self._added: int = 0
