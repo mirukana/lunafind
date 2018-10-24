@@ -51,7 +51,7 @@ def ratio2float(value: Union[int, float, str]) -> float:
 AGE_TO_ARROW_SHIFT_ARG = {
     ("Y", "y", "year"):                 "years",
     ("M", "mo", "month"):               "months",
-    ("w", "week"):                       "weeks",
+    ("w", "week"):                      "weeks",
     ("d", "day"):                       "days",
     ("h", "hour"):                      "hours",
     ("m", "mi", "mn", "min", "minute"): "minutes",

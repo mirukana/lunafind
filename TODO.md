@@ -9,8 +9,7 @@
 
 - Album/Generator|Stream|Factory/Post easy constructors
   - Generator.filter().write()
-
-- Client → Danbooru
+  - write() except parameter, skip if file is present without DL
 
 - Implement all set operators for attridict
 
@@ -25,13 +24,8 @@
 - Replace zenlog, GPL
 
 - Thumbnails?
-
 - Tag aliases?
-
 - Do something about parent/child posts
-
-- When searching for >2 tags, automatically use filtering to transparently
-  work around limits?
 - Integrate Decensooru?
 
 - D O C S T R I N G S
@@ -40,12 +34,11 @@
 
 - CLI script
     - zplug/emerge-like UI for multiprocess downloading?
-    - Use [doctopt](https://docopt.readthedocs.io/en/latest/)
     - Config system
     - Auto filter
-    - Ignore and error lists
+      - Use DANBOORU as DEFAULT once this will be done
     - bash/zsh completitions
 
 - Other programs
-    - Tag subs management
+    - Tag subs management with already fetched list
     - Tag aliases and relations

@@ -75,3 +75,8 @@ class Info(JsonResource):
 
         self.info.update(new)
         return self
+
+
+    def get_serialized(self) -> str:
+        self.data["dl_size"] = int(self.data["dl_size"])  # Unproxify
+        return super().get_serialized()
