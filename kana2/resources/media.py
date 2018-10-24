@@ -3,6 +3,7 @@
 
 from typing import Generator
 
+from .. import utils
 from .base import Resource
 
 
@@ -33,7 +34,9 @@ class Media(Resource):
 
     @property
     def msg_writing(self) -> str:
-        return f"Downloading {self.title} for post {self.post_id}..."
+        return f"Downloading {self.ext} of %s for post {self.post_id}..." % (
+            utils.bytes2human(self.info["dl_size"])
+        )
 
 
     @property

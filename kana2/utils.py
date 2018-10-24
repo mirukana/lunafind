@@ -21,7 +21,10 @@ def bytes2human(size: Union[int, float], prefix: str = "", suffix: str = ""
 
         size /= 1024
 
-    size = int(size) if str(size).endswith(".0") else round(size, 2)
+    size = int(size)      if str(size).endswith(".0") or unit in "BK" else \
+           round(size, 1) if unit == "M" else \
+           round(size, 2)
+
     return f"{size}{prefix}{unit}{suffix}"
 
 
