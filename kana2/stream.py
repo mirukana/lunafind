@@ -2,6 +2,8 @@
 # This file is part of kana2, licensed under LGPLv3.
 
 import collections
+from threading import Thread
+import time
 from typing import List, Optional
 
 from dataclasses import dataclass, field
@@ -24,14 +26,14 @@ class Stream(collections.Iterator):
     prefer: NetClient     = DEFAULT
     filter: Optional[str] = None
 
-    _info_gen: InfoClientGenType = field(init=False, default=None, repr=False)
-    _unfinished_dl: List[Post]   = field(init=False, default=None, repr=False)
+    unfinished: List[Post]        = field(init=False, default=None)
+    _info_gen:  InfoClientGenType = field(init=False, default=None, repr=False)
 
 
     def __post_init__(self) -> None:
-        self._unfinished_dl = []
-        self._info_gen      = info_auto(self.query, self.pages, self.limit,
-                                        self.random, self.raw, self.prefer)
+        self.unfinished = []
+        self._info_gen  = info_auto(self.query, self.pages, self.limit,
+                                    self.random, self.raw, self.prefer)
 
 
     def __next__(self) -> Post:
@@ -51,24 +53,30 @@ class Stream(collections.Iterator):
 
 
     def write(self, overwrite: bool = False) -> "Stream":
-        def write_post(post: Post) -> bool:
-            try:
-                post.write(overwrite=overwrite)
-                return True
+        post      = None
+        running   = {}
+        thread_id = 0
 
-            except KeyboardInterrupt:
-                log.warn("CTRL-C caught, stream stopped at post: %d", post.id)
-                self._unfinished_dl.append(post)
-                return False
+        def work(post: Post, thread_id: int) -> None:
+            post.write(overwrite=overwrite)
+            del running[thread_id]
 
-        for post in self._unfinished_dl:
-            if not write_post(post):
-                break
+        try:
+            while True:
+                while len(running) >= 8:
+                    time.sleep(0.1)
 
-            self._unfinished_dl.pop(0)
+                post = self.unfinished.pop(0) if self.unfinished else \
+                       next(self)
 
-        for post in self:
-            if not write_post(post):
-                break
+                thread = Thread(target=work, args=(post, thread_id))
+                running[thread_id] = thread
+                thread.start()
+                thread_id += 1
+
+        except KeyboardInterrupt:
+            log.warn("CTRL-C caught, finishing current tasks...")
+            if post:
+                self.unfinished.append(post)
 
         return self
