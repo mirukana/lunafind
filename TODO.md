@@ -1,11 +1,7 @@
 # kana2 TODO list
 
-- Get rid of pybooru?
-
 - Some form of asynchronicity
   - requests-threads, requests-futures, grequests, zproc, async/await?
-
-- If an http/booru error/ctrl-c happens, still return what was fetched right
 
 - write() except parameter, skip if file is present without DL
 
