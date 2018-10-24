@@ -21,6 +21,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.exceptions import RequestException
 
+from . import MAX_PARALLEL_REQUESTS_SEMAPHORE
+
 QueryType         = Union[int, str]
 InfoGenType       = Generator[Dict[str, Any], None, None]
 InfoClientGenType = Generator[Tuple[Dict[str, Any], "Client"], None, None]
@@ -71,9 +73,10 @@ class NetClient(Client, abc.ABC):
 
     def http(self, http_method: str, url: str, **request_method_kwargs):
         try:
-            result = self._session.request(
-                http_method, url, timeout=6.5, **request_method_kwargs
-            )
+            with MAX_PARALLEL_REQUESTS_SEMAPHORE:
+                result = self._session.request(
+                    http_method, url, timeout=6.5, **request_method_kwargs
+                )
         except RequestException as err:
             log.error(str(err))
 
@@ -123,7 +126,9 @@ class Danbooru(NetClient):
     def api(self, pybooru_method: str, *args, **kwargs):
         try:
             method = getattr(self._pybooru, pybooru_method)
-            return method(*args, **kwargs)
+
+            with MAX_PARALLEL_REQUESTS_SEMAPHORE:
+                return method(*args, **kwargs)
 
         except PybooruHTTPError as err:
             code                  = err.args[1]

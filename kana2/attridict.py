@@ -10,8 +10,6 @@ from typing import Tuple
 
 from zenlog import log
 
-from . import MAX_TOTAL_THREADS_SEMAPHORE
-
 
 class AttrIndexedDict(collections.UserDict, abc.ABC):
     "Dictionary where items are indexed by a specific attribute they possess."
@@ -43,8 +41,7 @@ class AttrIndexedDict(collections.UserDict, abc.ABC):
            ) -> "AttrIndexedDict":
         "For all stored items, run a method they possess."
 
-        def work(item) -> None:
-            getattr(item, method)(*args, **kwargs)
+        work = lambda item: getattr(item, method)(*args, **kwargs)
 
         if _threaded:
             pool = ThreadPool(processes=8)
@@ -61,8 +58,7 @@ class AttrIndexedDict(collections.UserDict, abc.ABC):
             return self
 
         for item in self.data.values():
-            with MAX_TOTAL_THREADS_SEMAPHORE:
-                work(item)
+            work(item)
         return self
 
 
