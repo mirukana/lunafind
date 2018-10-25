@@ -4,6 +4,7 @@
 
 - `-(tag1 tag2...)` (not tag1 and tag2) filtering
 - Implement all set operators for attridict
+- Order: artcomm and custom
 - Replace zenlog, GPL
 
 ## Major
@@ -15,7 +16,6 @@
 
 - Local clients to manage written to disk posts
 
-- Order: artcomm and custom
 - Filter: Danbooru hard stuff that needs users/etc info
 
 ## Etc
@@ -27,9 +27,6 @@
 
 - CLI script
     - zplug/emerge-like UI for multiprocess downloading?
-    - Config system
-    - Auto filter
-      - Use `DANBOORU` as `DEFAULT` once this will be done
     - bash/zsh completitions
 
 - Tag subs management with already fetched list

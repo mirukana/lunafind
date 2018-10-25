@@ -70,7 +70,7 @@ class Album(AttrIndexedDict, attr="id", map_partials=("update", "write")):
             return self
 
         if self._added > 1:
-            log.info("Added %d posts." % self._added)
+            log.info("Got %d posts." % self._added)
         return self
 
 

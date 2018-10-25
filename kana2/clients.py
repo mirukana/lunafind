@@ -6,7 +6,8 @@
 import abc
 import math
 import re
-from typing import Any, Dict, Generator, Optional, Sequence, Tuple, Union
+import threading
+from typing import Any, Dict, Generator, List, Optional, Sequence, Tuple, Union
 from urllib.parse import parse_qs, urlparse
 
 import pendulum as pend
@@ -21,13 +22,20 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.exceptions import RequestException
 
-from . import MAX_PARALLEL_REQUESTS_SEMAPHORE
+from . import config
 
 QueryType         = Union[int, str]
 InfoGenType       = Generator[Dict[str, Any], None, None]
 InfoClientGenType = Generator[Tuple[Dict[str, Any], "Client"], None, None]
 PageType          = Union[int, Sequence[int], type(Ellipsis)]
 
+
+# Set the maximum number of total requests/threads that can be running at once.
+# When doing Album.write(), a .write() thread will launch for every Post,
+# and every Post will launch a .write() thread for every resource, etc.
+MAX_PARALLEL_REQUESTS_SEMAPHORE = threading.BoundedSemaphore(
+    int(config.CFG["GENERAL"]["parallel_requests"])
+)
 
 # Missing in Pybooru. Usually Cloudflare saying the target site is down.
 BOORU_CODES[502] = (
@@ -55,7 +63,8 @@ class Client(abc.ABC):
     pass
 
 
-NET_CLIENTS_ALIVE = []
+ALIVE:   List[Client]     = []
+DEFAULT: Optional[Client] = None
 
 
 @dataclass
@@ -64,11 +73,12 @@ class NetClient(Client, abc.ABC):
 
 
     def __post_init__(self) -> None:
-        NET_CLIENTS_ALIVE.append(self)
-
         self._session = requests.Session()
+
         for scheme in ("http://", "https://"):
             self._session.mount(scheme, HTTPAdapter(max_retries=RETRY))
+
+        ALIVE.append(self)
 
 
     def http(self, http_method: str, url: str, **request_method_kwargs):
@@ -99,21 +109,15 @@ class Danbooru(NetClient):
     username:  str = ""
     api_key:   str = ""
 
-    default_limit: int = field(default=20, repr=False)
-
-    date_format: str = field(default="YYYY-MM-DDTHH:mm:ss.SSSZ", repr=False)
-    timezone:    str = field(default="US/Eastern",               repr=False)
-
-    creation: pend.DateTime = field(default=None, repr=False)
+    default_limit: int = field(default=20,                         repr=False)
+    date_format:   str = field(default="YYYY-MM-DDTHH:mm:ss.SSSZ", repr=False)
+    timezone:      str = field(default="US/Eastern",               repr=False)
 
     _pybooru: pybooru.Danbooru = field(init=False, default=None, repr=False)
 
 
     def __post_init__(self) -> None:
         super().__post_init__()
-
-        if not self.creation:
-            self.creation = pend.datetime(2005, 5, 24, tz=self.timezone)
 
         self._pybooru = \
             pybooru.Danbooru("", self.site_url, self.username, self.api_key)
@@ -227,7 +231,8 @@ class Danbooru(NetClient):
         return response["counts"]["posts"]
 
 
-    def get_post_rank(self, post: "Post") -> int:
+    @staticmethod
+    def get_post_rank(post: "Post") -> int:
         score = post["info"]["score"]
 
         if score < 1:
@@ -238,15 +243,7 @@ class Danbooru(NetClient):
         if post_date > pend.now().subtract(days=2):
             return -1
 
-        post_date = post_date.timestamp()
-        creation  = self.creation.timestamp()
-
-        return math.log(score, 3) + (post_date - creation) / 35_000
-
-
-DANBOORU  = Danbooru()
-SAFEBOORU = Danbooru("https://safebooru.donmai.us", "safebooru")
-DEFAULT   = SAFEBOORU
+        return math.log(score, 3) + post_date.timestamp() / 35_000
 
 
 def info_auto(query:  QueryType     = "",
@@ -254,9 +251,9 @@ def info_auto(query:  QueryType     = "",
               limit:  Optional[int] = None,
               random: bool          = False,
               raw:    bool          = False,
-              prefer: NetClient     = DEFAULT) -> InfoClientGenType:
+              prefer: Danbooru      = None) -> InfoClientGenType:
 
-    client = prefer
+    client = prefer or DEFAULT
     method = client.info_search
     args   = (query, pages, limit, random, raw)
 
@@ -264,19 +261,18 @@ def info_auto(query:  QueryType     = "",
         args = (f"id:{query}",)
 
     elif isinstance(query, str) and re.match(r"https?://", query):
-        for cli in NET_CLIENTS_ALIVE:
-            site = cli.site_url
+        for cli in ALIVE:
+            try:
+                site = cli.site_url
+            except AttributeError:
+                continue
+
+            if query.startswith("http://") and site.startswith("https://"):
+                query = re.sub("^http://", "https://", query)
 
             if query.startswith(site):
                 client = cli
                 break
-
-            if query.startswith("http:") and site.startswith("https:"):
-                query_https = query.replace("http:", "https:")
-                if query_https.startswith(site):
-                    client = cli
-                    query  = query_https
-                    break
         else:
             raise RuntimeError(f"No client to work with site {query!r}.")
 
@@ -285,3 +281,27 @@ def info_auto(query:  QueryType     = "",
 
     for post_info in method(*args):
         yield (post_info, client)
+
+
+def apply_config() -> None:
+    for name, cfg in config.CFG.items():
+        if name in ("DEFAULT", "GENERAL"):
+            continue
+
+        assert re.match(r"[a-z0-9_-]+", name), \
+               "Config section [{name}]: can only contain a-z 0-9 _ -"
+
+        # Will be added to ALIVE (class __init__)
+        client = Danbooru(
+            site_url = cfg["site_url"], name    = name,
+            username = cfg["username"], api_key = cfg["api_key"]
+        )
+
+        if name == config.CFG["GENERAL"]["default_booru"]:
+            global DEFAULT  # pylint: disable=global-statement
+            DEFAULT = client
+
+
+if config.RELOADED:
+    apply_config()
+    config.RELOADED = False

@@ -27,6 +27,7 @@ setup(
 
     python_requires  = ">=3.6, <4",
     install_requires = [
+        "appdirs",
         "atomicfile",
         "cached_property",
         "dataclasses;python_version<'3.7'",
@@ -35,6 +36,7 @@ setup(
         "pendulum",
         "pybooru",
         "requests",
+        "setuptools",
         "simplejson",
         "urllib3",
         "whratio",
@@ -42,6 +44,7 @@ setup(
     ],
 
     include_package_data = True,
+    package_data         = {__about__.__pkg_name__: ["data/*"]},
     packages             = find_packages(),
     entry_points    = {
         "console_scripts": [
@@ -50,7 +53,7 @@ setup(
     },
 
     keywords = "booru danbooru api client images ugoira anime cli terminal " \
-               "scrap tags download filter",
+               "scrap tags download filter order",
 
     url = "https://github.com/mirukan/kana2",
 

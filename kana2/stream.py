@@ -2,15 +2,15 @@
 # This file is part of kana2, licensed under LGPLv3.
 
 import collections
-from threading import Thread
 import time
+from threading import Thread
 from typing import List, Optional
 
 from dataclasses import dataclass, field
 from zenlog import log
 
-from . import filtering
-from .clients import (DEFAULT, InfoClientGenType, NetClient, PageType,
+from . import config, filtering
+from .clients import (DEFAULT, Danbooru, InfoClientGenType, PageType,
                       QueryType, info_auto)
 from .post import Post
 from .resources import Resource
@@ -23,14 +23,17 @@ class Stream(collections.Iterator):
     limit:  Optional[int] = None
     random: bool          = False
     raw:    bool          = False
-    prefer: NetClient     = DEFAULT
-    filter: Optional[str] = None
+    filter: str           = ""
+    prefer: Danbooru      = DEFAULT
 
     unfinished: List[Post]        = field(init=False, default=None)
     _info_gen:  InfoClientGenType = field(init=False, default=None, repr=False)
 
 
     def __post_init__(self) -> None:
+        self.filter = " ".join((self.filter,
+                                config.CFG["GENERAL"]["auto_filter"])).strip()
+
         self.unfinished = []
         self._info_gen  = info_auto(self.query, self.pages, self.limit,
                                     self.random, self.raw, self.prefer)
@@ -53,9 +56,10 @@ class Stream(collections.Iterator):
 
 
     def write(self, overwrite: bool = False) -> "Stream":
-        post      = None
-        running   = {}
-        thread_id = 0
+        post        = None
+        running     = {}
+        thread_id   = 0
+        max_running = int(config.CFG["GENERAL"]["parallel_requests"])
 
         def work(post: Post, thread_id: int) -> None:
             post.write(overwrite=overwrite)
@@ -63,7 +67,7 @@ class Stream(collections.Iterator):
 
         try:
             while True:
-                while len(running) >= 8:
+                while len(running) >= max_running:
                     time.sleep(0.1)
 
                 post = self.unfinished.pop(0) if self.unfinished else \

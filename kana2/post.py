@@ -21,7 +21,7 @@ class Post(AttrIndexedDict, attr="title", map_partials=("update", "write")):
 
     def __init__(self,
                  from_id:   Optional[int]            = None,
-                 prefer:    clients.NetClient        = clients.DEFAULT,
+                 prefer:    clients.Danbooru         = clients.DEFAULT,
                  resources: Optional[List[Resource]] = None) -> None:
         super().__init__()
         resources = list(resources) if resources else []

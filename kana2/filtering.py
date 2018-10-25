@@ -76,7 +76,7 @@ META_STR_TAGS_FUNCS = {
     "md5":      lambda p, v: p["info"]["md5"]          == v,
     "filetype": lambda p, v: p["info"].get("file_ext") == v,
     "dltype":   lambda p, v: p["info"].get("dl_ext")   == v,  # non-standard
-    "rating":   lambda p, v: p["info"]["rating"].startswith(v),
+    "rating":   lambda p, v: p["info"]["rating"][0]    == v[0],
     "locked":   lambda p, v: p["info"][f"is_{v}_locked"],
     "status":   lambda p, v: v in ("any", "all") or p.info[f"is_{v}"],
     "source":   _source_match,

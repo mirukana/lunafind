@@ -23,7 +23,7 @@ def write(content, path, binary=False, overwrite=False):
             for chunk in content:
                 out_file.write(chunk)
         else:
-            out_file.write(content)
+            out_file.write("%s%s" % (content.rstrip(), os.linesep))
 
     return True
 

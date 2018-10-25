@@ -10,6 +10,8 @@ from typing import Tuple
 
 from zenlog import log
 
+from . import config
+
 
 class AttrIndexedDict(collections.UserDict, abc.ABC):
     "Dictionary where items are indexed by a specific attribute they possess."
@@ -44,7 +46,7 @@ class AttrIndexedDict(collections.UserDict, abc.ABC):
         work = lambda item: getattr(item, method)(*args, **kwargs)
 
         if _threaded:
-            pool = ThreadPool(processes=8)
+            pool = ThreadPool(int(config.CFG["GENERAL"]["parallel_requests"]))
 
             try:
                 pool.map(work, self.data.values())
