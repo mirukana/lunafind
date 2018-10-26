@@ -2,7 +2,6 @@
 
 ## Minor
 
-- `-(tag1 tag2...)` (not tag1 and tag2) filtering
 - Implement all set operators for attridict
 - Order: artcomm and custom
 - Replace zenlog, GPL

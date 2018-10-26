@@ -29,7 +29,7 @@ InfoGenType       = Generator[Dict[str, Any], None, None]
 InfoClientGenType = Generator[Tuple[Dict[str, Any], "Client"], None, None]
 
 IE       = Union[int, type(Ellipsis)]
-PageType = Union[IE, Tuple[IE, IE], Tuple[IE, IE, IE],  Iterable[int]]
+PageType = Union[IE, str, Tuple[IE, IE], Tuple[IE, IE, IE], Iterable[int]]
 
 
 # Set the maximum number of total requests/threads that can be running at once.
@@ -152,17 +152,25 @@ class Danbooru(NetClient):
 
     @staticmethod
     def _parse_pages(pages: PageType, last_page: int) -> Iterable[int]:
-        if isinstance(pages, int):
-            return (pages,)
+        is_str = isinstance(pages, str)
 
-        if pages is ...:
+        if isinstance(pages, int) or (is_str and pages.isdigit()):
+            return (int(pages),)
+
+        if pages in (..., "all"):
             return range(1, last_page + 1)
 
+        if is_str and "-" in pages:
+            pages = tuple(pages.split("-"))
+
         if isinstance(pages, tuple):
-            begin = 1         if pages[0] is ... else pages[0]
-            end   = last_page if pages[1] is ... else pages[1]
-            step  = 1         if len(pages) < 3  else pages[2]
+            begin = 1         if pages[0] in (..., "begin") else int(pages[0])
+            end   = last_page if pages[1] in (..., "end")   else int(pages[1])
+            step  = 1         if len(pages) < 3             else int(pages[2])
             return range(begin, end + 1, step)
+
+        if is_str and "," in pages:
+            pages = [int(p) for p in pages.split(",")]
 
         assert hasattr(pages, "__iter__"), "pages must be iterable"
         return pages
