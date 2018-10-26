@@ -3,6 +3,7 @@
 
 import collections
 import time
+from copy import copy
 from threading import Thread
 from typing import List, Optional
 
@@ -23,17 +24,15 @@ class Stream(collections.Iterator):
     limit:  Optional[int] = None
     random: bool          = False
     raw:    bool          = False
-    filter: str           = ""
     prefer: Danbooru      = DEFAULT
 
     unfinished: List[Post]        = field(init=False, default=None)
+    filtered:   str               = field(init=False, default="")
     _info_gen:  InfoClientGenType = field(init=False, default=None, repr=False)
 
 
     def __post_init__(self) -> None:
-        self.filter = " ".join((self.filter,
-                                config.CFG["GENERAL"]["auto_filter"])).strip()
-
+        self.filtered   = config.CFG["GENERAL"]["auto_filter"].strip()
         self.unfinished = []
         self._info_gen  = info_auto(self.query, self.pages, self.limit,
                                     self.random, self.raw, self.prefer)
@@ -44,8 +43,8 @@ class Stream(collections.Iterator):
             info, client = next(self._info_gen)
             post         = Post(resources=[r(info, client)
                                            for r in Resource.subclasses])
-
-            if self.filter and not list(filtering.search([post], self.filter)):
+            if self.filtered.strip() and \
+               not list(filtering.search([post], self.filtered)):
                 continue
 
             return post
@@ -53,6 +52,13 @@ class Stream(collections.Iterator):
 
     def __iter__(self) -> "Stream":
         return self
+
+
+    def filter(self, search: str) -> "Stream":
+        # pylint: disable=protected-access
+        new          = copy(self)
+        new.filtered = " ".join((new.filtered, search)).strip()
+        return new
 
 
     def write(self, overwrite: bool = False) -> "Stream":
