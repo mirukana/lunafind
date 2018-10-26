@@ -7,7 +7,7 @@ import abc
 import math
 import re
 import threading
-from typing import Any, Dict, Generator, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Generator, Iterable, List, Optional, Tuple, Union
 from urllib.parse import parse_qs, urlparse
 
 import pendulum as pend
@@ -27,7 +27,9 @@ from . import config
 QueryType         = Union[int, str]
 InfoGenType       = Generator[Dict[str, Any], None, None]
 InfoClientGenType = Generator[Tuple[Dict[str, Any], "Client"], None, None]
-PageType          = Union[int, Sequence[int], type(Ellipsis)]
+
+IE       = Union[int, type(Ellipsis)]
+PageType = Union[IE, Tuple[IE, IE], Tuple[IE, IE, IE],  Iterable[int]]
 
 
 # Set the maximum number of total requests/threads that can be running at once.
@@ -148,6 +150,24 @@ class Danbooru(NetClient):
         return []
 
 
+    @staticmethod
+    def _parse_pages(pages: PageType, last_page: int) -> Iterable[int]:
+        if isinstance(pages, int):
+            return (pages,)
+
+        if pages is ...:
+            return range(1, last_page + 1)
+
+        if isinstance(pages, tuple):
+            begin = 1         if pages[0] is ... else pages[0]
+            end   = last_page if pages[1] is ... else pages[1]
+            step  = 1         if len(pages) < 3  else pages[2]
+            return range(begin, end + 1, step)
+
+        assert hasattr(pages, "__iter__"), "pages must be iterable"
+        return pages
+
+
     def info_search(self,
                     tags:   str           = "",
                     pages:  PageType      = 1,
@@ -163,8 +183,6 @@ class Danbooru(NetClient):
             yield from self.api("post_list", **params)
             return
 
-        last_page = None
-
         if limit:
             params["limit"] = limit
 
@@ -174,22 +192,10 @@ class Danbooru(NetClient):
         if raw is True:
             params["raw"] = "true"
 
+        total_posts = self.count_posts(params["tags"])
+        last_page   = math.ceil(total_posts / (limit or self.default_limit))
 
-        if isinstance(pages, int):
-            pages = (pages,)
-
-        elif pages is ...:
-            total_posts = self.count_posts(params["tags"])
-            last_page   = math.ceil(total_posts /
-                                    params.get("limit", self.default_limit))
-            pages       = range(1, last_page + 1)
-
-            log.info("Found %d posts over %d pages%s",
-                     total_posts, last_page,
-                     " for %r" % params["tags"] if params["tags"] else "")
-
-
-        for page in pages:
+        for page in self._parse_pages(pages, last_page):
             if page < 1:
                 continue
 
