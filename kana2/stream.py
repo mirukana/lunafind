@@ -81,14 +81,14 @@ class Stream(collections.Iterator):
     __truediv__  = lambda self, search: self.filter(search)  # /
 
 
-    def write(self, overwrite: bool = False) -> "Stream":
+    def write(self, overwrite: bool = False, warn: bool = True) -> "Stream":
         post        = None
         running     = {}
         thread_id   = 0
         max_running = int(config.CFG["GENERAL"]["parallel_requests"])
 
         def work(post: Post, thread_id: int) -> None:
-            post.write(overwrite=overwrite)
+            post.write(overwrite=overwrite, warn=warn)
             del running[thread_id]
 
         try:

@@ -62,6 +62,12 @@ Options:
     Save posts and their resources (media, info, artcom, notes...) to disk.
     Cannot be used with `--resource` or `--info-key`.
 
+  -q, --quiet-skip
+    Do not warn when skipping download of already existing files.
+
+  -o, --overwrite
+    Do not skip downloads and overwrite files that already exist.
+
   -h, --help
     Show this help.
 
@@ -186,7 +192,8 @@ def main(argv: Optional[List[str]] = None) -> None:
             args["--resource"] = "info"
 
         if args["--download"]:
-            stream.write()
+            stream.write(overwrite = args["--overwrite"],
+                         warn      = not args["--quiet-skip"])
             return
 
         for post in stream:
