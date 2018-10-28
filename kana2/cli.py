@@ -1,7 +1,7 @@
 # Copyright 2018 miruka
 # This file is part of kana2, licensed under LGPLv3.
 
-"""Usage: kana2 [QUERY]... [options]
+r"""Usage: kana2 [QUERY]... [options]
 
 Search, filter and download posts from Danbooru-based sites.
 
@@ -12,6 +12,11 @@ Arguments:
 
     As multiple queries can be used in one command,
     tag searches with multiple tags must be wrapped in quotes.
+
+    If a query starts with a `-`, prefix it with a `%` or `\` to prevent it
+    from being seen as an option, e.g. `kana2 %-rating:e`.
+    For `\`, quoting will always be required to prevent the shell from
+    interpreting it.
 
 Options:
   -p PAGES, --pages PAGES
@@ -151,10 +156,6 @@ def print_help(doc: str = __doc__, exit_code: int = 0) -> str:
 def main(argv: Optional[List[str]] = None) -> None:
     argv = argv if argv is not None else sys.argv[1:]
 
-    # Escape -tags so they won't be seen by docopt parser:
-    argv = [rf"\{arg}" if arg.startswith("-") and arg not in OPTIONS else arg
-            for arg in argv]
-
     try:
         args = docopt.docopt(
             __doc__, help=False, argv=argv, version=__about__.__version__
@@ -183,7 +184,7 @@ def main(argv: Optional[List[str]] = None) -> None:
         params["prefer"] = clients.ALIVE[args["--booru"]]
 
     for query in args["QUERY"] or ("",):
-        if query.startswith(r"\-"):
+        if query.startswith(r"\-") or query.startswith("%-"):
             query = query[1:]
 
         stream = Stream(query, **params).filter(args["--filter"] or "")
