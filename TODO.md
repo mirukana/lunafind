@@ -21,9 +21,7 @@
 
 ## Programs
 
-- CLI script
 - bash/zsh completitions
-
 - zplug/emerge-like monitor for downloads
 
 - Tag subs management with already fetched list

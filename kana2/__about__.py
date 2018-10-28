@@ -4,7 +4,7 @@
 "Python API and CLI tools for Danbooru-based sites."
 
 __pkg_name__ = "kana2"
-__version__  = "0.4.7"
+__version__  = "0.4.8"
 __status__   = "Development"
 # __status__ = "Production"
 
