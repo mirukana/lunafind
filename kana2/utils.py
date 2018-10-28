@@ -7,7 +7,9 @@ from typing import Union
 
 import pendulum as pend
 import simplejson
-
+from pygments import highlight
+from pygments.formatters import Terminal256Formatter
+from pygments.lexers import JsonLexer
 
 SIZE_UNITS = "BKMGTPEZY"
 
@@ -88,6 +90,17 @@ JSONIFY_DEFAULT_PARAMS = {"sort_keys": True, "ensure_ascii": False}
 def jsonify(dict_: dict, **dumps_kwargs) -> str:
     kwargs = {**JSONIFY_DEFAULT_PARAMS, **dumps_kwargs}
     return simplejson.dumps(dict_, **kwargs)
+
+
+def prettify_json(json: str) -> str:
+    if not json:
+        return ""
+
+    pretty = simplejson.dumps(simplejson.loads(json),
+                              indent=4, sort_keys=True, ensure_ascii=False)
+
+    return highlight(pretty,
+                     JsonLexer(), Terminal256Formatter(style="monokai"))
 
 
 def join_comma_and(*strings: str) -> str:

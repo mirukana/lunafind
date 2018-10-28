@@ -27,24 +27,42 @@ class Stream(collections.Iterator):
     prefer: Danbooru      = DEFAULT
 
     unfinished: List[Post]        = field(init=False, default=None)
-    filtered:   str               = field(init=False, default="")
+    filter_str: str               = field(init=False, default="")
+    filtered:   int               = field(init=False, default=0)
+    posts_seen: int               = field(init=False, default=0)
     _info_gen:  InfoClientGenType = field(init=False, default=None, repr=False)
 
 
     def __post_init__(self) -> None:
-        self.filtered   = config.CFG["GENERAL"]["auto_filter"].strip()
+        self.filter_str = config.CFG["GENERAL"]["auto_filter"].strip()
         self.unfinished = []
         self._info_gen  = info_auto(self.query, self.pages, self.limit,
                                     self.random, self.raw, self.prefer)
 
 
+    def _on_iter_done(self):
+        if not (self.posts_seen == 1 and self.filtered == 0):
+            log.info(f"{self.filtered}/{self.posts_seen} posts filtered for "
+                     f"{self.query!r}.")
+
+
     def __next__(self) -> Post:
         while True:
-            info, client = next(self._info_gen)
-            post         = Post(resources=[r(info, client)
-                                           for r in Resource.subclasses])
-            if self.filtered.strip() and \
-               not list(filtering.search([post], self.filtered)):
+            try:
+                info, client = next(self._info_gen)
+            except StopIteration:
+                self._on_iter_done()
+                raise
+
+            post = Post(resources=[
+                r(info, client) for r in Resource.subclasses
+            ])
+
+            self.posts_seen += 1
+
+            if self.filter_str.strip() and \
+               not list(filtering.search([post], self.filter_str)):
+                self.filtered += 1
                 continue
 
             return post
@@ -56,9 +74,11 @@ class Stream(collections.Iterator):
 
     def filter(self, search: str) -> "Stream":
         # pylint: disable=protected-access
-        new          = copy(self)
-        new.filtered = " ".join((new.filtered, search)).strip()
+        new            = copy(self)
+        new.filter_str = " ".join((new.filter_str, search)).strip()
         return new
+
+    __truediv__  = lambda self, search: self.filter(search)  # /
 
 
     def write(self, overwrite: bool = False) -> "Stream":
@@ -88,5 +108,8 @@ class Stream(collections.Iterator):
             log.warn("CTRL-C caught, finishing current tasks...")
             if post:
                 self.unfinished.append(post)
+
+        except StopIteration:
+            pass
 
         return self

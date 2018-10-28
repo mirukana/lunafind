@@ -7,7 +7,7 @@ import abc
 import math
 import re
 import threading
-from typing import Any, Dict, Generator, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Generator, Iterable, Optional, Tuple, Union
 from urllib.parse import parse_qs, urlparse
 
 import pendulum as pend
@@ -65,8 +65,8 @@ class Client(abc.ABC):
     pass
 
 
-ALIVE:   List[Client]     = []
-DEFAULT: Optional[Client] = None
+ALIVE:   Dict[str, Client] = {}
+DEFAULT: Optional[Client]  = None
 
 
 @dataclass
@@ -79,8 +79,6 @@ class NetClient(Client, abc.ABC):
 
         for scheme in ("http://", "https://"):
             self._session.mount(scheme, HTTPAdapter(max_retries=RETRY))
-
-        ALIVE.append(self)
 
 
     def http(self, http_method: str, url: str, **request_method_kwargs):
@@ -127,6 +125,8 @@ class Danbooru(NetClient):
         for scheme in ("http://", "https://"):
             # pybooru.client is a requests session
             self._pybooru.client.mount(scheme, HTTPAdapter(max_retries=RETRY))
+
+        ALIVE[self.name] = self
 
 
     def api(self, pybooru_method: str, *args, **kwargs):
@@ -203,6 +203,10 @@ class Danbooru(NetClient):
         total_posts = self.count_posts(params["tags"])
         last_page   = math.ceil(total_posts / (limit or self.default_limit))
 
+        if total_posts == 0 or last_page == 0:
+            log.warn(f"No posts for search {tags!r}.")
+            return
+
         for page in self._parse_pages(pages, last_page):
             if page < 1:
                 continue
@@ -214,8 +218,8 @@ class Danbooru(NetClient):
                 " for %r"       % params["tags"] if params["tags"] else "",
                 " on page %d%s" % (params["page"],
                                    f"/{last_page}" if last_page else ""),
-                "  [random]" if "random" in params else "",
-                "  [raw]"    if "raw"    in params else ""
+                " [random]" if "random" in params else "",
+                " [raw]"    if "raw"    in params else ""
             )
 
             yield from self.api("post_list", **params)
@@ -275,7 +279,7 @@ def info_auto(query:  QueryType     = "",
         args = (f"id:{query}",)
 
     elif isinstance(query, str) and re.match(r"https?://", query):
-        for cli in ALIVE:
+        for cli in ALIVE.values():
             try:
                 site = cli.site_url
             except AttributeError:
