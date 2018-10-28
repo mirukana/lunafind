@@ -51,7 +51,7 @@ Options:
     Comma-separated list of resources for posts to print on stdout,
     e.g. `info` or `info,media,artcom,notes`.
 
-    If no --resource, --info-key or --download option is specified,
+    If no `--resource`, `--info-key` or `--download` option is specified,
     the default behavior is to print info on stdout.
 
   -k KEY, --info-key KEY
@@ -60,6 +60,7 @@ Options:
 
   -d, --download
     Save posts and their resources (media, info, artcom, notes...) to disk.
+    Cannot be used with `--resource` or `--info-key`.
 
   -h, --help
     Show this help.
@@ -184,6 +185,10 @@ def main(argv: Optional[List[str]] = None) -> None:
         if not(args["--resource"] or args["--info-key"] or args["--download"]):
             args["--resource"] = "info"
 
+        if args["--download"]:
+            stream.write()
+            return
+
         for post in stream:
             if args["--info-key"]:
                 for key in args["--info-key"].split(","):
@@ -194,6 +199,3 @@ def main(argv: Optional[List[str]] = None) -> None:
                     json = utils.prettify_json(post[res].get_serialized())
                     if json:
                         print(json)
-
-            if args["--download"]:
-                post.write()

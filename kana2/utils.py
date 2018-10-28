@@ -7,6 +7,7 @@ from typing import Union
 
 import pendulum as pend
 import simplejson
+# pylint: disable=no-name-in-module
 from pygments import highlight
 from pygments.formatters import Terminal256Formatter
 from pygments.lexers import JsonLexer
@@ -23,7 +24,7 @@ def bytes2human(size: Union[int, float], prefix: str = "", suffix: str = ""
 
         size /= 1024
 
-    size = int(size)      if str(size).endswith(".0") or unit in "BK" else \
+    size = int(size)      if unit in "BK" else \
            round(size, 1) if unit == "M" else \
            round(size, 2)
 

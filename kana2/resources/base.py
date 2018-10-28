@@ -6,13 +6,15 @@ import inspect
 import os
 import pprint
 import textwrap
+from types import GeneratorType
 from typing import Any, Dict, Optional, Union
 
+from atomicfile import AtomicFile
 from cached_property import cached_property
 from dataclasses import dataclass, field
 from zenlog import log
 
-from .. import clients, io, utils
+from .. import clients, utils
 
 
 @dataclass(repr=False)
@@ -137,17 +139,32 @@ class Resource(abc.ABC):
         return self.get_path()
 
 
-    def write(self, overwrite: bool = False) -> "Resource":
+    def write(self, overwrite: bool = False, warn: bool = True) -> "Resource":
         "Write serialized resource data to disk."
+
+        if os.path.exists(self.path) and not overwrite:
+            if warn:
+                log.warn("Not overwriting %r", self.path)
+            return self
+
         if self.msg_writing:
             log.info(self.msg_writing)
 
         content = self.get_serialized()
 
-        if content is not None:
-            io.write(content, self.path, self.binary, overwrite)
+        if content is None:
+            return self
 
-        return self
+        os.makedirs(os.path.dirname(self.path), exist_ok=True)
+
+        with AtomicFile(self.path, "wb" if self.binary else "w") as out:
+            if isinstance(content, GeneratorType):
+                for chunk in content:
+                    out.write(chunk)
+            else:
+                out.write("%s%s" % (content.rstrip(), os.linesep))
+
+            return self
 
 
     # Get functions, override in subclasses when necessary.
