@@ -33,7 +33,7 @@ setup(
         "cached_property",
         "dataclasses;python_version<'3.7'",
         "docopt",
-        "lazy_object_property",
+        "lazy_object_proxy",
         "pendulum",
         "pybooru",
         "pygments",
