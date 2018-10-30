@@ -67,10 +67,7 @@ class Album(AttrIndexedDict, attr="id", map_partials=("update", "write")):
 
         except KeyboardInterrupt:
             log.warn("Caught CTRL-C, added %d posts." % self._added)
-            return self
 
-        if self._added > 1:
-            log.info("Got %d posts." % self._added)
         return self
 
 

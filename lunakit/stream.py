@@ -84,7 +84,7 @@ class Stream(collections.Iterator):
         return Album(*order.sort(list(self), by))
 
     __truediv__  = lambda self, search: self.filter(search)  # /
-    __mod__      = lambda self, by:     self.order(by)            # %
+    __mod__      = lambda self, by:     self.order(by)       # %
 
 
     def write(self, overwrite: bool = False, warn: bool = True) -> "Stream":

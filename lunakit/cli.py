@@ -72,7 +72,8 @@ Options:
 
   -k KEY, --show-key KEY
     Comma-separated list of info JSON keys to print for posts,
-    e.g. `dl_url` or `id,tag_string`
+    e.g. `dl_url` or `id,tag_string`.
+    If multiple keys are specified, posts will be separated by a blank line.
 
   -d, --download
     Save posts and their resources (media, info, artcom, notes...) to disk.
@@ -236,8 +237,8 @@ def main(argv: Optional[List[str]] = None) -> None:
               for q in args["QUERY"] or [""]]
 
     if args["--order"]:
-        stores = [Album(stores[0]).put(*stores[1:]).order(args["--order"])]
-
+        stores = [sum([Album(s) for s in stores], Album())
+                  .order(args["--order"])]
 
     for obj in stores:
         posts = obj.list if isinstance(obj, Album) else obj

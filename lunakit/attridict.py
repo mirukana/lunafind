@@ -33,6 +33,9 @@ class AttrIndexedDict(collections.UserDict, abc.ABC):
 
     def __getattr__(self, name: str):
         "Allow accessing dict items with a dot like attributes."
+        if name.startswith("_"):
+            raise AttributeError(name)
+
         try:
             return self.data[name]
         except KeyError:

@@ -2,8 +2,6 @@
 
 ## Minor
 
-- Fix + for Albums
-
 - Implement all set operators for attridict
 - Order: artcomm and custom
 - Replace zenlog, GPL
