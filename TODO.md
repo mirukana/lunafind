@@ -2,6 +2,9 @@
 
 ## Minor
 
+- Fix + for Albums
+- `post_url` and `title` extra info keys
+
 - Implement all set operators for attridict
 - Order: artcomm and custom
 - Replace zenlog, GPL
@@ -16,6 +19,7 @@
 
 ## Etc
 
+- Document filter and info differences from Danbooru
 - Docstrings, documentation
 - Tests
 

@@ -10,7 +10,7 @@ from typing import List, Optional
 from dataclasses import dataclass, field
 from zenlog import log
 
-from . import config, filtering
+from . import config, filtering, order
 from .clients import (DEFAULT, Danbooru, InfoClientGenType, PageType,
                       QueryType, info_auto)
 from .post import Post
@@ -78,7 +78,12 @@ class Stream(collections.Iterator):
         new.filter_str = " ".join((new.filter_str, search)).strip()
         return new
 
+    def order(self, by: str) -> "Album":
+        from .album import Album  # ævoid circular dependency
+        return Album(*order.sort(list(self), by))
+
     __truediv__  = lambda self, search: self.filter(search)  # /
+    __mod__      = lambda self, by:     self.order(by)            # %
 
 
     def write(self, overwrite: bool = False, warn: bool = True) -> "Stream":
