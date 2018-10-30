@@ -1,5 +1,5 @@
 # Copyright 2018 miruka
-# This file is part of kana2, licensed under LGPLv3.
+# This file is part of lunakit, licensed under LGPLv3.
 
 import abc
 import collections

@@ -1,11 +1,11 @@
 # Copyright 2018 miruka
-# This file is part of kana2, licensed under LGPLv3.
+# This file is part of lunakit, licensed under LGPLv3.
 
-"kana2 setuptools file"
+"lunakit setuptools file"
 
 from setuptools import setup, find_packages
 
-from kana2 import __about__
+from lunakit import __about__
 
 
 def get_readme():
@@ -57,7 +57,7 @@ setup(
     keywords = "booru danbooru api client images ugoira anime cli terminal " \
                "scrap tags download filter order",
 
-    url = "https://github.com/mirukan/kana2",
+    url = "https://github.com/mirukan/lunakit",
 
     classifiers=[
         "Development Status :: 3 - Alpha",

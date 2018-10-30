@@ -1,9 +1,9 @@
 # Copyright 2018 miruka
-# This file is part of kana2, licensed under LGPLv3.
+# This file is part of lunakit, licensed under LGPLv3.
 
 "Python API and CLI tools for Danbooru-based sites."
 
-__pkg_name__ = "kana2"
+__pkg_name__ = "lunakit"
 __version__  = "0.4.8"
 __status__   = "Development"
 # __status__ = "Production"

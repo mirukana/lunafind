@@ -1,7 +1,7 @@
 # Copyright 2018 miruka
-# This file is part of kana2, licensed under LGPLv3.
+# This file is part of lunakit, licensed under LGPLv3.
 
-PKG_DIR = kana2
+PKG_DIR = lunakit
 
 PYTHON = python3
 PIP    = pip3

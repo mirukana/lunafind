@@ -1,5 +1,5 @@
 # Copyright 2018 miruka
-# This file is part of kana2, licensed under LGPLv3.
+# This file is part of lunakit, licensed under LGPLv3.
 
 import abc
 import inspect
@@ -26,7 +26,7 @@ class Resource(abc.ABC):
 
     Attributes:
         info:       Info resource object corresponding to the post.
-        client:     Booru client, object from kana2.clients.
+        client:     Booru client, object from lunakit.clients.
         ext:        Extension for the file to be written.
         binary:     Whether 'wb' or 'w' mode will be used to write the file.
         chunk_size: Size of chunks for HTTP transfers, default is 8 MiB.

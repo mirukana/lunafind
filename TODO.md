@@ -1,4 +1,4 @@
-# kana2 TODO and idea list
+# lunakit TODO and idea list
 
 ## Minor
 
@@ -26,3 +26,4 @@
 
 - Tag subs management with already fetched list
 - Tag aliases and relations
+- Create Post from a non-booru image using IQDB

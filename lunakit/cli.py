@@ -1,7 +1,7 @@
 # Copyright 2018 miruka
-# This file is part of kana2, licensed under LGPLv3.
+# This file is part of lunakit, licensed under LGPLv3.
 
-r"""Usage: kana2 [QUERY]... [options]
+r"""Usage: lunakit [QUERY]... [options]
 
 Search, filter and download posts from Danbooru-based sites.
 
@@ -14,7 +14,7 @@ Arguments:
     tag searches with multiple tags must be wrapped in quotes.
 
     If a query starts with a `-`, prefix it with a `%` or `\` to prevent it
-    from being seen as an option, e.g. `kana2 %-rating:e`.
+    from being seen as an option, e.g. `lunakit %-rating:e`.
     For `\`, quoting will always be required to prevent the shell from
     interpreting it.
 
@@ -48,9 +48,9 @@ Options:
 
     For a faster filtering, use tags that have less posts for the booru
     search and others for the filter, for example:
-      `kana2 snow wallpaper -f touhou 1girl -d`
+      `lunakit snow wallpaper -f touhou 1girl -d`
     Instead of:
-      `kana2 touhou 1girl -f wallpaper snow -d`
+      `lunakit touhou 1girl -f wallpaper snow -d`
 
   -R RES, --resource RES
     Comma-separated list of resources for posts to print on stdout,
@@ -91,18 +91,18 @@ Notes:
     that file should be downloaded (to be documented).
 
 Examples:
-  kana2 "blonde 2girls" --download
+  lunakit "blonde 2girls" --download
     Download the first page of posts containing tags `blonde` and `2girls`.
 
-  kana2 --random --limit 200 --key dl_url
+  lunakit --random --limit 200 --key dl_url
     Print raw image/webm URL for 200 random posts.
 
-  kana2 "wallpaper order:score" --filter "-no_human ratio:16:9 width:>=1920"
+  lunakit "wallpaper order:score" --filter "-no_human ratio:16:9 width:>=1920"
     Search for posts with the `wallpaper` tags sorted by score,
     filter posts to only leave those without the `no_human` tag, with a ratio
     of 16:9 and a width equal or superior to 1920, print info.
 
-  kana2 "~scenery ~landscape" "~outdoor ~nature" --pages all --download
+  lunakit "~scenery ~landscape" "~outdoor ~nature" --pages all --download
     Do two separate searches (Danbooru 2 tag limit) for "scenery or landscape"
     and "outdoor or nature", all pages, combine the results and
     download everything."""

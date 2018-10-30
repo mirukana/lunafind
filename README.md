@@ -1,11 +1,11 @@
-# kana2
+# lunakit
 
-[![PyPI downloads](http://pepy.tech/badge/kana2)](
-    http://pepy.tech/project/kana2)
-[![PyPI version](https://img.shields.io/pypi/v/kana2.svg)](
-    https://pypi.org/projects/kana2)
-[![PyPI pyversions](https://img.shields.io/pypi/pyversions/kana2.svg)](
-    https://pypi.python.org/pypi/kana2)
+[![PyPI downloads](http://pepy.tech/badge/lunakit)](
+    http://pepy.tech/project/lunakit)
+[![PyPI version](https://img.shields.io/pypi/v/lunakit.svg)](
+    https://pypi.org/projects/lunakit)
+[![PyPI pyversions](https://img.shields.io/pypi/pyversions/lunakit.svg)](
+    https://pypi.python.org/pypi/lunakit)
 
 
 <SHORTDESC>
@@ -24,13 +24,13 @@
 ## CLI examples
 
 ```sh
-    $ kana2
+    $ lunakit
 ```
 
 ## Python package examples
 
 ```python3
-    >>> import kana2
+    >>> import lunakit
 
     >>> 
 ```
@@ -40,5 +40,5 @@
 Requires Python 3.6+, tested on GNU/Linux only.
 
 ```sh
-    # pip3 install kana2
+    # pip3 install lunakit
 ```
