@@ -12,7 +12,7 @@ from typing import Any, Dict, Optional, Union
 from atomicfile import AtomicFile
 from cached_property import cached_property
 from dataclasses import dataclass, field
-from zenlog import log
+from logzero import logger as log
 
 from .. import clients, utils
 
@@ -84,7 +84,7 @@ class Resource(abc.ABC):
         detected = self.get_if_post_has_resource()
 
         if not detected and self.msg_no_data_found:
-            log.warn(self.msg_no_data_found)
+            log.warning(self.msg_no_data_found)
 
         return detected
 
@@ -123,7 +123,7 @@ class Resource(abc.ABC):
 
         if not new_data and new_data not in (0, False):
             if self.msg_update_fail:
-                log.warn(self.msg_update_fail)
+                log.warning(self.msg_update_fail)
 
             if accept_gone:
                 self.__dict__["data"] = new_data
@@ -144,7 +144,7 @@ class Resource(abc.ABC):
 
         if os.path.exists(self.path) and not overwrite:
             if warn:
-                log.warn("Not overwriting %r", self.path)
+                log.warning("Not overwriting %r", self.path)
             return self
 
         if self.msg_writing:

@@ -34,6 +34,7 @@ setup(
         "dataclasses;python_version<'3.7'",
         "docopt",
         "lazy_object_proxy",
+        "logzero",
         "pendulum",
         "pybooru",
         "pygments",
@@ -42,7 +43,6 @@ setup(
         "simplejson",
         "urllib3",
         "whratio",
-        "zenlog"
     ],
 
     include_package_data = True,

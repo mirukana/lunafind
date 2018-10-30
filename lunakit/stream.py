@@ -8,7 +8,7 @@ from threading import Thread
 from typing import List, Optional
 
 from dataclasses import dataclass, field
-from zenlog import log
+from logzero import logger as log
 
 from . import config, filtering, order
 from .clients import (DEFAULT, Danbooru, InfoClientGenType, PageType,
@@ -44,7 +44,7 @@ class Stream(collections.Iterator):
         if not (self.posts_seen == 1 and self.filtered == 0):
             log.info("%d/%d posts filtered%s.",
                      self.filtered, self.posts_seen,
-                     f"for {self.query!r}" if self.query else "")
+                     f" for {self.query!r}" if self.query else "")
 
 
     def __next__(self) -> Post:
@@ -111,7 +111,7 @@ class Stream(collections.Iterator):
                 thread_id += 1
 
         except KeyboardInterrupt:
-            log.warn("CTRL-C caught, finishing current tasks...")
+            log.warning("CTRL-C caught, finishing current tasks...")
             if post:
                 self.unfinished.append(post)
 

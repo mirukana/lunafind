@@ -8,7 +8,7 @@ import functools
 from multiprocessing.pool import ThreadPool
 from typing import Tuple
 
-from zenlog import log
+from logzero import logger as log
 
 from . import config
 
@@ -54,7 +54,7 @@ class AttrIndexedDict(collections.UserDict, abc.ABC):
             try:
                 pool.map(work, self.data.values())
             except KeyboardInterrupt:
-                log.warn("CTRL-C caught, finishing current tasks...")
+                log.warning("CTRL-C caught, finishing current tasks...")
                 pool.terminate()
             else:
                 pool.close()

@@ -4,9 +4,11 @@
 
 - Implement all set operators for attridict
 - Order: artcomm and custom
-- Replace zenlog, GPL
 
 ## Major
+
+- Downloader class that takes in iterable (Stream or `iter(Album.list)`),
+  able to keep track and resume downloads, even in CLI usage (file save?)
 
 - Tag aliases for filtering
 - Filter: Danbooru hard stuff that needs users/etc info

@@ -14,9 +14,9 @@ import pendulum as pend
 import pybooru
 import urllib3
 from dataclasses import dataclass, field
+from logzero import logger as log
 from pybooru.exceptions import PybooruError, PybooruHTTPError
 from pybooru.resources import HTTP_STATUS_CODE as BOORU_CODES
-from zenlog import log
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -90,14 +90,13 @@ class NetClient(Client, abc.ABC):
         except RequestException as err:
             log.error(str(err))
 
-        code                  = result.status_code
-        short_desc, long_desc = BOORU_CODES[code]
+        code      = result.status_code
+        long_desc = BOORU_CODES[code][1]
 
         if code in BOORU_CODE_GROUPS["OK"]:
             return result
 
-        log.error("%s: %s, %s - URL: %s",
-                  code, short_desc, long_desc, result.url)
+        log.error("[%d] %s", code, long_desc)
 
         return None
 
@@ -139,11 +138,10 @@ class Danbooru(NetClient):
                 return method(*args, **kwargs)
 
         except PybooruHTTPError as err:
-            code                  = err.args[1]
-            url                   = err.args[2]
-            short_desc, long_desc = BOORU_CODES[code]
+            code      = err.args[1]
+            long_desc = BOORU_CODES[code][1]
 
-            log.error("%s: %s - %s - %s", code, short_desc, long_desc, url)
+            log.error("[%d] %s", code, long_desc)
 
         except (PybooruError, RequestException) as err:
             log.error(str(err))
@@ -206,7 +204,7 @@ class Danbooru(NetClient):
         last_page   = math.ceil(total_posts / (limit or self.default_limit))
 
         if total_posts == 0 or last_page == 0:
-            log.warn(f"No posts for search {tags!r}.")
+            log.warning("No posts for search %r.", tags)
             return
 
         for page in self._parse_pages(pages, last_page):

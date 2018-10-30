@@ -4,7 +4,7 @@
 import traceback
 from typing import Generator, List
 
-from zenlog import log
+from logzero import logger as log
 
 from . import filtering, order
 from .attridict import AttrIndexedDict
@@ -66,7 +66,7 @@ class Album(AttrIndexedDict, attr="id", map_partials=("update", "write")):
                 self._put_stream(Stream(*stream_args, **stream_kwargs))
 
         except KeyboardInterrupt:
-            log.warn("Caught CTRL-C, added %d posts." % self._added)
+            log.warning("Caught CTRL-C, added %d posts.", self._added)
 
         return self
 

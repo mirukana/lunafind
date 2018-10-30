@@ -27,10 +27,15 @@ Options:
     - A comma-separated list: `1,3,5,12,99`
 
   -l NUM, --limit NUM
-    Number of posts per page. On Danbooru, default is 20 and max is 200.
+    Number of posts per page.
+    For Danbooru, default is `20`, max is `200`, and the max page with the
+    default limit for non-premium users is `1000`.
+
+    Using `--limit 200` allows more total posts to be fetched,
+    20K vs 80K with some big tags. Timeouts start to appear near pages 400-500.
 
   -r, --random
-    Randomize results order.
+    Get results in a randomized order.
 
   -w, --raw
     Do not parse the query for aliased tags, metatags or multiple tags,
@@ -107,8 +112,9 @@ Notes:
     image or ugoira webm that should be downloaded.
 
 Examples:
-  lunakit "blonde 2girls" --pages all --download
+  lunakit "blonde 2girls" --limit 200 --pages all --download
     Download all pages of posts containing tags `blonde` and `2girls`.
+    See the `--limit` option description to know why `200` is used here.
 
   lunakit --show-key title,post_url
     Print title and post page URL for latest posts on the home page.
@@ -134,13 +140,11 @@ import re
 import sys
 from typing import List, Optional
 
-import blessed
 import docopt
-from zenlog import log
+from logzero import logger as log
 
-from . import Album, Stream, __about__, clients, order, utils
+from . import TERM, Album, Stream, __about__, clients, order, utils
 
-TERM    = blessed.Terminal()
 OPTIONS = [string for match in re.findall(r"(-.)(?:\s|,)|(--.+?)\s", __doc__)
            for string in match if string]
 
@@ -261,7 +265,7 @@ def main(argv: Optional[List[str]] = None) -> None:
                     try:
                         print(post["info"][key])
                     except KeyError:
-                        log.warn(f"Post {post.id} has no {key!r} key.")
+                        log.warning("Post %d has no %r key.", post.id, key)
 
             if args["--resource"]:
                 for res in args["--resource"].split(","):
