@@ -42,8 +42,9 @@ class Stream(collections.Iterator):
 
     def _on_iter_done(self):
         if not (self.posts_seen == 1 and self.filtered == 0):
-            log.info(f"{self.filtered}/{self.posts_seen} posts filtered for "
-                     f"{self.query!r}.")
+            log.info("%d/%d posts filtered%s.",
+                     self.filtered, self.posts_seen,
+                     f"for {self.query!r}" if self.query else "")
 
 
     def __next__(self) -> Post:

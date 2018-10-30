@@ -3,12 +3,9 @@
 
 from typing import Optional, List
 
-from cached_property import cached_property
-
 from . import clients
 from .attridict import AttrIndexedDict
 from .resources import Info, Resource
-from .utils import join_comma_and
 
 
 class PostNotFoundError(Exception):
@@ -52,20 +49,9 @@ class Post(AttrIndexedDict, attr="title", map_partials=("update", "write")):
     def id(self) -> int:
         return self["info"]["id"]
 
-
-    @cached_property
+    @property
     def title(self) -> str:
-        kinds = {k: join_comma_and(*self.info[f"tag_string_{k}"].split())
-                 for k in ("character", "copyright", "artist")}
-
-        return (
-            "{character} ({copyright}) drawn by {artist}%".format(**kinds)
-            .replace("() drawn by", "drawn by")
-            .replace("drawn by %", "")
-            .replace("%", "")
-            .strip()
-            or "untitled"
-        )
+        return self["info"]["title"]
 
 
     def __repr__(self) -> str:

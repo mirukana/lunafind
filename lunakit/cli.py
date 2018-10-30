@@ -67,16 +67,16 @@ Options:
     Comma-separated list of resources for posts to print on stdout,
     e.g. `info` or `info,media,artcom,notes`.
 
-    If no `--resource`, `--info-key` or `--download` option is specified,
+    If no `--resource`, `--show-key` or `--download` option is specified,
     the default behavior is to print info on stdout.
 
-  -k KEY, --info-key KEY
+  -k KEY, --show-key KEY
     Comma-separated list of info JSON keys to print for posts,
     e.g. `dl_url` or `id,tag_string`
 
   -d, --download
     Save posts and their resources (media, info, artcom, notes...) to disk.
-    Cannot be used with `--resource` or `--info-key`.
+    Cannot be used with `--resource` or `--show-key`.
 
   -q, --quiet-skip
     Do not warn when skipping download of already existing files.
@@ -106,10 +106,13 @@ Notes:
     image or ugoira webm that should be downloaded.
 
 Examples:
-  lunakit "blonde 2girls" --download
-    Download the first page of posts containing tags `blonde` and `2girls`.
+  lunakit "blonde 2girls" --pages all --download
+    Download all pages of posts containing tags `blonde` and `2girls`.
 
-  lunakit --random --limit 200 --key dl_url
+  lunakit --show-key title,post_url
+    Print title and post page URL for latest posts on the home page.
+
+  lunakit --random --limit 200 --show-key dl_url
     Print raw image/webm URL for 200 random posts.
 
   lunakit "wallpaper order:score" --filter "%-no_human ratio:16:9 width:>=1920"
@@ -121,9 +124,9 @@ Examples:
     be mistaken for an option. `\` can also be used, but will most likely
     always require quoting due to your shell.
 
-  lunakit "~scenery ~landscape" "~outdoor ~nature" --pages all --download
+  lunakit "~scenery ~landscape" "~outdoor ~nature" --pages 1-10 --download
     Do two separate searches (Danbooru 2 tag limit) for "scenery or landscape"
-    and "outdoor or nature", all pages, combine the results and
+    and "outdoor or nature", pages 1 to 10, combine the results and
     download everything."""
 
 import re
@@ -132,6 +135,7 @@ from typing import List, Optional
 
 import blessed
 import docopt
+from zenlog import log
 
 from . import Album, Stream, __about__, clients, order, utils
 
@@ -238,7 +242,7 @@ def main(argv: Optional[List[str]] = None) -> None:
     for obj in stores:
         posts = obj.list if isinstance(obj, Album) else obj
 
-        if not(args["--resource"] or args["--info-key"] or args["--download"]):
+        if not(args["--resource"] or args["--show-key"] or args["--download"]):
             args["--resource"] = "info"
 
         if args["--download"]:
@@ -246,10 +250,17 @@ def main(argv: Optional[List[str]] = None) -> None:
                         warn      = not args["--quiet-skip"])
             return
 
+
+        newline = bool(args["--show-key"] and "," in args["--show-key"]) or \
+                  bool(args["--resource"])
+
         for post in posts:
-            if args["--info-key"]:
-                for key in args["--info-key"].split(","):
-                    print(post["info"][key])
+            if args["--show-key"]:
+                for key in args["--show-key"].split(","):
+                    try:
+                        print(post["info"][key])
+                    except KeyError:
+                        log.warn(f"Post {post.id} has no {key!r} key.")
 
             if args["--resource"]:
                 for res in args["--resource"].split(","):
@@ -257,5 +268,5 @@ def main(argv: Optional[List[str]] = None) -> None:
                     if json:
                         print(json)
 
-            if args["--info-key"] or args["--resource"]:
+            if newline:
                 print()

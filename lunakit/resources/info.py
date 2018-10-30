@@ -9,6 +9,7 @@ from zenlog import log
 
 import whratio
 
+from ..utils import join_comma_and
 from .base import JsonResource
 
 
@@ -25,12 +26,31 @@ class Info(JsonResource):
         return self.info
 
 
-    def enhance(self) -> "Info":
-        new = {"is_broken": False}
+    def _get_title(self) -> str:
+        kinds = {k: join_comma_and(*self.info[f"tag_string_{k}"].split())
+                 for k in ("character", "copyright", "artist")}
 
+        return (
+            "{character} ({copyright}) drawn by {artist}%".format(**kinds)
+            .replace("() drawn by", "drawn by")
+            .replace("drawn by %", "")
+            .replace("%", "")
+            .strip()
+            or "untitled"
+        )
+
+
+    def enhance(self) -> "Info":
+        new = {**self.info, "is_broken": False}
+
+        new["title"]      = self._get_title()
+        new["fetched_at"] = pend.now().format(self.client.date_format)
         new["booru"]      = self.client.name
         new["booru_url"]  = self.client.site_url
-        new["fetched_at"] = pend.now().format(self.client.date_format)
+        new["post_url"]   = "%s%s" % (
+            new["booru_url"],
+            self.client.post_url_template.format(**new)
+        )
 
         try:
             new["children_num"] = len(self.info["children_ids"].split())

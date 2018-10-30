@@ -113,6 +113,8 @@ class Danbooru(NetClient):
     date_format:   str = field(default="YYYY-MM-DDTHH:mm:ss.SSSZ", repr=False)
     timezone:      str = field(default="US/Eastern",               repr=False)
 
+    post_url_template: str = field(default="/posts/{id}", repr=False)
+
     _pybooru: pybooru.Danbooru = field(init=False, default=None, repr=False)
 
 
