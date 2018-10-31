@@ -26,10 +26,12 @@ class Stream(collections.Iterator):
     raw:    bool          = False
     prefer: Danbooru      = None
 
-    unfinished: List[Post]        = field(init=False, default=None)
-    filter_str: str               = field(init=False, default="")
-    filtered:   int               = field(init=False, default=0)
-    posts_seen: int               = field(init=False, default=0)
+    unfinished:     List[Post] = field(init=False, default=None)
+    filter_str:     str        = field(init=False, default="")
+    stop_if_filter: str        = field(init=False, default="")
+    filtered:       int        = field(init=False, default=0)
+    posts_seen:     int        = field(init=False, default=0)
+
     _info_gen:  InfoClientGenType = field(init=False, default=None, repr=False)
 
 
@@ -42,7 +44,7 @@ class Stream(collections.Iterator):
                                     self.random, self.raw, self.prefer)
 
 
-    def _on_iter_done(self):
+    def _on_iter_done(self) -> None:
         if not (self.posts_seen == 1 and self.filtered == 0):
             log.info("%d/%d posts filtered%s.",
                      self.filtered, self.posts_seen,
@@ -63,6 +65,11 @@ class Stream(collections.Iterator):
 
             self.posts_seen += 1
 
+            if self.stop_if_filter.strip() and \
+               list(filtering.search([post], self.stop_if_filter)):
+                self._on_iter_done()
+                raise StopIteration
+
             if self.filter_str.strip() and \
                not list(filtering.search([post], self.filter_str)):
                 self.filtered += 1
@@ -79,6 +86,12 @@ class Stream(collections.Iterator):
         # pylint: disable=protected-access
         new            = copy(self)
         new.filter_str = " ".join((new.filter_str, search)).strip()
+        return new
+
+    def stop_if(self, search: str) -> "Stream":
+        # pylint: disable=protected-access
+        new                = copy(self)
+        new.stop_if_filter = " ".join((new.stop_if_filter, search)).strip()
         return new
 
     def order(self, by: str) -> "Album":
