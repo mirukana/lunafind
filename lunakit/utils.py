@@ -16,6 +16,7 @@ SIZE_UNITS = "BKMGTPEZY"
 
 def bytes2human(size: Union[int, float], prefix: str = "", suffix: str = ""
                ) -> str:
+    size = float(size)  # Prevent proxied size problems with round()
     unit = ""
 
     for unit in SIZE_UNITS:
