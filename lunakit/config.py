@@ -4,6 +4,7 @@
 import shutil
 from configparser import ConfigParser, ExtendedInterpolation
 from pathlib import Path
+from typing import Optional
 
 from appdirs import user_config_dir
 from pkg_resources import resource_filename
@@ -16,8 +17,8 @@ CFG          = ConfigParser(interpolation=ExtendedInterpolation())
 RELOADED     = False
 
 
-def reload(path: str = FILE):
-    path = Path(path).expanduser()
+def reload(path: Optional[str] = None) -> None:
+    path = Path(path or FILE).expanduser()
 
     if not path.is_file():
         path.parent.mkdir(parents=True, exist_ok=True)

@@ -2,6 +2,9 @@
 
 ## Minor
 
+- Logger non-global object
+- Don't update post dirs with a *READONLY* file inside
+- Max limit client attr (also use in lunasync)
 - Implement all set operators for attridict
 - Order: artcomm and custom
 
@@ -15,6 +18,7 @@
 - Integrate Decensooru?
 
 - Local clients to manage written to disk posts
+- Transparently store user resource modifications in separate patch files
 
 ## Etc
 

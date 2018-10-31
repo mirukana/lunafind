@@ -122,14 +122,14 @@ Examples:
   lunakit --random --limit 200 --show-key dl_url
     Print raw image/webm URL for 200 random posts.
 
-  lunakit "wallpaper order:score" --filter "%-no_human ratio:16:9 width:>=1920"
-    Search for posts with the `wallpaper` tags sorted by score,
-    filter posts to only leave those without the `no_human` tag, with a ratio
+  lunakit wallpaper --pages all --filter "%-no_human ratio:16:9 width:>=1920"
+    Retrieve all posts with the `wallpaper` tags,
+    filter them to only leave those without the `no_human` tag, with a ratio
     of 16:9 and a width equal or superior to 1920, print info.
 
     Since the filter value starts with a `-`, it is escaped with a `%` to not
     be mistaken for an option. `\` can also be used, but will most likely
-    always require quoting due to your shell.
+    always require quoting due to the shell.
 
   lunakit "~scenery ~landscape" "~outdoor ~nature" --pages 1-10 --download
     Do two separate searches (Danbooru 2 tag limit) for "scenery or landscape"

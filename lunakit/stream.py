@@ -24,7 +24,7 @@ class Stream(collections.Iterator):
     limit:  Optional[int] = None
     random: bool          = False
     raw:    bool          = False
-    prefer: Danbooru      = DEFAULT
+    prefer: Danbooru      = None
 
     unfinished: List[Post]        = field(init=False, default=None)
     filter_str: str               = field(init=False, default="")
@@ -34,6 +34,8 @@ class Stream(collections.Iterator):
 
 
     def __post_init__(self) -> None:
+        self.prefer = self.prefer or DEFAULT
+
         self.filter_str = config.CFG["GENERAL"]["auto_filter"].strip()
         self.unfinished = []
         self._info_gen  = info_auto(self.query, self.pages, self.limit,
