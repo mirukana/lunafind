@@ -24,6 +24,9 @@ class Media(Resource):
 
 
     def get_data(self) -> Generator[bytes, None, None]:
+        if self.info["is_broken"]:
+            return None
+
         response = self.client.http("get", self.info["dl_url"], stream=True)
 
         if not response:
@@ -32,10 +35,18 @@ class Media(Resource):
         return response.iter_content(self.chunk_size)
 
 
+    def write(self, overwrite: bool = False, warn: bool = True):
+        if self.info["is_broken"]:
+            return None
+
+        return super().write(overwrite, warn)
+
+
     @property
     def msg_writing(self) -> str:
         return f"Downloading {self.ext} of %s for post {self.post_id}" % (
             utils.bytes2human(self.info["dl_size"])
+            if "dl_size" in self.info else "unknown size"
         )
 
 

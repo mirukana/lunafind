@@ -88,7 +88,7 @@ Options:
     Do not warn when skipping download of already existing files.
 
   -O, --overwrite
-    Do not skip downloads and overwrite files that already exist.
+    Force download and overwrite any files that already exist.
 
 
   -h, --help
