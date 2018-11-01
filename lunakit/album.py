@@ -4,9 +4,7 @@
 import traceback
 from typing import Generator, List
 
-from logzero import logger as log
-
-from . import filtering, order
+from . import LOG, filtering, order
 from .attridict import AttrIndexedDict
 from .post import Post
 from .stream import Stream
@@ -39,7 +37,7 @@ class Album(AttrIndexedDict, attr="id", map_partials=("update", "write")):
             raise
         except Exception:
             traceback.print_exc()
-            log.error("Unexpected error while handling post %d, "
+            LOG.error("Unexpected error while handling post %d, "
                       "trying to recover...", post.id)
 
     def _put_stream(self, stream: Stream) -> None:
@@ -66,7 +64,7 @@ class Album(AttrIndexedDict, attr="id", map_partials=("update", "write")):
                 self._put_stream(Stream(*stream_args, **stream_kwargs))
 
         except KeyboardInterrupt:
-            log.warning("Caught CTRL-C, added %d posts.", self._added)
+            LOG.warning("Caught CTRL-C, added %d posts.", self._added)
 
         return self
 

@@ -14,7 +14,6 @@ import pendulum as pend
 import pybooru
 import urllib3
 from dataclasses import dataclass, field
-from logzero import logger as log
 from pybooru.exceptions import PybooruError, PybooruHTTPError
 from pybooru.resources import HTTP_STATUS_CODE as BOORU_CODES
 
@@ -22,7 +21,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.exceptions import RequestException
 
-from . import config
+from . import LOG, config
 
 QueryType         = Union[int, str]
 InfoGenType       = Generator[Dict[str, Any], None, None]
@@ -88,7 +87,7 @@ class NetClient(Client, abc.ABC):
                     http_method, url, timeout=6.5, **request_method_kwargs
                 )
         except RequestException as err:
-            log.error(str(err))
+            LOG.error(str(err))
 
         code      = result.status_code
         long_desc = BOORU_CODES[code][1]
@@ -96,7 +95,7 @@ class NetClient(Client, abc.ABC):
         if code in BOORU_CODE_GROUPS["OK"]:
             return result
 
-        log.error("[%d] %s", code, long_desc)
+        LOG.error("[%d] %s", code, long_desc)
 
         return None
 
@@ -141,10 +140,10 @@ class Danbooru(NetClient):
             code      = err.args[1]
             long_desc = BOORU_CODES[code][1]
 
-            log.error("[%d] %s", code, long_desc)
+            LOG.error("[%d] %s", code, long_desc)
 
         except (PybooruError, RequestException) as err:
-            log.error(str(err))
+            LOG.error(str(err))
 
         # Returning [] instead of None to not crash because of `yield from`s.
         return []
@@ -187,7 +186,7 @@ class Danbooru(NetClient):
 
         # No need for other params if search is just an ID or MD5.
         if re.match(r"^(id|md5):[a-fA-F\d]+$", tags):
-            log.info("Fetching post %s", tags.split(":")[1])
+            LOG.info("Fetching post %s", tags.split(":")[1])
             yield from self.api("post_list", **params)
             return
 
@@ -204,7 +203,7 @@ class Danbooru(NetClient):
         last_page   = math.ceil(total_posts / (limit or self.default_limit))
 
         if total_posts == 0 or last_page == 0:
-            log.warning("No posts for search %r.", tags)
+            LOG.warning("No posts for search %r.", tags)
             return
 
         for page in self._parse_pages(pages, last_page):
@@ -213,7 +212,7 @@ class Danbooru(NetClient):
 
             params["page"] = page
 
-            log.info(
+            LOG.info(
                 "Fetching posts%s%s%s%s",
                 " for %r"       % params["tags"] if params["tags"] else "",
                 " on page %d%s" % (params["page"],

@@ -8,9 +8,7 @@ import functools
 from multiprocessing.pool import ThreadPool
 from typing import Tuple
 
-from logzero import logger as log
-
-from . import config
+from . import LOG, config
 
 
 class AttrIndexedDict(collections.UserDict, abc.ABC):
@@ -54,7 +52,7 @@ class AttrIndexedDict(collections.UserDict, abc.ABC):
             try:
                 pool.map(work, self.data.values())
             except KeyboardInterrupt:
-                log.warning("CTRL-C caught, finishing current tasks...")
+                LOG.warning("CTRL-C caught, finishing current tasks...")
                 pool.terminate()
             else:
                 pool.close()

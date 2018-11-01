@@ -141,9 +141,8 @@ import sys
 from typing import List, Optional
 
 import docopt
-from logzero import logger as log
 
-from . import TERM, Album, Stream, __about__, clients, order, utils
+from . import LOG, TERM, Album, Stream, __about__, clients, order, utils
 
 OPTIONS = [string for match in re.findall(r"(-.)(?:\s|,)|(--.+?)\s", __doc__)
            for string in match if string]
@@ -265,7 +264,7 @@ def main(argv: Optional[List[str]] = None) -> None:
                     try:
                         print(post["info"][key])
                     except KeyError:
-                        log.warning("Post %d has no %r key.", post.id, key)
+                        LOG.warning("Post %d has no %r key.", post.id, key)
 
             if args["--resource"]:
                 for res in args["--resource"].split(","):

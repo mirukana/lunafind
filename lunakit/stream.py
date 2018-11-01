@@ -8,9 +8,8 @@ from threading import Thread
 from typing import List, Optional
 
 from dataclasses import dataclass, field
-from logzero import logger as log
 
-from . import config, filtering, order
+from . import LOG, config, filtering, order
 from .clients import (DEFAULT, Danbooru, InfoClientGenType, PageType,
                       QueryType, info_auto)
 from .post import Post
@@ -46,7 +45,7 @@ class Stream(collections.Iterator):
 
     def _on_iter_done(self) -> None:
         if not (self.posts_seen == 1 and self.filtered == 0):
-            log.info("%d/%d posts filtered%s.",
+            LOG.info("%d/%d posts filtered%s.",
                      self.filtered, self.posts_seen,
                      f" for {self.query!r}" if self.query else "")
 
@@ -126,7 +125,7 @@ class Stream(collections.Iterator):
                 thread_id += 1
 
         except KeyboardInterrupt:
-            log.warning("CTRL-C caught, finishing current tasks...")
+            LOG.warning("CTRL-C caught, finishing current tasks...")
             if post:
                 self.unfinished.append(post)
 

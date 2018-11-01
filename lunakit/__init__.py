@@ -6,13 +6,15 @@ import blessed
 
 TERM = blessed.Terminal()
 
-logzero.formatter(logzero.LogFormatter(
-    datefmt = "%H:%M:%S",
-    fmt     = ("%(color)s%(levelname)1.1s %(asctime)s | "
-               "%(message)s%(end_color)s"),
-    colors  = {10: TERM.cyan, 20: TERM.green, 30: TERM.yellow,
-               40: TERM.red, 50: TERM.magenta}
-))
+LOG = logzero.setup_logger(
+    formatter = logzero.LogFormatter(
+        datefmt = "%H:%M:%S",
+        fmt     = ("%(color)s%(levelname)1.1s %(asctime)s | "
+                   "%(message)s%(end_color)s"),
+        colors  = {10: TERM.cyan, 20: TERM.green, 30: TERM.yellow,
+                   40: TERM.red, 50: TERM.magenta}
+    )
+)
 
 # pylint: disable=wrong-import-position
 

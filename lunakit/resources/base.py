@@ -12,9 +12,8 @@ from typing import Any, Dict, Optional, Union
 from atomicfile import AtomicFile
 from cached_property import cached_property
 from dataclasses import dataclass, field
-from logzero import logger as log
 
-from .. import clients, utils
+from .. import LOG, clients, utils
 
 
 @dataclass(repr=False)
@@ -84,7 +83,7 @@ class Resource(abc.ABC):
         detected = self.get_if_post_has_resource()
 
         if not detected and self.msg_no_data_found:
-            log.warning(self.msg_no_data_found)
+            LOG.warning(self.msg_no_data_found)
 
         return detected
 
@@ -96,14 +95,14 @@ class Resource(abc.ABC):
             return None
 
         if self.msg_fetching:
-            log.info(self.msg_fetching)
+            LOG.info(self.msg_fetching)
 
         # pylint: disable=assignment-from-none
         got = self.get_data()
 
         if not got and got not in (0, False):
             if self.msg_no_data_found:
-                log.info(self.msg_no_data_found)
+                LOG.info(self.msg_no_data_found)
             return None
 
         return got
@@ -123,7 +122,7 @@ class Resource(abc.ABC):
 
         if not new_data and new_data not in (0, False):
             if self.msg_update_fail:
-                log.warning(self.msg_update_fail)
+                LOG.warning(self.msg_update_fail)
 
             if accept_gone:
                 self.__dict__["data"] = new_data
@@ -144,11 +143,11 @@ class Resource(abc.ABC):
 
         if os.path.exists(self.path) and not overwrite:
             if warn:
-                log.warning("Not overwriting %r", self.path)
+                LOG.warning("Not overwriting %r", self.path)
             return self
 
         if self.msg_writing:
-            log.info(self.msg_writing)
+            LOG.info(self.msg_writing)
 
         content = self.get_serialized()
 

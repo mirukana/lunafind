@@ -5,10 +5,10 @@ from typing import Any, Dict, Optional
 
 import pendulum as pend
 from lazy_object_proxy import Proxy as LazyProxy
-from logzero import logger as log
 
 import whratio
 
+from .. import LOG
 from ..utils import join_comma_and
 from .base import JsonResource
 
@@ -65,7 +65,7 @@ class Info(JsonResource):
         new["ratio_float"] = whratio.as_float(*w_h)
 
         if "file_ext" not in self.info:
-            log.warning("No media info for post %d.", self.post_id)
+            LOG.warning("No media info for post %d.", self.post_id)
             new["is_broken"] = True
 
         elif self.info["file_ext"] != "zip":
@@ -86,7 +86,7 @@ class Info(JsonResource):
                     return int(response.headers["content-length"])
 
                 new["is_broken"] = True
-                log.warning("Broken post: %d, cannot get size.", self.post_id)
+                LOG.warning("Broken post: %d, cannot get size.", self.post_id)
                 return None
 
             # Doing this non-lazily makes fetching pages of ugoiras very
