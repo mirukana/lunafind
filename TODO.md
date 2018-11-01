@@ -2,7 +2,6 @@
 
 ## Minor
 
-- `--print-config-path`, `--config`
 - Don't update post dirs with a *READONLY* file inside
 - Intelligent post update based on `updated_at` and `fetched_at` keys
 - Max limit client attr (also use in lunasync)

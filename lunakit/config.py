@@ -4,6 +4,7 @@
 import shutil
 from configparser import ConfigParser, ExtendedInterpolation
 from pathlib import Path
+from threading import Event
 from typing import Optional
 
 from appdirs import user_config_dir
@@ -14,7 +15,7 @@ from . import __about__
 DEFAULT_FILE = resource_filename(__about__.__name__, "data/default_config.ini")
 FILE         = "%s/config.ini" % user_config_dir(__about__.__pkg_name__)
 CFG          = ConfigParser(interpolation=ExtendedInterpolation())
-RELOADED     = False
+RELOADED     = Event()
 
 
 def reload(path: Optional[str] = None) -> None:
@@ -25,5 +26,4 @@ def reload(path: Optional[str] = None) -> None:
         shutil.copyfile(DEFAULT_FILE, path)
 
     CFG.read_file(open(FILE, "r"))
-    global RELOADED  # pylint: disable=global-statement
-    RELOADED = True
+    RELOADED.set()

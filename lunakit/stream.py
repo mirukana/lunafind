@@ -9,21 +9,19 @@ from typing import List, Optional
 
 from dataclasses import dataclass, field
 
-from . import LOG, config, filtering, order
-from .clients import (DEFAULT, Danbooru, InfoClientGenType, PageType,
-                      QueryType, info_auto)
+from . import LOG, clients, config, filtering, order
 from .post import Post
 from .resources import Resource
 
 
 @dataclass
 class Stream(collections.Iterator):
-    query:  QueryType     = ""
-    pages:  PageType      = 1
-    limit:  Optional[int] = None
-    random: bool          = False
-    raw:    bool          = False
-    prefer: Danbooru      = None
+    query:  clients.QueryType = ""
+    pages:  clients.PageType  = 1
+    limit:  Optional[int]     = None
+    random: bool              = False
+    raw:    bool              = False
+    prefer: clients.Danbooru  = None
 
     unfinished:     List[Post] = field(init=False, default=None)
     filter_str:     str        = field(init=False, default="")
@@ -31,16 +29,17 @@ class Stream(collections.Iterator):
     filtered:       int        = field(init=False, default=0)
     posts_seen:     int        = field(init=False, default=0)
 
-    _info_gen:  InfoClientGenType = field(init=False, default=None, repr=False)
+    _info_gen: clients.InfoClientGenType = \
+        field(init=False, default=None, repr=False)
 
 
     def __post_init__(self) -> None:
-        self.prefer = self.prefer or DEFAULT
+        self.prefer = self.prefer or clients.DEFAULT
 
         self.filter_str = config.CFG["GENERAL"]["auto_filter"].strip()
         self.unfinished = []
-        self._info_gen  = info_auto(self.query, self.pages, self.limit,
-                                    self.random, self.raw, self.prefer)
+        self._info_gen  = clients.info_auto(self.query, self.pages, self.limit,
+                                            self.random, self.raw, self.prefer)
 
 
     def _on_iter_done(self) -> None:

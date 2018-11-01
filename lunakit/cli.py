@@ -95,6 +95,9 @@ Options:
     Show the configuration file path.
     If the file doesn't exist, a default one is automatically copied.
 
+  --config PATH
+    Use `PATH` as configuration file instead of the default location.
+
   --help-order-values
     Show possible values for `--order`.
 
@@ -142,6 +145,7 @@ Examples:
 
 import re
 import sys
+import time
 from typing import List, Optional
 
 import docopt
@@ -186,6 +190,12 @@ def main(argv: Optional[List[str]] = None) -> None:
             print(TERM.red("Invalid command syntax, check help:\n"))
 
         utils.print_colored_help(__doc__, exit_code=10)
+
+    if args["--config"]:
+        config.FILE = args["--config"]
+        config.reload()
+        while config.RELOADED.is_set():
+            time.sleep(0.05)
 
     if args["--help-order-values"]:
         print_order_values()

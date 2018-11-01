@@ -300,25 +300,28 @@ def info_auto(query:  QueryType     = "",
         yield (post_info, client)
 
 
-def apply_config() -> None:
-    for name, cfg in config.CFG.items():
-        if name in ("DEFAULT", "GENERAL"):
-            continue
+def _wait_reload_cfg() -> None:
+    while True:
+        config.RELOADED.wait()
 
-        assert re.match(r"[a-z0-9_-]+", name), \
-               "Config section [{name}]: can only contain a-z 0-9 _ -"
+        for name, cfg in config.CFG.items():
+            if name in ("DEFAULT", "GENERAL"):
+                continue
 
-        # Will be added to ALIVE (class __init__)
-        client = Danbooru(
-            site_url = cfg["site_url"], name    = name,
-            username = cfg["username"], api_key = cfg["api_key"]
-        )
+            assert re.match(r"[a-z0-9_-]+", name), \
+                   "Config section [{name}]: can only contain a-z 0-9 _ -"
 
-        if name == config.CFG["GENERAL"]["default_booru"]:
-            global DEFAULT  # pylint: disable=global-statement
-            DEFAULT = client
+            # Will be added to ALIVE (class __init__)
+            client = Danbooru(
+                site_url = cfg["site_url"], name    = name,
+                username = cfg["username"], api_key = cfg["api_key"]
+            )
+
+            if name == config.CFG["GENERAL"]["default_booru"]:
+                global DEFAULT  # pylint: disable=global-statement
+                DEFAULT = client
+
+        config.RELOADED.clear()
 
 
-if config.RELOADED:
-    apply_config()
-    config.RELOADED = False
+threading.Thread(target=_wait_reload_cfg, daemon=True).start()
