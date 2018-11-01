@@ -54,8 +54,8 @@ setup(
         ]
     },
 
-    keywords = "booru danbooru api client images ugoira anime cli terminal " \
-               "scrap tags download filter order",
+    keywords = "booru danbooru api client image ugoira anime cli terminal " \
+               "scrap tag search filter order download",
 
     url = "https://github.com/mirukan/lunakit",
 

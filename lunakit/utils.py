@@ -3,6 +3,8 @@
 
 "Misc useful functions."
 
+import re
+import sys
 from typing import Union
 
 import pendulum as pend
@@ -11,6 +13,8 @@ import simplejson
 from pygments import highlight
 from pygments.formatters import Terminal256Formatter
 from pygments.lexers import JsonLexer
+
+from . import TERM
 
 SIZE_UNITS = "BKMGTPEZY"
 
@@ -110,3 +114,35 @@ def join_comma_and(*strings: str) -> str:
         return ", ".join(strings)
 
     return "%s and %s" % (", ".join(strings[:-1]), strings[-1])
+
+
+def print_colored_help(doc: str, exit_code: int = 0) -> None:
+    doc = doc.splitlines()
+
+    # Usage:
+    doc[0] = re.sub(r"(Usage: +)",
+                    f"%s{TERM.blue}" % TERM.magenta_bold(r"\1"), doc[0])
+    # [things]
+    doc[0] = re.sub(r"\[(\S+)\]",
+                    f"[%s{TERM.blue}]" % TERM.bold(rf"\1"), doc[0])
+
+    doc[0] = f"{doc[0]}{TERM.normal}"
+    doc    = "\n".join(doc)
+
+    styles = {
+        r"`(.+?)`":      "green",         # `things`
+        r"^(\S.+:)$":    "magenta_bold",  #  Sections:
+        r"^(  [A-Z]+)$": "blue_bold",     #  ARGUMENT
+        r"^(  \S.+)$":   "blue",          #  Two-space indented lines
+        r"^(\s*-)":      "magenta",       #  - Dash lists
+    }
+
+    for reg, style in styles.items():
+        doc = re.sub(reg, getattr(TERM, style)(r"\1"), doc, flags=re.MULTILINE)
+
+    doc = re.sub(r"(-{1,2}[a-zA-Z\d]+ +)([A-Z]+)",
+                 r"\1%s%s%s" % (TERM.blue_bold(r"\2"), TERM.normal, TERM.blue),
+                 doc)
+
+    print(doc)
+    sys.exit(exit_code)

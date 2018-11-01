@@ -148,38 +148,6 @@ OPTIONS = [string for match in re.findall(r"(-.)(?:\s|,)|(--.+?)\s", __doc__)
            for string in match if string]
 
 
-def print_help(doc: str = __doc__, exit_code: int = 0) -> None:
-    doc = doc.splitlines()
-
-    # Usage:
-    doc[0] = re.sub(r"(Usage: +)",
-                    f"%s{TERM.blue}" % TERM.magenta_bold(r"\1"), doc[0])
-    # [things]
-    doc[0] = re.sub(r"\[(\S+)\]",
-                    f"[%s{TERM.blue}]" % TERM.bold(rf"\1"), doc[0])
-
-    doc[0] = f"{doc[0]}{TERM.normal}"
-    doc    = "\n".join(doc)
-
-    styles = {
-        r"`(.+?)`":      "green",         # `things`
-        r"^(\S.+:)$":    "magenta_bold",  #  Sections:
-        r"^(  [A-Z]+)$": "blue_bold",     #  ARGUMENT
-        r"^(  \S.+)$":   "blue",          #  Two-space indented lines
-        r"^(\s*-)":      "magenta",       #  - Dash lists
-    }
-
-    for reg, style in styles.items():
-        doc = re.sub(reg, getattr(TERM, style)(r"\1"), doc, flags=re.MULTILINE)
-
-    doc = re.sub(r"(-{1,2}[a-zA-Z\d]+ +)([A-Z]+)",
-                 r"\1%s%s%s" % (TERM.blue_bold(r"\2"), TERM.normal, TERM.blue),
-                 doc)
-
-    print(doc)
-    sys.exit(exit_code)
-
-
 def print_order_values() -> None:
     dicts     = {**order.ORDER_NUM, **order.ORDER_DATE, **order.ORDER_FUNCS}
     by_maxlen = len(max(dicts.keys(), key=len))
@@ -210,15 +178,15 @@ def main(argv: Optional[List[str]] = None) -> None:
         )
     except docopt.DocoptExit:
         if len(sys.argv) > 1:
-            print("Invalid command syntax, check help:\n")
+            print(TERM.red("Invalid command syntax, check help:\n"))
 
-        print_help(exit_code=10)
+        utils.print_colored_help(__doc__, exit_code=10)
 
     if args["--help-order-values"]:
         print_order_values()
 
     if args["--help"]:
-        print_help()
+        utils.print_colored_help(__doc__)
 
     params = {
         "pages":  args["--pages"],
