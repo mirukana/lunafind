@@ -91,11 +91,15 @@ Options:
     Force download and overwrite any files that already exist.
 
 
-  -h, --help
-    Show this help.
+  --print-config-path
+    Show the configuration file path.
+    If the file doesn't exist, a default one is automatically copied.
 
   --help-order-values
     Show possible values for `--order`.
+
+  -h, --help
+    Show this help.
 
   -V, --version
     Show the program version.
@@ -142,7 +146,8 @@ from typing import List, Optional
 
 import docopt
 
-from . import LOG, TERM, Album, Stream, __about__, clients, order, utils
+from . import (LOG, TERM, Album, Stream, __about__, clients, config, order,
+               utils)
 
 OPTIONS = [string for match in re.findall(r"(-.)(?:\s|,)|(--.+?)\s", __doc__)
            for string in match if string]
@@ -187,6 +192,11 @@ def main(argv: Optional[List[str]] = None) -> None:
 
     if args["--help"]:
         utils.print_colored_help(__doc__)
+
+    if args["--print-config-path"]:
+        print(config.FILE)
+        sys.exit()
+
 
     params = {
         "pages":  args["--pages"],
