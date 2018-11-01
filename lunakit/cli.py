@@ -240,8 +240,9 @@ def main(argv: Optional[List[str]] = None) -> None:
               for q in args["QUERY"] or [""]]
 
     if args["--order"]:
-        stores = [sum([Album(s) for s in stores], Album())
-                  .order(args["--order"])]
+        stores = [
+            sum([Album(s) for s in stores], Album()).order(args["--order"])
+        ]
 
     for obj in stores:
         posts = obj.list if isinstance(obj, Album) else obj
@@ -252,7 +253,7 @@ def main(argv: Optional[List[str]] = None) -> None:
         if args["--download"]:
             posts.write(overwrite = args["--overwrite"],
                         warn      = not args["--quiet-skip"])
-            return
+            continue
 
 
         newline = bool(args["--show-key"] and "," in args["--show-key"]) or \
