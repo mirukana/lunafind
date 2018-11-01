@@ -1,10 +1,10 @@
 # Copyright 2018 miruka
 # This file is part of lunakit, licensed under LGPLv3.
 
-from typing import Optional, List
+from typing import List, Optional
 
-from . import clients
 from .attridict import AttrIndexedDict
+from .clients import danbooru, net
 from .resources import Info, Resource
 
 
@@ -18,16 +18,16 @@ class Post(AttrIndexedDict, attr="title", map_partials=("update", "write")):
 
     def __init__(self,
                  from_id:   Optional[int]            = None,
-                 prefer:    clients.Danbooru         = None,
+                 prefer:    danbooru.Danbooru        = None,
                  resources: Optional[List[Resource]] = None) -> None:
         super().__init__()
         resources = list(resources) if resources else []
 
-        prefer = prefer or clients.DEFAULT
+        prefer = prefer or net.DEFAULT
 
         if from_id:
             try:
-                info, client = next(clients.info_auto(from_id, prefer=prefer))
+                info, client = next(net.post_info(from_id, prefer=prefer))
             except StopIteration:
                 raise PostNotFoundError(from_id)
 

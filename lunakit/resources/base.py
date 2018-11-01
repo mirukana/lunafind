@@ -13,7 +13,8 @@ from atomicfile import AtomicFile
 from cached_property import cached_property
 from dataclasses import dataclass, field
 
-from .. import LOG, clients, utils
+from .. import LOG, utils
+from ..clients import net
 
 
 @dataclass(repr=False)
@@ -34,7 +35,7 @@ class Resource(abc.ABC):
     subclasses = []
 
     info:   Union["Info", Dict[str, Any]] = field(default_factory=dict)
-    client: clients.Client                = field(default=None)
+    client: net.Client                    = field(default=None)
 
     ext:        Optional[str] = field(default=None,          repr=False)
     binary:     bool          = field(default=False,         repr=False)
@@ -55,7 +56,7 @@ class Resource(abc.ABC):
         self.info = self.info or {}  # for pylint - Info *are* subscriptable
 
         if not self.client:
-            self.client = getattr(self.info, "client", "") or clients.DEFAULT
+            self.client = getattr(self.info, "client", "") or net.DEFAULT
 
 
     def __repr__(self) -> str:

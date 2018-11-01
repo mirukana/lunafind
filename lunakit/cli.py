@@ -220,7 +220,7 @@ def main(argv: Optional[List[str]] = None) -> None:
         params["limit"] = int(args["--limit"])
 
     if args["--booru"]:
-        params["prefer"] = clients.ALIVE[args["--booru"]]
+        params["prefer"] = clients.net.ALIVE[args["--booru"]]
 
     unesc = lambda s: s[1:] if s.startswith(r"\-") or s.startswith("%-") else s
 

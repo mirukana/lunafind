@@ -2,6 +2,7 @@
 
 ## Minor
 
+- Make `-k` show keys of the resource printed with `-r` 
 - Stop upon reaching pagination limit or too many timeouts
 - Don't update post dirs with a *READONLY* file inside
 - Intelligent post update based on `updated_at` and `fetched_at` keys
