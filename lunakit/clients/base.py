@@ -8,8 +8,9 @@ from typing import Any, Dict, Generator, Iterable, List, Optional, Tuple, Union
 import pendulum as pend
 
 QueryType         = Union[int, str]
-InfoGenType       = Generator[Dict[str, Any], None, None]
-InfoClientGenType = Generator[Tuple[Dict[str, Any], "Client"], None, None]
+InfoType          = Dict[str, Any]
+InfoGenType       = Generator[InfoType, None, None]
+InfoClientGenType = Generator[Tuple[InfoType, "Client"], None, None]
 
 IE       = Union[int, type(Ellipsis)]
 PageType = Union[IE, str, Tuple[IE, IE], Tuple[IE, IE, IE], Iterable[int]]
@@ -23,22 +24,22 @@ class Client(abc.ABC):
                     limit:  Optional[int] = None,
                     random: bool          = False,
                     raw:    bool          = False) -> InfoGenType:
-        pass
+        yield {}
 
 
     @abc.abstractmethod
     def artcom(self, post_id: int) -> List[Dict[str, Any]]:
-        pass
+        return []
 
 
     @abc.abstractmethod
     def notes(self, post_id: int) -> List[Dict[str, Any]]:
-        pass
+        return []
 
 
     @abc.abstractmethod
     def count_posts(self, tags: str = "") -> int:
-        pass
+        return 0
 
 
     @staticmethod

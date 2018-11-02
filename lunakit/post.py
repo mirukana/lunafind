@@ -4,7 +4,7 @@
 from typing import List, Optional
 
 from .attridict import AttrIndexedDict
-from .clients import danbooru, net
+from .clients import base, net
 from .resources import Info, Resource
 
 
@@ -18,7 +18,7 @@ class Post(AttrIndexedDict, attr="title", map_partials=("update", "write")):
 
     def __init__(self,
                  from_id:   Optional[int]            = None,
-                 prefer:    danbooru.Danbooru        = None,
+                 prefer:    base.Client              = None,
                  resources: Optional[List[Resource]] = None) -> None:
         super().__init__()
         resources = list(resources) if resources else []

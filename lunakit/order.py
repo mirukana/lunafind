@@ -2,7 +2,7 @@
 # This file is part of lunakit, licensed under LGPLv3.
 
 import random
-from typing import List, Sequence
+from typing import List
 
 import pendulum as pend
 
@@ -52,7 +52,7 @@ ORDER_FUNCS = {
 }
 
 
-def sort(posts: Sequence[Post], by: str) -> List[Post]:
+def sort(posts: List[Post], by: str) -> List[Post]:
     by_val  = by.replace("asc_", "").replace("desc_", "")
 
     in_dict = (ORDER_NUM   if by_val in ORDER_NUM   else
@@ -66,7 +66,7 @@ def sort(posts: Sequence[Post], by: str) -> List[Post]:
         )
 
     if in_dict == ORDER_FUNCS:
-        return sorted(posts, key=ORDER_FUNCS[by], reverse=True)
+        return posts.sort(key=ORDER_FUNCS[by], reverse=True)
 
     by_full = by if by.startswith("asc_") or by.startswith("desc_") else \
               f"%s_{by}" % in_dict[by][0]
@@ -75,4 +75,4 @@ def sort(posts: Sequence[Post], by: str) -> List[Post]:
         key = post["info"][in_dict[by_val][1]]
         return pend.parse(key) if in_dict == ORDER_DATE else key
 
-    return sorted(posts, key=sort_key, reverse=by_full.startswith("desc_"))
+    return posts.sort(key=sort_key, reverse=by_full.startswith("desc_"))

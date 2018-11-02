@@ -9,20 +9,20 @@ from typing import List, Optional
 
 from dataclasses import dataclass, field
 
-from . import LOG, config, filtering, order
-from .clients import base, danbooru, net
+from . import LOG, config, order, filtering
+from .clients import base, net
 from .post import Post
 from .resources import Resource
 
 
 @dataclass
 class Stream(collections.Iterator):
-    query:  base.QueryType     = ""
-    pages:  base.PageType      = 1
-    limit:  Optional[int]     = None
-    random: bool              = False
-    raw:    bool              = False
-    prefer: danbooru.Danbooru = None
+    query:  base.QueryType = ""
+    pages:  base.PageType  = 1
+    limit:  Optional[int]  = None
+    random: bool           = False
+    raw:    bool           = False
+    prefer: base.Client    = None
 
     unfinished:     List[Post] = field(init=False, default=None)
     filter_str:     str        = field(init=False, default="")
@@ -44,10 +44,13 @@ class Stream(collections.Iterator):
 
 
     def _on_iter_done(self) -> None:
-        if not (self.posts_seen == 1 and self.filtered == 0):
-            LOG.info("%d/%d posts filtered%s.",
-                     self.filtered, self.posts_seen,
-                     f" for {self.query!r}" if self.query else "")
+        if self.posts_seen == 1 and self.filtered == 0:
+            return
+
+        LOG.info("Found %d total posts%s%s.",
+                 self.posts_seen,
+                 f", {self.filtered} filtered" if self.filtered else "",
+                 f" for {self.query!r}"        if self.query    else "")
 
 
     def __next__(self) -> Post:
@@ -65,12 +68,12 @@ class Stream(collections.Iterator):
             self.posts_seen += 1
 
             if self.stop_if_filter.strip() and \
-               list(filtering.search([post], self.stop_if_filter)):
+               list(filtering.filter_all([post], self.stop_if_filter)):
                 self._on_iter_done()
                 raise StopIteration
 
             if self.filter_str.strip() and \
-               not list(filtering.search([post], self.filter_str)):
+               not list(filtering.filter_all([post], self.filter_str)):
                 self.filtered += 1
                 continue
 

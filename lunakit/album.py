@@ -73,7 +73,7 @@ class Album(AttrIndexedDict, attr="id", map_partials=("update", "write")):
         return Album(*self.filter_lazy(search))
 
     def filter_lazy(self, search: str) -> Generator[Post, None, None]:
-        yield from filtering.search(self.list, search)
+        yield from filtering.filter_all(self.list, search)
 
     def order(self, by: str) -> "Album":
         return Album(*order.sort(self.list, by))

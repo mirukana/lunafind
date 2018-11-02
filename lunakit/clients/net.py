@@ -48,8 +48,8 @@ RETRY = urllib3.util.Retry(
 )
 
 
-ALIVE:   Dict[str, "Client"] = {}
-DEFAULT: Optional["Client"]  = None
+ALIVE:   Dict[str, base.Client] = {}
+DEFAULT: Optional[base.Client]  = None
 
 
 # pylint: disable=abstract-method
@@ -90,7 +90,7 @@ def auto_info(query:  base.QueryType = "",
               limit:  Optional[int]  = None,
               random: bool           = False,
               raw:    bool           = False,
-              prefer: "Danbooru"     = None) -> base.InfoClientGenType:
+              prefer: NetClient      = None) -> base.InfoClientGenType:
     "Return post info using the most appropriate client for search/URL/ID."
 
     client = prefer or DEFAULT

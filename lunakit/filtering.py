@@ -3,11 +3,12 @@
 
 import re
 import shlex
-from typing import Generator, Optional, Sequence, Set
+from typing import Generator, Iterable, Optional, Set, Union
 
 import pendulum as pend
 
 from . import utils
+from .clients.base import InfoType
 from .post import Post
 
 
@@ -49,57 +50,54 @@ META_NUM_TAGS = {
 }
 
 
-def _source_match(post: Post, value: str, key: str = "source") -> bool:
-    info_v = post.info[key]
-
+def _source_match(info: InfoType, value: str, key: str = "source") -> bool:
     if value == "none":
-        return not info_v
+        return not info[key]
 
     if value.startswith("pixiv/"):
         # If no / at the end, will match artists *starting with* value.
-        return re.search(rf"pixiv(\.net/img.*(/img)?)?/{value[6:]}", info_v,
-                         re.IGNORECASE)
+        return re.search(rf"pixiv(\.net/img.*(/img)?)?/{value[6:]}",
+                         info[key], re.IGNORECASE)
 
     # Other "source:..." on Danbooru: "match anything that starts with ...".
     # * in value = .* regex (other regexes get escaped).
-    return re.match(r"%s.*" % re.escape(value).replace(r"\*", r".*"), info_v,
-                    re.IGNORECASE)
+    return re.match(r"%s.*" % re.escape(value).replace(r"\*", r".*"),
+                    info[key], re.IGNORECASE)
 
 
-def _broken_match(post: Post, value: str) -> bool:
+def _broken_match(info: InfoType, value: str) -> bool:
     assert value in ("any", "none")
-    broken = post["info"]["is_broken"]
-    return broken if value == "any" else not broken
+    return info["is_broken"] if value == "any" else not info["is_broken"]
 
 
 META_STR_TAGS_FUNCS = {
-    "md5":      lambda p, v: p["info"]["md5"]          == v,
-    "filetype": lambda p, v: p["info"].get("file_ext") == v,
-    "dltype":   lambda p, v: p["info"].get("dl_ext")   == v,  # non-standard
-    "rating":   lambda p, v: p["info"]["rating"][0]    == v[0],
-    "locked":   lambda p, v: p["info"][f"is_{v}_locked"],
-    "status":   lambda p, v: v in ("any", "all") or p.info[f"is_{v}"],
+    "md5":      lambda info, v: info["md5"]          == v,
+    "filetype": lambda info, v: info.get("file_ext") == v,
+    "dltype":   lambda info, v: info.get("dl_ext")   == v,  # non-standard
+    "rating":   lambda info, v: info["rating"][0]    == v[0],
+    "locked":   lambda info, v: info[f"is_{v}_locked"],
+    "status":   lambda info, v: v in ("any", "all") or info[f"is_{v}"],
     "source":   _source_match,
 
     # Non-standard tags:
     "broken":  _broken_match,
-    "booru":   lambda p, v: _source_match(p, v, key="booru"),
-    "boorurl": lambda p, v: _source_match(p, v, key="booru_url"),
+    "booru":   lambda info, v: _source_match(info, v, key="booru"),
+    "boorurl": lambda info, v: _source_match(info, v, key="booru_url"),
 }
 
 
-def _tag_present(post: Post, tag: str) -> bool:
+def _tag_present(info: InfoType, tag: str) -> bool:
     # Non-standard: support wildcards in "-tag" or "~tag".
     # "*" in tag → ".*?" regex, escape other regex/special chars
     # wrap strings in spaces to match tags even if they're at start/end.
     return re.search(r" %s " % re.escape(tag).replace(r"\*", r".*?"),
-                     r" %s " % post.info["tag_string"],
+                     r" %s " % info["tag_string"],
                      re.IGNORECASE)
 
 
-def _meta_num_match(post:Post, tag: str, value: str) -> bool:
+def _meta_num_match(info: InfoType, tag: str, value: str) -> bool:
     convert     = META_NUM_TAGS[tag][1]
-    info_v      = convert(post.info[META_NUM_TAGS[tag][0]])
+    info_v      = convert(info[META_NUM_TAGS[tag][0]])
     eq_fuzzy_20 = "eq_fuzzy_20" in META_NUM_TAGS[tag]
     reverse_cmp = "reverse_cmp" in META_NUM_TAGS[tag]
 
@@ -160,24 +158,24 @@ def _meta_num_match(post:Post, tag: str, value: str) -> bool:
     return result if not reverse_cmp else not result
 
 
-def _filter_post(post:           Post,
-                 simple_tags:    Set[str],
-                 meta_num:       Set[str],
-                 meta_str:       Set[str]) -> bool:
+def _filter_info(info:        InfoType,
+                 simple_tags: Set[str],
+                 meta_num:    Set[str],
+                 meta_str:    Set[str]) -> bool:
 
     no_prefix = lambda tag: tag[1:] if tag[0] in ("-", "~") else tag
     presences    = {}
 
     for tag in simple_tags:
-        presences[tag] = _tag_present(post, no_prefix(tag))
+        presences[tag] = _tag_present(info, no_prefix(tag))
 
     for tag_val in meta_num:
         tag, value         = tag_val.split(":", maxsplit=1)
-        presences[tag_val] = _meta_num_match(post, no_prefix(tag), value)
+        presences[tag_val] = _meta_num_match(info, no_prefix(tag), value)
 
     for tag_val in meta_str:
         tag, value         = tag_val.split(":", maxsplit=1)
-        presences[tag_val] = META_STR_TAGS_FUNCS[no_prefix(tag)](post, value)
+        presences[tag_val] = META_STR_TAGS_FUNCS[no_prefix(tag)](info, value)
 
     tilde_tag_in_search   = False
     one_tilde_tag_present = False
@@ -201,7 +199,9 @@ def _filter_post(post:           Post,
     return True
 
 
-def search(posts: Sequence[Post], terms: str) -> Generator[Post, None, None]:
+def filter_all(items: Iterable[Union[InfoType, Post]], terms: str
+              ) -> Generator[Union[InfoType, Post], None, None]:
+
     def raw_tag(term: str) -> Optional[str]:
         if not ":" in term:
             return None
@@ -215,6 +215,7 @@ def search(posts: Sequence[Post], terms: str) -> Generator[Post, None, None]:
 
     term_args = (tags, meta_num, meta_str)
 
-    for post in posts:
-        if _filter_post(post, *term_args):
-            yield post
+    for item in items:
+        if _filter_info(item["info"] if isinstance(item, Post) else item,
+                        *term_args):
+            yield item
