@@ -26,9 +26,10 @@ class Stream(collections.Iterator):
     raw:    bool          = False
     prefer: base.Client   = None
 
+    filter_str:     str = field(default = "")
+    stop_if_filter: str = field(default = "")
+
     unfinished:     List[Post] = field(init=False, default=None)
-    filter_str:     str        = field(init=False, default="")
-    stop_if_filter: str        = field(init=False, default="")
     posts_seen:     int        = field(init=False, default=0)
 
     _info_gen: base.InfoGenType = \
@@ -47,8 +48,14 @@ class Stream(collections.Iterator):
                 self.query, self.pages, self.limit, self.random, self.raw
             )
 
-        self.filter_str = config.CFG["GENERAL"]["auto_filter"].strip()
+        auto = config.CFG["GENERAL"]["auto_filter"]
+        if not self.filter_str.startswith(auto):
+            self.filter_str = " ".join((auto, self.filter_str)).strip()
 
+        self._apply_filters()
+
+
+    def _apply_filters(self) -> None:
         if self.filter_str:
             self._info_gen = filter_all(
                 items = self._info_gen,
@@ -58,9 +65,9 @@ class Stream(collections.Iterator):
 
         if self.stop_if_filter.strip():
             self._info_gen = filter_all(
-                items = self._info_gen,
-                terms = self.stop_if_filter,
-                raw   = self.raw,
+                items         = self._info_gen,
+                terms         = self.stop_if_filter,
+                raw           = self.raw,
                 stop_on_match = True
             )
 
@@ -99,11 +106,13 @@ class Stream(collections.Iterator):
     def filter(self, search: str) -> "Stream":
         new            = copy(self)
         new.filter_str = " ".join((new.filter_str, search)).strip()
+        new._apply_filters()
         return new
 
     def stop_if(self, search: str) -> "Stream":
         new                = copy(self)
         new.stop_if_filter = " ".join((new.stop_if_filter, search)).strip()
+        new._apply_filters()
         return new
 
     def order(self, by: str) -> "Album":

@@ -227,12 +227,16 @@ def filter_all(items:         Iterable[Union[InfoType, Post]],
     for item in items:
         arg = item["info"] if isinstance(item, Post) else item
 
-        if _filter_info(arg, *term_args):
-            yield item
+        if stop_on_match:
+            if not _filter_info(arg, *term_args):
+                yield item
+            else:
+                return 1
 
-            if stop_on_match:
-                return discarded
         else:
-            discarded += 1
+            if _filter_info(arg, *term_args):
+                yield item
+            else:
+                discarded += 1
 
     return discarded
