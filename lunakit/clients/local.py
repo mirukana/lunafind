@@ -2,6 +2,7 @@
 # This file is part of lunakit, licensed under LGPLv3.
 
 from pathlib import Path
+from random import randint
 from typing import Any, Dict, List, Optional, Union
 
 import simplejson
@@ -44,6 +45,9 @@ class Local(base.Client):
                     raw:    bool               = False) -> base.InfoGenType:
 
         def sort_func(path):
+            if random:
+                return randint(1, 1_000_000)
+
             try:
                 return int(path.name.split("-")[-1])
             except ValueError:
@@ -58,7 +62,7 @@ class Local(base.Client):
 
         posts = sorted(self.path.iterdir(), key=sort_func, reverse=True)
 
-        yield from filtering.filter_all(info_gen(posts), tags)
+        yield from filtering.filter_all(info_gen(posts), tags, raw=raw)
 
 
     def artcom(self, info: base.InfoType) -> List[Dict[str, Any]]:

@@ -199,7 +199,9 @@ def _filter_info(info:        InfoType,
     return True
 
 
-def filter_all(items: Iterable[Union[InfoType, Post]], terms: str
+def filter_all(items: Iterable[Union[InfoType, Post]],
+               terms: str,
+               raw:   bool = False
               ) -> Generator[Union[InfoType, Post], None, None]:
 
     def raw_tag(term: str) -> Optional[str]:
@@ -208,7 +210,7 @@ def filter_all(items: Iterable[Union[InfoType, Post]], terms: str
         tag = term.split(":")[0]
         return tag[1:] if tag[0] in ("-", "~") else tag
 
-    terms     = set(shlex.split(terms))
+    terms     = set(shlex.split(terms)) if not raw else {terms}
     meta_num  = set(t for t in terms if raw_tag(t) in META_NUM_TAGS)
     meta_str  = set(t for t in terms if raw_tag(t) in META_STR_TAGS_FUNCS)
     tags      = terms - set(meta_num) - set(meta_str)
