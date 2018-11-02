@@ -6,15 +6,17 @@ import inspect
 import os
 import pprint
 import textwrap
+from copy import copy
 from types import GeneratorType
 from typing import Any, Dict, Optional, Union
 
 from atomicfile import AtomicFile
 from cached_property import cached_property
 from dataclasses import dataclass, field
+from lazy_object_proxy import Proxy as LazyProxy
 
 from .. import LOG, utils
-from ..clients import base, net
+from ..clients import base, local, net
 
 
 @dataclass(repr=False)
@@ -63,9 +65,9 @@ class Resource(abc.ABC):
         data  = pprint.pformat(self.data, width=80 - 4)
         lines = len(data.splitlines())
 
-        return "%s(client.name=%r, post_id=%r, data=%s)" % (
+        return "%s(client=%r, post_id=%r, data=%s)" % (
             type(self).__name__,
-            self.client.name,
+            self.client,
             self.post_id,
             "\\\n%s\n" % textwrap.indent(data, "   ") if lines > 1 else data
         )
@@ -142,6 +144,9 @@ class Resource(abc.ABC):
     def write(self, overwrite: bool = False, warn: bool = True) -> "Resource":
         "Write serialized resource data to disk."
 
+        if isinstance(self.client, local.Local):
+            return self
+
         if os.path.exists(self.path) and not overwrite:
             if warn:
                 LOG.warning("Not overwriting %r", self.path)
@@ -158,13 +163,21 @@ class Resource(abc.ABC):
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
 
         with AtomicFile(self.path, "wb" if self.binary else "w") as out:
+            if isinstance(content, LazyProxy):
+                # Unproxify so the right type is returned
+                content = copy(content)
+
             if isinstance(content, GeneratorType):
                 for chunk in content:
                     out.write(chunk)
-            else:
-                out.write("%s%s" % (content.rstrip(), os.linesep))
+                return self
 
-            return self
+            if not self.binary:
+                content = "%s%s" % (content.rstrip(), os.linesep)
+
+            out.write(content)
+
+        return self
 
 
     # Get functions, override in subclasses when necessary.
@@ -245,13 +258,3 @@ class JsonResource(Resource, abc.ABC):
 
     def __delitem__(self, key) -> None:
         del self.data[key]
-
-
-    def __getattr__(self, name: str):
-        """Allow accessing resource data dict with a dot like attributes.
-        Warning: dict items can't be set/edited/deleted when accessed like so.
-        """
-        try:
-            return self.data[name]
-        except KeyError:
-            raise AttributeError(f"No attribute or dict key named {name!r}.")

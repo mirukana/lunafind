@@ -3,11 +3,16 @@
 ## Minor
 
 - Make `-k` show keys of the resource printed with `-R`
+- Option to show local `-R` resource path
+
 - Don't return a Python-converted thing when using `-k`
 
 - Stop upon reaching pagination limit or too many timeouts
 - Don't update post dirs with a *READONLY* file inside
-- Intelligent post update based on `updated_at` and `fetched_at` keys
+
+- Intelligent post update based on `updated_at` and `fetched_at` keys,
+  Allow updating + writing local post using remote booru
+
 - Max limit client attr (also use in lunasync)
 - Implement all set operators for attridict
 - Order: artcomm and custom

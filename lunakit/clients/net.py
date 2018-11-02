@@ -55,6 +55,8 @@ DEFAULT: Optional[base.Client]  = None
 # pylint: disable=abstract-method
 @dataclass
 class NetClient(base.Client, abc.ABC):
+    name: str = "netclient"
+
     _session: requests.Session = field(init=False, default=None, repr=False)
 
 

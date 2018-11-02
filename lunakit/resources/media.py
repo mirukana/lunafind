@@ -24,15 +24,7 @@ class Media(Resource):
 
 
     def get_data(self) -> Generator[bytes, None, None]:
-        if self.info["is_broken"]:
-            return None
-
-        response = self.client.http("get", self.info["dl_url"], stream=True)
-
-        if not response:
-            return None
-
-        return response.iter_content(self.chunk_size)
+        return self.client.media(self.info)
 
 
     def write(self, overwrite: bool = False, warn: bool = True):

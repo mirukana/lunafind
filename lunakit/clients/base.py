@@ -6,6 +6,8 @@ import math
 from typing import Any, Dict, Generator, Iterable, List, Optional, Tuple, Union
 
 import pendulum as pend
+from dataclasses import dataclass
+from lazy_object_proxy import Proxy as LazyProxy
 
 QueryType         = Union[int, str]
 InfoType          = Dict[str, Any]
@@ -16,7 +18,10 @@ IE       = Union[int, type(Ellipsis)]
 PageType = Union[IE, str, Tuple[IE, IE], Tuple[IE, IE, IE], Iterable[int]]
 
 
+@dataclass
 class Client(abc.ABC):
+    name: str = "client"
+
     @abc.abstractmethod
     def info_search(self,
                     tags:   str           = "",
@@ -28,12 +33,17 @@ class Client(abc.ABC):
 
 
     @abc.abstractmethod
-    def artcom(self, post_id: int) -> List[Dict[str, Any]]:
+    def artcom(self, info: InfoType) -> List[Dict[str, Any]]:
         return []
 
 
     @abc.abstractmethod
-    def notes(self, post_id: int) -> List[Dict[str, Any]]:
+    def media(self, info: InfoType) -> Optional[LazyProxy]:
+        return None
+
+
+    @abc.abstractmethod
+    def notes(self, info: InfoType) -> List[Dict[str, Any]]:
         return []
 
 

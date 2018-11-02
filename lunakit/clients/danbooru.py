@@ -8,6 +8,7 @@ from urllib.parse import parse_qs, urlparse
 
 import pybooru
 from dataclasses import dataclass, field
+from lazy_object_proxy import Proxy as LazyProxy
 from pybooru.exceptions import PybooruError, PybooruHTTPError
 from pybooru.resources import HTTP_STATUS_CODE as BOORU_CODES
 
@@ -20,8 +21,8 @@ from .. import LOG
 
 @dataclass
 class Danbooru(net.NetClient):
-    site_url:  str = "https://danbooru.donmai.us"
     name:      str = "danbooru"
+    site_url:  str = "https://danbooru.donmai.us"
     username:  str = ""
     api_key:   str = ""
 
@@ -135,12 +136,25 @@ class Danbooru(net.NetClient):
         )
 
 
-    def artcom(self, post_id: int) -> List[Dict[str, Any]]:
-        return self._api("artist_commentary_list", post_id=post_id)
+    def artcom(self, info: base.InfoType) -> List[Dict[str, Any]]:
+        return self._api("artist_commentary_list", post_id=info["id"])
 
 
-    def notes(self, post_id: int) -> List[Dict[str, Any]]:
-        return self._api("note_list", post_id=post_id)
+    def media(self, info: base.InfoType) -> Optional[LazyProxy]:
+        if info["is_broken"]:
+            return None
+
+        def get():
+            response = self.http("get", info["dl_url"], stream=True)
+            if not response:
+                return None
+            return response.iter_content(8 * 1024 ** 2)  # 8 MiB chunks
+
+        return LazyProxy(get)
+
+
+    def notes(self, info: base.InfoType) -> List[Dict[str, Any]]:
+        return self._api("note_list", post_id=info["id"])
 
 
     def count_posts(self, tags: str = "") -> int:

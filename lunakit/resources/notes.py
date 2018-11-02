@@ -14,4 +14,4 @@ class Notes(JsonResource):
 
 
     def get_data(self) -> List[Dict[str, Any]]:
-        return self.client.notes(self.post_id)
+        return self.client.notes(self.info)
