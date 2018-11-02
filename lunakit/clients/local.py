@@ -11,7 +11,8 @@ from dataclasses import dataclass
 from lazy_object_proxy import Proxy as LazyProxy
 
 from . import base
-from .. import LOG, filtering
+from .. import LOG
+from ..filtering import filter_all
 
 
 @dataclass
@@ -72,13 +73,25 @@ class Local(base.Client):
                     LOG.error("Invalid post: %r.", str(post))
                     continue
 
-        if limit:
-            last_page = math.ceil(len(posts) / limit)
-            posts     = [post
-                         for page in self._parse_pages(pages, last_page)
-                         for post in posts[page*limit-limit : page*limit]]
+        posts = sorted(self.path.iterdir(), key=sort_func, reverse=True)
 
-        yield from filtering.filter_all(info_gen(posts), tags, raw=raw)
+        ok_i = max_i = None
+
+        if limit:
+            last  = math.ceil(len(posts) / limit)
+            ok_i  = {i
+                     for p in self._parse_pages(pages, last)
+                     for i in range((p - 1) * limit, (p - 1) * limit + limit)}
+            max_i = sorted(ok_i)[-1]
+
+        for i, post in enumerate(filter_all(info_gen(posts), tags, raw)):
+            if max_i and i > max_i:
+                break
+
+            if ok_i and i not in ok_i:
+                continue
+
+            yield post
 
 
     def artcom(self, info: base.InfoType) -> List[Dict[str, Any]]:
