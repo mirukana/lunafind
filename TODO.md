@@ -4,6 +4,7 @@
 
 - Make `-k` show keys of the resource printed with `-R`
 - Option to show local `-R` resource path
+- `--order`
 
 - Don't return a Python-converted thing when using `-k`
 

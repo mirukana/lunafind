@@ -1,6 +1,7 @@
 # Copyright 2018 miruka
 # This file is part of lunakit, licensed under LGPLv3.
 
+import math
 from pathlib import Path
 from random import randint
 from typing import Any, Dict, List, Optional, Union
@@ -10,7 +11,7 @@ from dataclasses import dataclass
 from lazy_object_proxy import Proxy as LazyProxy
 
 from . import base
-from .. import filtering
+from .. import LOG, filtering
 
 
 @dataclass
@@ -58,9 +59,16 @@ class Local(base.Client):
                 try:
                     yield simplejson.loads((post / "info.json").read_text())
                 except (NotADirectoryError, FileNotFoundError):
+                    LOG.error("Invalid post: %r.", str(post))
                     continue
 
         posts = sorted(self.path.iterdir(), key=sort_func, reverse=True)
+
+        if limit:
+            last_page = math.ceil(len(posts) / limit)
+            posts     = [post
+                         for page in self._parse_pages(pages, last_page)
+                         for post in posts[page*limit-limit : page*limit]]
 
         yield from filtering.filter_all(info_gen(posts), tags, raw=raw)
 
