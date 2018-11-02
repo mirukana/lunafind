@@ -14,7 +14,7 @@ from cached_property import cached_property
 from dataclasses import dataclass, field
 
 from .. import LOG, utils
-from ..clients import net
+from ..clients import base, net
 
 
 @dataclass(repr=False)
@@ -35,7 +35,7 @@ class Resource(abc.ABC):
     subclasses = []
 
     info:   Union["Info", Dict[str, Any]] = field(default_factory=dict)
-    client: net.Client                    = field(default=None)
+    client: base.Client                   = field(default=None)
 
     ext:        Optional[str] = field(default=None,          repr=False)
     binary:     bool          = field(default=False,         repr=False)

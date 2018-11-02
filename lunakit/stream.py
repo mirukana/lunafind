@@ -10,15 +10,15 @@ from typing import List, Optional
 from dataclasses import dataclass, field
 
 from . import LOG, config, filtering, order
-from .clients import danbooru, net
+from .clients import base, danbooru, net
 from .post import Post
 from .resources import Resource
 
 
 @dataclass
 class Stream(collections.Iterator):
-    query:  net.QueryType     = ""
-    pages:  net.PageType      = 1
+    query:  base.QueryType     = ""
+    pages:  base.PageType      = 1
     limit:  Optional[int]     = None
     random: bool              = False
     raw:    bool              = False
@@ -30,7 +30,7 @@ class Stream(collections.Iterator):
     filtered:       int        = field(init=False, default=0)
     posts_seen:     int        = field(init=False, default=0)
 
-    _info_gen: net.InfoClientGenType = \
+    _info_gen: base.InfoClientGenType = \
         field(init=False, default=None, repr=False)
 
 
@@ -39,7 +39,7 @@ class Stream(collections.Iterator):
 
         self.filter_str = config.CFG["GENERAL"]["auto_filter"].strip()
         self.unfinished = []
-        self._info_gen  = net.post_info(self.query, self.pages, self.limit,
+        self._info_gen  = net.auto_info(self.query, self.pages, self.limit,
                                         self.random, self.raw, self.prefer)
 
 

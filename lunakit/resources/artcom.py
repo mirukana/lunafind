@@ -40,4 +40,4 @@ class Artcom(JsonResource):
 
 
     def get_data(self) -> List[Dict[str, Any]]:
-        return self.client.api("artist_commentary_list", post_id=self.post_id)
+        return self.client.artcom(self.post_id)

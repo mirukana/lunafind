@@ -27,7 +27,7 @@ class Post(AttrIndexedDict, attr="title", map_partials=("update", "write")):
 
         if from_id:
             try:
-                info, client = next(net.post_info(from_id, prefer=prefer))
+                info, client = next(net.auto_info(from_id, prefer=prefer))
             except StopIteration:
                 raise PostNotFoundError(from_id)
 

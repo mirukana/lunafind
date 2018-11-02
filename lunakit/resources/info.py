@@ -8,8 +8,7 @@ from lazy_object_proxy import Proxy as LazyProxy
 
 import whratio
 
-from .. import LOG
-from ..utils import join_comma_and
+from .. import LOG, utils
 from .base import JsonResource
 
 
@@ -18,7 +17,9 @@ class Info(JsonResource):
 
     def __post_init__(self):
         super().__post_init__()
-        self.enhance()
+
+        if "is_broken" not in self.info:
+            self.enhance()
 
 
     def get_data(self) -> Dict[str, Any]:
@@ -27,7 +28,7 @@ class Info(JsonResource):
 
 
     def _get_title(self) -> str:
-        kinds = {k: join_comma_and(*self.info[f"tag_string_{k}"].split())
+        kinds = {k: utils.join_comma_and(*self.info[f"tag_string_{k}"].split())
                  for k in ("character", "copyright", "artist")}
 
         return (
@@ -45,12 +46,18 @@ class Info(JsonResource):
 
         new["title"]      = self._get_title()
         new["fetched_at"] = pend.now().format(self.client.date_format)
-        new["booru"]      = self.client.name
-        new["booru_url"]  = self.client.site_url
-        new["post_url"]   = "%s%s" % (
-            new["booru_url"],
-            self.client.post_url_template.format(**new)
-        )
+
+        if hasattr(self.client, "name"):
+            new["booru"]      = self.client.name
+
+        if hasattr(self.client, "site_url"):
+            new["booru_url"]  = self.client.site_url
+
+        if hasattr(self.client, "post_url_template"):
+            new["post_url"]   = "%s%s" % (
+                new["booru_url"],
+                self.client.post_url_template.format(**new)
+            )
 
         try:
             new["children_num"] = len(self.info["children_ids"].split())

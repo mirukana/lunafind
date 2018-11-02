@@ -6,7 +6,7 @@
 import abc
 import re
 import threading
-from typing import Any, Dict, Generator, Iterable, Optional, Tuple, Union
+from typing import Dict, Optional
 
 import urllib3
 from dataclasses import dataclass, field
@@ -16,14 +16,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.exceptions import RequestException
 
+from . import base
 from .. import LOG, config
-
-QueryType         = Union[int, str]
-InfoGenType       = Generator[Dict[str, Any], None, None]
-InfoClientGenType = Generator[Tuple[Dict[str, Any], "Client"], None, None]
-
-IE       = Union[int, type(Ellipsis)]
-PageType = Union[IE, str, Tuple[IE, IE], Tuple[IE, IE, IE], Iterable[int]]
 
 # Set the maximum number of total requests/threads that can be running at once.
 # When doing Album.write(), a .write() thread will launch for every Post,
@@ -58,8 +52,9 @@ ALIVE:   Dict[str, "Client"] = {}
 DEFAULT: Optional["Client"]  = None
 
 
+# pylint: disable=abstract-method
 @dataclass
-class Client(abc.ABC):
+class NetClient(base.Client, abc.ABC):
     _session: requests.Session = field(init=False, default=None, repr=False)
 
 
@@ -90,12 +85,12 @@ class Client(abc.ABC):
         return None
 
 
-def post_info(query:  QueryType     = "",
-              pages:  PageType      = 1,
-              limit:  Optional[int] = None,
-              random: bool          = False,
-              raw:    bool          = False,
-              prefer: "Danbooru"    = None) -> InfoClientGenType:
+def auto_info(query:  base.QueryType = "",
+              pages:  base.PageType  = 1,
+              limit:  Optional[int]  = None,
+              random: bool           = False,
+              raw:    bool           = False,
+              prefer: "Danbooru"     = None) -> base.InfoClientGenType:
     "Return post info using the most appropriate client for search/URL/ID."
 
     client = prefer or DEFAULT
