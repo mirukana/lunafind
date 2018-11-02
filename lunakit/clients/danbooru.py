@@ -48,7 +48,8 @@ class Danbooru(net.NetClient):
         net.ALIVE[self.name] = self
 
 
-    def _api(self, pybooru_method: str, *args, **kwargs):
+    def _api(self, pybooru_method: str, *args, catch_errs: bool = True,
+             **kwargs):
         try:
             method = getattr(self._pybooru, pybooru_method)
 
@@ -56,16 +57,26 @@ class Danbooru(net.NetClient):
                 return method(*args, **kwargs)
 
         except PybooruHTTPError as err:
+            if not catch_errs:
+                raise
+
             code      = err.args[1]
             long_desc = BOORU_CODES[code][1]
 
             LOG.error("[%d] %s", code, long_desc)
 
         except (PybooruError, RequestException) as err:
+            if not catch_errs:
+                raise
+
             LOG.error(str(err))
 
         # Returning [] instead of None to not crash because of `yield from`s.
         return []
+
+
+    def info_id(self, post_id: int) -> base.InfoType:
+        return self._api("post_show", post_id=post_id, catch_errs=False)
 
 
     def info_search(self,
@@ -119,11 +130,12 @@ class Danbooru(net.NetClient):
 
     def info_url(self, url: str) -> base.InfoGenType:
         try:
-            pid = re.search(r"/posts/(\d+)\??.*$", url).group(1)
-            yield from self.info_search(tags=f"id:{pid}")
-            return
+            post_id = re.search(r"/posts/(\d+)\??.*$", url).group(1)
         except AttributeError:  # Not a direct post URL
             pass
+        else:
+            yield self.info_id(post_id)
+            return
 
         parsed = parse_qs(urlparse(url).query)
 

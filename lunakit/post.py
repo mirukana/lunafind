@@ -1,41 +1,39 @@
 # Copyright 2018 miruka
 # This file is part of lunakit, licensed under LGPLv3.
 
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from .attridict import AttrIndexedDict
 from .clients import base, net
 from .resources import Info, Resource
 
 
-class PostNotFoundError(Exception):
-    def __init__(self, pid: int) -> None:
-        super().__init__(f"Post {pid} not found.")
-
-
 class Post(AttrIndexedDict, attr="title", map_partials=("update", "write")):
     "Collection of resources belonging to a specific post."
 
     def __init__(self,
-                 from_id:   Optional[int]            = None,
+                 id_or_url: Union[int, str]          = None,
                  prefer:    base.Client              = None,
                  resources: Optional[List[Resource]] = None) -> None:
         super().__init__()
         resources = list(resources) if resources else []
 
-        prefer = prefer or net.DEFAULT
+        client = prefer or net.DEFAULT
 
-        if from_id:
-            try:
-                info, client = next(net.auto_info(from_id, prefer=prefer))
-            except StopIteration:
-                raise PostNotFoundError(from_id)
+
+        if id_or_url:
+            if str(id_or_url).startswith("http"):
+                client = net.client_from_url(id_or_url)
+                info   = next(client.info_url(id_or_url))
+            else:
+                info = client.info_id(id_or_url)
 
             passed_res = [type(r) for r in resources]
 
             for res in Resource.subclasses:
                 if res not in passed_res:
                     resources.append(res(info, client))
+
 
         passed_info = [r for r in resources if isinstance(r, Info)]
 

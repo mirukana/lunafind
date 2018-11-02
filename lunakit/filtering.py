@@ -87,9 +87,13 @@ META_STR_TAGS_FUNCS = {
 
 
 def _tag_present(info: InfoType, tag: str) -> bool:
+    # Avoid regex unless no choice, they have bad performances.
+    # Wrap strings in spaces to match tags even if they're at start/end.
+    if "*" not in tag:
+        return f" {tag} " in f" {info['tag_string']} "
+
     # Non-standard: support wildcards in "-tag" or "~tag".
     # "*" in tag → ".*?" regex, escape other regex/special chars
-    # wrap strings in spaces to match tags even if they're at start/end.
     return re.search(r" %s " % re.escape(tag).replace(r"\*", r".*?"),
                      r" %s " % info["tag_string"],
                      re.IGNORECASE)
@@ -199,10 +203,11 @@ def _filter_info(info:        InfoType,
     return True
 
 
-def filter_all(items: Iterable[Union[InfoType, Post]],
-               terms: str,
-               raw:   bool = False
-              ) -> Generator[Union[InfoType, Post], None, None]:
+def filter_all(items:         Iterable[Union[InfoType, Post]],
+               terms:         str,
+               raw:           bool = False,
+               stop_on_match: bool = False,
+              ) -> Generator[Union[InfoType, Post], None, int]:
 
     def raw_tag(term: str) -> Optional[str]:
         if not ":" in term:
@@ -210,14 +215,24 @@ def filter_all(items: Iterable[Union[InfoType, Post]],
         tag = term.split(":")[0]
         return tag[1:] if tag[0] in ("-", "~") else tag
 
-    terms     = set(shlex.split(terms)) if not raw else {terms}
+    terms     = set(shlex.split(terms.lower())) if not raw else {terms.lower()}
     meta_num  = set(t for t in terms if raw_tag(t) in META_NUM_TAGS)
     meta_str  = set(t for t in terms if raw_tag(t) in META_STR_TAGS_FUNCS)
     tags      = terms - set(meta_num) - set(meta_str)
 
     term_args = (tags, meta_num, meta_str)
 
+    discarded = 0
+
     for item in items:
-        if _filter_info(item["info"] if isinstance(item, Post) else item,
-                        *term_args):
+        arg = item["info"] if isinstance(item, Post) else item
+
+        if _filter_info(arg, *term_args):
             yield item
+
+            if stop_on_match:
+                return discarded
+        else:
+            discarded += 1
+
+    return discarded

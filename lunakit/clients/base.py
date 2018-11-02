@@ -9,10 +9,8 @@ import pendulum as pend
 from dataclasses import dataclass
 from lazy_object_proxy import Proxy as LazyProxy
 
-QueryType         = Union[int, str]
-InfoType          = Dict[str, Any]
-InfoGenType       = Generator[InfoType, None, None]
-InfoClientGenType = Generator[Tuple[InfoType, "Client"], None, None]
+InfoType    = Dict[str, Any]
+InfoGenType = Generator[InfoType, None, None]
 
 IE       = Union[int, type(Ellipsis)]
 PageType = Union[IE, str, Tuple[IE, IE], Tuple[IE, IE, IE], Iterable[int]]
@@ -21,6 +19,7 @@ PageType = Union[IE, str, Tuple[IE, IE], Tuple[IE, IE, IE], Iterable[int]]
 @dataclass
 class Client(abc.ABC):
     name: str = "client"
+
 
     @abc.abstractmethod
     def info_search(self,

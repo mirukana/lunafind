@@ -34,8 +34,18 @@ class Local(base.Client):
         try:
             path = (path / file) if "*" not in file else next(path.glob(file))
             return path.read_text() if not binary else path.read_bytes()
+
         except (StopIteration, FileNotFoundError):
             return None
+
+
+    def _read_json(self, info: base.InfoType, file: str) -> Optional[str]:
+        return simplejson.loads(self._read_res(info, file))
+
+
+    def info_booru_id(self, booru: str, post_id: int) -> base.InfoType:
+        fake_info = {"booru": booru, "id": post_id}
+        return self._read_json(fake_info, "info.json")
 
 
     def info_search(self,
@@ -62,8 +72,6 @@ class Local(base.Client):
                     LOG.error("Invalid post: %r.", str(post))
                     continue
 
-        posts = sorted(self.path.iterdir(), key=sort_func, reverse=True)
-
         if limit:
             last_page = math.ceil(len(posts) / limit)
             posts     = [post
@@ -74,7 +82,7 @@ class Local(base.Client):
 
 
     def artcom(self, info: base.InfoType) -> List[Dict[str, Any]]:
-        return simplejson.loads(self._read_res(info, "artcom.json")) or []
+        return self._read_json(info, "artcom.json") or []
 
 
     def media(self, info: base.InfoType) -> Optional[LazyProxy]:
@@ -82,7 +90,7 @@ class Local(base.Client):
 
 
     def notes(self, info: base.InfoType) -> List[Dict[str, Any]]:
-        return simplejson.loads(self._read_res(info, "notes.json")) or []
+        return self._read_json(info, "notes.json") or []
 
 
     def count_posts(self, tags: str = "") -> int:

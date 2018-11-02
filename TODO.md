@@ -8,6 +8,8 @@
 
 - Don't return a Python-converted thing when using `-k`
 
+- Fuzzy tag filtering
+
 - Stop upon reaching pagination limit or too many timeouts
 - Don't update post dirs with a *READONLY* file inside
 

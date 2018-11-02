@@ -2,6 +2,7 @@
 # This file is part of lunakit, licensed under LGPLv3.
 
 import collections
+import re
 import time
 from copy import copy
 from threading import Thread
@@ -9,74 +10,84 @@ from typing import List, Optional
 
 from dataclasses import dataclass, field
 
-from . import LOG, config, order, filtering
+from . import LOG, config, order
 from .clients import base, net
+from .filtering import filter_all
 from .post import Post
 from .resources import Resource
 
 
 @dataclass
 class Stream(collections.Iterator):
-    query:  base.QueryType = ""
-    pages:  base.PageType  = 1
-    limit:  Optional[int]  = None
-    random: bool           = False
-    raw:    bool           = False
-    prefer: base.Client    = None
+    query:  str           = ""
+    pages:  base.PageType = 1
+    limit:  Optional[int] = None
+    random: bool          = False
+    raw:    bool          = False
+    prefer: base.Client   = None
 
     unfinished:     List[Post] = field(init=False, default=None)
     filter_str:     str        = field(init=False, default="")
     stop_if_filter: str        = field(init=False, default="")
-    filtered:       int        = field(init=False, default=0)
     posts_seen:     int        = field(init=False, default=0)
 
-    _info_gen: base.InfoClientGenType = \
+    _info_gen: base.InfoGenType = \
         field(init=False, default=None, repr=False)
 
 
     def __post_init__(self) -> None:
-        self.prefer = self.prefer or net.DEFAULT
+        self.prefer     = self.prefer or net.DEFAULT
+        self.unfinished = []
+
+        if re.match(r"https?://.+", str(self.query)):
+            client         = net.client_from_url(self.query)
+            self._info_gen = client.info_url(self.query)
+        else:
+            self._info_gen = self.prefer.info_search(
+                self.query, self.pages, self.limit, self.random, self.raw
+            )
 
         self.filter_str = config.CFG["GENERAL"]["auto_filter"].strip()
-        self.unfinished = []
-        self._info_gen  = net.auto_info(self.query, self.pages, self.limit,
-                                        self.random, self.raw, self.prefer)
+
+        if self.filter_str:
+            self._info_gen = filter_all(
+                items = self._info_gen,
+                terms = self.filter_str,
+                raw   = self.raw
+            )
+
+        if self.stop_if_filter.strip():
+            self._info_gen = filter_all(
+                items = self._info_gen,
+                terms = self.stop_if_filter,
+                raw   = self.raw,
+                stop_on_match = True
+            )
 
 
-    def _on_iter_done(self) -> None:
-        if self.posts_seen == 1 and self.filtered == 0:
+    def _on_iter_done(self, discarded: int) -> None:
+        if self.posts_seen == 1 and discarded == 0:
             return
 
         LOG.info("Found %d total posts%s%s.",
                  self.posts_seen,
-                 f", {self.filtered} filtered" if self.filtered else "",
-                 f" for {self.query!r}"        if self.query    else "")
+                 f", {discarded} filtered" if discarded else "",
+                 f" for {self.query!r}"    if self.query    else "")
 
 
     def __next__(self) -> Post:
         while True:
             try:
-                info, client = next(self._info_gen)
-            except StopIteration:
-                self._on_iter_done()
+                info = next(self._info_gen)
+            except StopIteration as stop:
+                self._on_iter_done(discarded = stop.value if stop.value else 0)
                 raise
 
             post = Post(resources=[
-                r(info, client) for r in Resource.subclasses
+                r(info, self.prefer) for r in Resource.subclasses
             ])
 
             self.posts_seen += 1
-
-            if self.stop_if_filter.strip() and \
-               list(filtering.filter_all([post], self.stop_if_filter)):
-                self._on_iter_done()
-                raise StopIteration
-
-            if self.filter_str.strip() and \
-               not list(filtering.filter_all([post], self.filter_str)):
-                self.filtered += 1
-                continue
-
             return post
 
 
@@ -84,14 +95,13 @@ class Stream(collections.Iterator):
         return self
 
 
+    # pylint: disable=protected-access
     def filter(self, search: str) -> "Stream":
-        # pylint: disable=protected-access
         new            = copy(self)
         new.filter_str = " ".join((new.filter_str, search)).strip()
         return new
 
     def stop_if(self, search: str) -> "Stream":
-        # pylint: disable=protected-access
         new                = copy(self)
         new.stop_if_filter = " ".join((new.stop_if_filter, search)).strip()
         return new

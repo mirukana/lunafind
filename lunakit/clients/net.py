@@ -4,7 +4,6 @@
 "Base network client abstract class and other net-related variables."
 
 import abc
-import re
 import threading
 from typing import Dict, Optional
 
@@ -48,14 +47,15 @@ RETRY = urllib3.util.Retry(
 )
 
 
-ALIVE:   Dict[str, base.Client] = {}
-DEFAULT: Optional[base.Client]  = None
+ALIVE:   Dict[str, "NetClient"] = {}
+DEFAULT: Optional["NetClient"]  = None
 
 
 # pylint: disable=abstract-method
 @dataclass
 class NetClient(base.Client, abc.ABC):
-    name: str = "netclient"
+    name:     str = "netclient"
+    site_url: str = ""
 
     _session: requests.Session = field(init=False, default=None, repr=False)
 
@@ -87,39 +87,29 @@ class NetClient(base.Client, abc.ABC):
         return None
 
 
-def auto_info(query:  base.QueryType = "",
-              pages:  base.PageType  = 1,
-              limit:  Optional[int]  = None,
-              random: bool           = False,
-              raw:    bool           = False,
-              prefer: NetClient      = None) -> base.InfoClientGenType:
-    "Return post info using the most appropriate client for search/URL/ID."
+    @abc.abstractmethod
+    def info_id(self, post_id: int) -> base.InfoType:
+        return {}
 
-    client = prefer or DEFAULT
-    method = client.info_search
-    args   = (query, pages, limit, random, raw)
 
-    if isinstance(query, int):
-        args = (f"id:{query}",)
+    @abc.abstractmethod
+    def info_url(self, url: str) -> base.InfoGenType:
+        yield {}
 
-    elif isinstance(query, str) and re.match(r"https?://", query):
-        for cli in ALIVE.values():
-            try:
-                site = cli.site_url
-            except AttributeError:
-                continue
 
-            if query.startswith("http://") and site.startswith("https://"):
-                query = re.sub("^http://", "https://", query)
+class NoClientFound(Exception):
+    pass
 
-            if query.startswith(site):
-                client = cli
-                break
-        else:
-            raise RuntimeError(f"No client to work with site {query!r}.")
 
-        method = client.info_url
-        args   = (query,)
+def client_from_url(url: str) -> NetClient:
+    "Return a client matching an URL if possible."
+    for client in ALIVE.values():
+        site = client.site_url
 
-    for post_info_ in method(*args):
-        yield (post_info_, client)
+        if url.startswith("http://") and site.startswith("https://"):
+            url = url.replace("http://", "https://")
+
+        if url.startswith(site):
+            return client
+
+    raise NoClientFound(f"No client known to work with site {url!r}.")
