@@ -3,12 +3,12 @@
 
 import math
 import re
-from typing import Any, Dict, List, Optional
+from typing import Optional
 from urllib.parse import parse_qs, urlparse
 
+import pendulum as pend
 import pybooru
 from dataclasses import dataclass, field
-from lazy_object_proxy import Proxy as LazyProxy
 from pybooru.exceptions import PybooruError, PybooruHTTPError
 from pybooru.resources import HTTP_STATUS_CODE as BOORU_CODES
 
@@ -26,8 +26,7 @@ class Danbooru(net.NetClient):
     username:  str = ""
     api_key:   str = ""
 
-    default_limit: int = field(default=20,                         repr=False)
-    date_format:   str = field(default="YYYY-MM-DDTHH:mm:ss.SSSZ", repr=False)
+    default_limit: int = field(default=20, repr=False)
 
     post_url_template: str = field(default="/posts/{id}", repr=False)
 
@@ -148,24 +147,33 @@ class Danbooru(net.NetClient):
         )
 
 
-    def artcom(self, info: base.InfoType) -> List[Dict[str, Any]]:
+    def artcom(self, info: base.InfoType) -> base.ArtcomType:
+        if " commentary "         not in f" {info['tag_string_meta']} " and \
+           " commentary_request " not in f" {info['tag_string_meta']} " and \
+            pend.parse(info["created_at"]) > pend.yesterday():
+            return []
+
         return self._api("artist_commentary_list", post_id=info["id"])
 
 
-    def media(self, info: base.InfoType) -> Optional[LazyProxy]:
-        if info["is_broken"]:
+    def media(self, info: base.InfoType) -> base.MediaType:
+        if "file_ext" not in info:
+            LOG.warning("No media available for post %d.", info["id"])
             return None
 
-        def get():
-            response = self.http("get", info["dl_url"], stream=True)
-            if not response:
-                return None
-            return response.iter_content(8 * 1024 ** 2)  # 8 MiB chunks
+        url_key = "large_file_url" if info["file_ext"] == "zip" else "file_url"
+        answer  = self.http("get", info[url_key], stream=True)
 
-        return LazyProxy(get)
+        try:
+            return answer.iter_content(8 * 1024 ** 2)
+        except AttributeError:
+            return None
 
 
-    def notes(self, info: base.InfoType) -> List[Dict[str, Any]]:
+    def notes(self, info: base.InfoType) -> base.NotesType:
+        if not bool(info["last_noted_at"]):
+            return []
+
         return self._api("note_list", post_id=info["id"])
 
 

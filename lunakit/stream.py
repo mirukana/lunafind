@@ -14,7 +14,6 @@ from . import LOG, config, order
 from .clients import base, net
 from .filtering import filter_all
 from .post import Post
-from .resources import Resource
 
 
 @dataclass
@@ -40,9 +39,10 @@ class Stream(collections.Iterator):
         self.prefer     = self.prefer or net.DEFAULT
         self.unfinished = []
 
-        if re.match(r"https?://.+", str(self.query)):
-            client         = net.client_from_url(self.query)
-            self._info_gen = client.info_url(self.query)
+        if re.match(r"^\s*https?://.+", str(self.query)):
+            query          = str(self.query).strip()
+            client         = net.client_from_url(query)
+            self._info_gen = client.info_url(query)
         else:
             self._info_gen = self.prefer.info_search(
                 self.query, self.pages, self.limit, self.random, self.raw
@@ -50,7 +50,7 @@ class Stream(collections.Iterator):
 
         auto = config.CFG["GENERAL"]["auto_filter"]
         if not self.filter_str.startswith(auto):
-            self.filter_str = " ".join((auto, self.filter_str)).strip()
+            self.filter_str = " ".join((self.filter_str, auto)).strip()
 
         self._apply_filters()
 
@@ -90,9 +90,7 @@ class Stream(collections.Iterator):
                 self._on_iter_done(discarded = stop.value if stop.value else 0)
                 raise
 
-            post = Post(resources=[
-                r(info, self.prefer) for r in Resource.subclasses
-            ])
+            post = Post(info=info, prefer=self.prefer)
 
             self.posts_seen += 1
             return post
@@ -105,13 +103,13 @@ class Stream(collections.Iterator):
     # pylint: disable=protected-access
     def filter(self, search: str) -> "Stream":
         new            = copy(self)
-        new.filter_str = " ".join((new.filter_str, search)).strip()
+        new.filter_str = " ".join((search, new.filter_str)).strip()
         new._apply_filters()
         return new
 
     def stop_if(self, search: str) -> "Stream":
         new                = copy(self)
-        new.stop_if_filter = " ".join((new.stop_if_filter, search)).strip()
+        new.stop_if_filter = " ".join((search, new.stop_if_filter)).strip()
         new._apply_filters()
         return new
 

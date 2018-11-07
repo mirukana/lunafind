@@ -6,8 +6,7 @@ import math
 from typing import Any, Dict, Generator, Iterable, List, Optional, Tuple, Union
 
 import pendulum as pend
-from dataclasses import dataclass
-from lazy_object_proxy import Proxy as LazyProxy
+from dataclasses import dataclass, field
 
 InfoType    = Dict[str, Any]
 InfoGenType = Generator[InfoType, None, None]
@@ -15,10 +14,16 @@ InfoGenType = Generator[InfoType, None, None]
 IE       = Union[int, type(Ellipsis)]
 PageType = Union[IE, str, Tuple[IE, IE], Tuple[IE, IE, IE], Iterable[int]]
 
+ArtcomType = NotesType = List[Dict[str, Any]]
+MediaType  = Optional[Generator[bytes, None, None]]
+
 
 @dataclass
 class Client(abc.ABC):
     name: str = "client"
+
+    date_format: str = \
+        field(init=False, default="YYYY-MM-DDTHH:mm:ss.SSSZ", repr=False)
 
 
     @abc.abstractmethod
@@ -32,17 +37,17 @@ class Client(abc.ABC):
 
 
     @abc.abstractmethod
-    def artcom(self, info: InfoType) -> List[Dict[str, Any]]:
+    def artcom(self, info: InfoType) -> ArtcomType:
         return []
 
 
     @abc.abstractmethod
-    def media(self, info: InfoType) -> Optional[LazyProxy]:
+    def media(self, info: InfoType) -> MediaType:
         return None
 
 
     @abc.abstractmethod
-    def notes(self, info: InfoType) -> List[Dict[str, Any]]:
+    def notes(self, info: InfoType) -> NotesType:
         return []
 
 
@@ -79,12 +84,12 @@ class Client(abc.ABC):
 
     @staticmethod
     def get_post_rank(post: "Post") -> int:
-        score = post["info"]["score"]
+        score = post.info["score"]
 
         if score < 1:
             return score
 
-        post_date = pend.parse(post["info"]["created_at"])
+        post_date = pend.parse(post.info["created_at"])
 
         if post_date > pend.now().subtract(days=2):
             return -1

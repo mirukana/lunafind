@@ -10,7 +10,7 @@ from .post import Post
 from .stream import Stream
 
 
-class Album(AttrIndexedDict, attr="id", map_partials=("update", "write")):
+class Album(AttrIndexedDict, attr="id", map_partials=("write",)):
     def __init__(self, *stream_args_posts_streams, **stream_kwargs) -> None:
         super().__init__()
         self._added: int = 0
@@ -20,7 +20,7 @@ class Album(AttrIndexedDict, attr="id", map_partials=("update", "write")):
     def __repr__(self) -> str:
         return "%s({\n%s\n})" % (
             type(self).__name__,
-            "\n".join((f"    {i!r}: {p.title!r}," for i, p in self.items()))
+            "\n".join((f"  {i!r}: '{p.title:.64}'," for i, p in self.items()))
         )
 
 

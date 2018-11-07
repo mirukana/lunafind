@@ -248,7 +248,7 @@ def main(argv: Optional[List[str]] = None) -> None:
             if args["--show-key"]:
                 for key in args["--show-key"].split(","):
                     try:
-                        print(post["info"][key])
+                        print(post.info[key])
                     except KeyError:
                         LOG.warning("Post %d has no %r key.", post.id, key)
 

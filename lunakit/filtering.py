@@ -7,7 +7,7 @@ from typing import Generator, Iterable, Optional, Set, Union
 
 import pendulum as pend
 
-from . import utils
+from . import LOG, utils
 from .clients.base import InfoType
 from .post import Post
 
@@ -225,18 +225,22 @@ def filter_all(items:         Iterable[Union[InfoType, Post]],
     discarded = 0
 
     for item in items:
-        arg = item["info"] if isinstance(item, Post) else item
+        info = item.info if isinstance(item, Post) else item
 
-        if stop_on_match:
-            if not _filter_info(arg, *term_args):
-                yield item
-            else:
-                return 1
+        try:
+            if stop_on_match:
+                if not _filter_info(info, *term_args):
+                    yield item
+                else:
+                    return 1
 
-        else:
-            if _filter_info(arg, *term_args):
-                yield item
             else:
-                discarded += 1
+                if _filter_info(info, *term_args):
+                    yield item
+                else:
+                    discarded += 1
+
+        except KeyError as err:
+            LOG.warning("No %r key for post %d.", err.args[0], info["id"])
 
     return discarded

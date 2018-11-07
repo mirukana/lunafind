@@ -40,15 +40,11 @@ ORDER_DATE = {
 }
 
 ORDER_FUNCS = {
-    "rank":
-        # pylint: disable=unnecessary-lambda
-        lambda p: p["info"].client.get_post_rank(p),
-    "random":
-        lambda _: random.randint(1, 1_000_000),
-    "landscape":
-        lambda p: int(p["info"]["image_width"] > p["info"]["image_height"]),
-    "portrait":
-        lambda p: int(p["info"]["image_height"] > p["info"]["image_width"]),
+    # pylint: disable=unnecessary-lambda
+    "rank":      lambda p: p.info.client.get_post_rank(p),
+    "random":    lambda _: random.randint(1, 1_000_000),
+    "landscape": lambda p: int(p.info["image_width"] > p.info["image_height"]),
+    "portrait":  lambda p: int(p.info["image_height"] > p.info["image_width"]),
 }
 
 
@@ -72,7 +68,7 @@ def sort(posts: List[Post], by: str) -> List[Post]:
               f"%s_{by}" % in_dict[by][0]
 
     def sort_key(post: Post) -> int:
-        key = post["info"][in_dict[by_val][1]]
+        key = post.info[in_dict[by_val][1]]
         return pend.parse(key) if in_dict == ORDER_DATE else key
 
     return posts.sort(key=sort_key, reverse=by_full.startswith("desc_"))
