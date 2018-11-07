@@ -5,13 +5,14 @@
 - Make `-k` show keys of the resource printed with `-R`
 - Option to show local `-R` resource path
 - `--order`
-
 - Don't return a Python-converted thing when using `-k`
+
+- Flag file or dir name modification to prevent
+  updates/remember deleted posts and not refetch them/force recaching/etc
 
 - Fuzzy tag filtering
 
 - Stop upon reaching pagination limit or too many timeouts
-- Don't update post dirs with a *READONLY* file inside
 
 - Intelligent post update based on `updated_at` and `fetched_at` keys,
   Allow updating + writing local post using remote booru

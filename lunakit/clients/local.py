@@ -11,7 +11,7 @@ from random import randint
 from typing import Generator, Iterable, Optional, Union
 
 import simplejson
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from . import base
 from .. import LOG
@@ -64,19 +64,21 @@ IndexedPost.__getitem__ = _indexedpost_getitem
 
 @dataclass
 class Local(base.Client):
-    name: str              = "local"
-    path: Union[Path, str] = Path(".")
+    name: str               = "local"
+    path: Union[Path, str]  = Path(".")
+
+    index: Path = field(init=False, default=None, repr=False)
 
 
     def __post_init__(self) -> None:
-        self.path = Path(self.path).expanduser()
+        self.path  = Path(self.path).expanduser()
+        self.index = self.path / "index.tsv.gz"
 
 
-    @staticmethod
-    def _create_index(post_dirnames: Iterable[str]) -> None:
+    def _index_add(self, post_dirnames: Iterable[str]) -> base.InfoGenType:
         LOG.info("Indexing %d posts...", len(post_dirnames))
 
-        with gzip.open("index.tsv.gz", "at", newline="") as file:
+        with gzip.open(self.index, "at+", newline="") as file:
             writer = csv.DictWriter(
                 file,
                 delimiter    = "\t",
@@ -90,22 +92,62 @@ class Local(base.Client):
                         open(f"{post}{os.sep}info.json", "r")
                     )
                 except (FileNotFoundError, NotADirectoryError) as err:
-                    if err.args[0] != "index.tsv.gz":
+                    if not str(err.filename).startswith(self.index.name):
                         LOG.error(str(err))
+                    continue
 
                 writer.writerow(info)
+                yield info
 
-        LOG.info("Index updated.")
 
+    def _index_iter(self, post_dirnames: Iterable[str]
+                   ) -> Generator[IndexedPost, None, None]:
 
-    @staticmethod
-    def _iter_index() -> Generator[IndexedPost, None, None]:
-        with gzip.open("index.tsv.gz", "rt", newline="") as file:
+        post_dirnames = set(post_dirnames)
+        post_dirnames.discard(self.index.name)
+
+        if not self.index.exists():
+            yield from self._index_add(post_dirnames)
+            return
+
+        lines_to_del = []
+
+        with gzip.open(self.index, "rt+", newline="") as file:
             reader = csv.reader(file, delimiter="\t")
-            for row in reader:
+
+            for i, row in enumerate(reader, 1):
                 row = (True if i == "True" else False if i == "False" else i
                        for i in row)
-                yield IndexedPost(*row)
+                ip  = IndexedPost(*row)
+                key = f"{ip.fetched_from}-{ip.id}"
+
+                try:
+                    post_dirnames.remove(key)
+                except KeyError:
+                    lines_to_del.append(i)
+                else:
+                    yield ip
+
+        if post_dirnames:
+            yield from self._index_add(post_dirnames)
+
+        if lines_to_del:
+            self._index_del(*lines_to_del)
+
+
+    def _index_del(self, *line_nums: int) -> None:
+        LOG.info("%d post dirs gone, deleting from index...", len(line_nums))
+
+        tmp_file = self.index.parent / f".{self.index.name}"
+
+        with gzip.open(self.index, "rt", newline="") as in_file, \
+             gzip.open(tmp_file,   "wt", newline="") as out_file:
+
+            for i, line in enumerate(in_file, 1):
+                if i not in line_nums:
+                    out_file.write(line)
+
+        tmp_file.rename(self.index)
 
 
     def _read_res(self, info: InfoType, file: str, binary: bool = False
@@ -151,9 +193,6 @@ class Local(base.Client):
         posts = os.listdir(self.path)
         posts.sort(key=sort_func, reverse=True)
 
-        if not (self.path / "index.tsv.gz").exists():
-            self._create_index(posts)
-
         ok_i  = max_i = None
 
         if limit:
@@ -163,7 +202,8 @@ class Local(base.Client):
                      for i in range((p - 1) * limit, (p - 1) * limit + limit)}
             max_i = sorted(ok_i)[-1]
 
-        filter_gen = filter_all(self._iter_index(), terms=tags, raw=raw)
+        filter_gen = filter_all(self._index_iter(posts), terms=tags, raw=raw)
+        del posts
 
         for i, post in enumerate(filter_gen):
             if max_i and i > max_i:
