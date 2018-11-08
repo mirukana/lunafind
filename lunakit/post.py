@@ -9,6 +9,9 @@ import pendulum as pend
 from atomicfile import AtomicFile
 from cached_property import cached_property
 
+# pylint: disable=no-name-in-module
+from fastnumbers import fast_int
+
 from . import LOG, utils
 from .clients import base, local, net
 
@@ -70,7 +73,7 @@ class Post:
 
     @cached_property
     def id(self) -> int:
-        return int(self.info["id"])
+        return fast_int(self.info["id"])
 
     @cached_property
     def artcom(self) -> base.ArtcomType:

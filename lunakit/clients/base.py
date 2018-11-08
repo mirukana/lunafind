@@ -8,6 +8,9 @@ from typing import Any, Dict, Generator, Iterable, List, Optional, Tuple, Union
 import pendulum as pend
 from dataclasses import dataclass, field
 
+# pylint: disable=no-name-in-module
+from fastnumbers import fast_int as fint
+
 InfoType    = Dict[str, Any]
 InfoGenType = Generator[InfoType, None, None]
 
@@ -66,7 +69,7 @@ class Client(abc.ABC):
         is_str = isinstance(pages, str)
 
         if isinstance(pages, int) or (is_str and pages.isdigit()):
-            return (int(pages),)
+            return (fint(pages),)
 
         if pages in (..., "all"):
             return range(1, last_page + 1)
@@ -75,13 +78,13 @@ class Client(abc.ABC):
             pages = tuple(pages.split("-"))
 
         if isinstance(pages, tuple):
-            begin = 1         if pages[0] in (..., "begin") else int(pages[0])
-            end   = last_page if pages[1] in (..., "end")   else int(pages[1])
-            step  = 1         if len(pages) < 3             else int(pages[2])
+            begin = 1         if pages[0] in (..., "begin") else fint(pages[0])
+            end   = last_page if pages[1] in (..., "end")   else fint(pages[1])
+            step  = 1         if len(pages) < 3             else fint(pages[2])
             return range(begin, end + 1, step)
 
         if is_str and "," in pages:
-            pages = [int(p) for p in pages.split(",")]
+            pages = [fint(p) for p in pages.split(",")]
 
         assert hasattr(pages, "__iter__"), "pages must be iterable"
         return pages

@@ -10,13 +10,16 @@ from typing import Union
 import pendulum as pend
 import simplejson
 
+# pylint: disable=no-name-in-module
+from fastnumbers import fast_float, fast_int
+
 from . import TERM
 
 SIZE_UNITS = "BKMGTPEZY"
 
 def bytes2human(size: Union[int, float], prefix: str = "", suffix: str = ""
                ) -> str:
-    size = float(size)  # Prevent proxied size problems with round()
+    size = fast_float(size)  # Prevent proxied size problems with round()
     unit = ""
 
     for unit in SIZE_UNITS:
@@ -25,7 +28,7 @@ def bytes2human(size: Union[int, float], prefix: str = "", suffix: str = ""
 
         size /= 1024
 
-    size = int(size)      if unit in "BK" else \
+    size = fast_int(size)    if unit in "BK" else \
            round(size, 1) if unit == "M" else \
            round(size, 2)
 
@@ -34,7 +37,7 @@ def bytes2human(size: Union[int, float], prefix: str = "", suffix: str = ""
 
 def human2bytes(size: Union[int, float, str]) -> float:
     size   = str(size)
-    result = float(size.rstrip("%s%s" % (SIZE_UNITS, SIZE_UNITS.lower())))
+    result = fast_float(size.rstrip("%s%s" % (SIZE_UNITS, SIZE_UNITS.lower())))
 
     if size.lstrip(f"0123456789.").upper() in ("", "B", "O"):
         return result
@@ -50,9 +53,9 @@ def human2bytes(size: Union[int, float, str]) -> float:
 def ratio2float(value: Union[int, float, str]) -> float:
     if isinstance(value, str) and ":" in value:
         w, h = value.split(":")
-        return int(w) / int(h)
+        return fast_int(w) / fast_int(h)
 
-    return float(value)
+    return fast_float(value)
 
 
 AGE_UNIT_TO_SUBTRACT_ARG = {
@@ -73,7 +76,7 @@ def age2date(age: str) -> pend.DateTime:
         pass
 
     user_unit  = age.lstrip("0123456789.")
-    value      = abs(float(age.replace(user_unit, "")))
+    value      = abs(fast_float(age.replace(user_unit, "")))
     found_unit = None
 
     for units, shift_unit in AGE_UNIT_TO_SUBTRACT_ARG.items():

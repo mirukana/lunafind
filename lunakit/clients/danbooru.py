@@ -15,6 +15,9 @@ from pybooru.resources import HTTP_STATUS_CODE as BOORU_CODES
 from requests.adapters import HTTPAdapter
 from requests.exceptions import RequestException
 
+# pylint: disable=no-name-in-module
+from fastnumbers import fast_int
+
 from . import base, net
 from .. import LOG
 
@@ -149,8 +152,8 @@ class Danbooru(net.NetClient):
             tags   = parsed.get("tags",      [""]   )[-1],
             random = parsed.get("random",    [False])[-1],
             raw    = parsed.get("raw",       [False])[-1],
-            pages  = int(parsed.get("page",  [1]    )[-1]),
-            limit  = int(parsed.get("limit", [self.default_limit])[-1])
+            pages  = fast_int(parsed.get("page",  [1]    )[-1]),
+            limit  = fast_int(parsed.get("limit", [self.default_limit])[-1])
         )
 
 
