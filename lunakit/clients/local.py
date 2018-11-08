@@ -150,24 +150,28 @@ class Local(base.Client):
         tmp_file.rename(self.index)
 
 
+    def _get_post_path(self, info: InfoType) -> Path:
+        return self.path / f"{info['fetched_from']}-{info['id']}"
+
+
     def _read_res(self, info: InfoType, file: str, binary: bool = False
                  ) -> Union[str, bytes, None]:
 
-        path = self.path / "{}-{}".format(info["fetched_from"], info["id"])
+        path = self._get_post_path(info)
 
         try:
-            path = (path / file) if "*" not in file else next(path.glob(file))
-            return path.read_text() if not binary else path.read_bytes()
-
-        except (StopIteration, FileNotFoundError):
+            path /= file
+        except FileNotFoundError:
             return None
 
+        return path.read_text() if not binary else path.read_bytes()
 
-    def _read_json(self, info: InfoType, file: str) -> Optional[str]:
-        res = self._read_res(info, file)
+
+    def _read_json(self, info: InfoType, file_noext: str) -> Optional[str]:
+        res = self._read_res(info, f"{file_noext}.json")
         if res is None:
             return None
-        return simplejson.loads(self._read_res(info, file))
+        return simplejson.loads(res)
 
 
     def info_booru_id(self, booru: str, post_id: int) -> InfoType:
@@ -216,16 +220,36 @@ class Local(base.Client):
 
 
     def artcom(self, info: InfoType) -> base.ArtcomType:
-        return self._read_json(info, "artcom.json") or []
+        return self._read_json(info, "artcom") or []
 
 
     def media(self, info: InfoType) -> base.MediaType:
-        return self._read_res(info, "media.*", binary=True)
+        ext = "webm" if info["file_ext"] == "zip" else info["file_ext"]
+        return self._read_res(info, f"media.{ext}", binary=True)
 
 
     def notes(self, info: InfoType) -> base.NotesType:
-        return self._read_json(info, "notes.json") or []
+        return self._read_json(info, "notes") or []
 
 
     def count_posts(self, tags: str = "") -> int:
         return len(list(self.info_search(tags)))
+
+
+    def get_url(self, info: base.InfoType, resource: str = "post") -> str:
+        def verify(path: Path) -> Optional[str]:
+            if path.exists():
+                return str(path)
+            return None
+
+        assert resource in ("post", "artcom", "info", "media", "notes")
+        path = self._get_post_path(info).resolve()
+
+        if resource == "post":
+            return verify(path)
+
+        if resource == "media":
+            ext = "webm" if info["file_ext"] == "zip" else info["file_ext"]
+            return verify(path / f"media.{ext}")
+
+        return verify(path / f"{resource}.json")

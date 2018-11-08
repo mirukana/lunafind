@@ -52,6 +52,10 @@ class Post:
         return f"{type(self).__name__}(id={self.id}, title='{self.title}')"
 
 
+    def get_url(self, resource: str = "post") -> str:
+        return self.client.get_url(self.info, resource)
+
+
     @cached_property
     def title(self) -> str:
         kinds = {k: utils.join_comma_and(*self.info[f"tag_string_{k}"].split())
@@ -67,16 +71,6 @@ class Post:
     @cached_property
     def id(self) -> int:
         return int(self.info["id"])
-
-    @cached_property
-    def url(self) -> str:
-        if self.info["fetched_from"] == "local":
-            return None
-
-        client = net.ALIVE[self.info["fetched_from"]]
-        return "%s%s" % (client.site_url,
-                         client.post_url_template.format(**self.info))
-
 
     @cached_property
     def artcom(self) -> base.ArtcomType:

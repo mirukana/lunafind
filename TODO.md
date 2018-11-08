@@ -3,12 +3,9 @@
 ## Minor
 
 - Update CLI examples
-- Option to show local `-R` resource path
 
 - Some way to get missing infos for IndexedInfo
 - ! filtering missing keys like tag counts
-- ! Do something about null JSON values being blank with -k x,y (post newlines)
-- Don't return a Python-converted thing when using `-k`
 
 - Some way to view auto-filtered posts
 

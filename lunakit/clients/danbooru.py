@@ -3,7 +3,7 @@
 
 import math
 import re
-from typing import Optional
+from typing import Dict, Optional
 from urllib.parse import parse_qs, urlparse
 
 import pendulum as pend
@@ -28,13 +28,20 @@ class Danbooru(net.NetClient):
 
     default_limit: int = field(default=20, repr=False)
 
-    post_url_template: str = field(default="/posts/{id}", repr=False)
+    url_templates: Dict[str, str] = field(default_factory=dict, repr=False)
 
     _pybooru: pybooru.Danbooru = field(init=False, default=None, repr=False)
 
 
     def __post_init__(self) -> None:
         super().__post_init__()
+
+        self.url_templates = {
+            "post":         "/posts/{id}",
+            "artcom":       "/artist_commentaries.json?search[post_id]={id}",
+            "info":         "/posts/{id}.json",
+            "notes":        "/notes.json?search[post_id]={id}",
+        }
 
         self._pybooru = \
             pybooru.Danbooru("", self.site_url, self.username, self.api_key)
@@ -180,3 +187,16 @@ class Danbooru(net.NetClient):
     def count_posts(self, tags: str = "") -> int:
         response = self._api("count_posts", tags)
         return response["counts"]["posts"]
+
+
+    def get_url(self, info: base.InfoType, resource: str = "post") -> str:
+        assert resource in ("post", "artcom", "info", "media", "notes")
+
+        if resource == "media" and info["file_ext"] == "zip":
+            return info.get("large_file_url")
+
+        if resource == "media":
+            return info.get("file_url")
+
+        return "%s%s" % (self.site_url,
+                         self.url_templates[resource].format(**info))

@@ -56,6 +56,11 @@ class Client(abc.ABC):
         return 0
 
 
+    @abc.abstractmethod
+    def get_url(self, info: InfoType, resource: str) -> str:
+        return ""
+
+
     @staticmethod
     def _parse_pages(pages: PageType, last_page: int) -> Iterable[int]:
         is_str = isinstance(pages, str)

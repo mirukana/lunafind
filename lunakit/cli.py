@@ -44,6 +44,7 @@ Options:
     Do not parse the query for aliased tags, metatags or multiple tags,
     send it as a single literal tag.
 
+
   -s NAME, --source NAME
     Where to search posts.
     Can be the name of a booru defined in your configuration file,
@@ -52,7 +53,7 @@ Options:
     If not specified, the default booru from your config file is used.
     This option is ignored for URL queries.
 
-  -P PATH, --local-path PATH
+  -d DIR, --local-dir DIR
     Path to the directory containing the posts for `--source local`.
     If unspecified, the current directory (`.`) is used.
 
@@ -80,18 +81,20 @@ Options:
 
 
   -R RES, --resource RES
-    Posts resource to print on stdout;
-    can be `info`, `media`, `artcom` or `notes`.
+    Posts resource to print on stdout, default is `info`.
+    Can be `info`, `media`, `artcom` or `notes`.
 
-    If no `--resource` or `--download` option is specified,
-    the default behavior is `--resource info`.
+  -P RES, --show-path RES
+    If `RES` in `post`: print the URL or directory of the post.
 
-  -d, --download
+    If `RES` is `info`, `media`, `artcom` or `notes`:
+    print the URL or file path of that resource.
+
+  -D, --download
     Save posts and their resources (media, info, artcom, notes...) to disk.
-    Cannot be used with `--resource`.
     Has no effect for posts from `--source local`.
 
-  -q, --quiet-skip
+  -Q, --quiet-skip
     Do not warn when skipping download of already existing files.
 
   -O, --overwrite
@@ -224,7 +227,7 @@ def main(argv: Optional[List[str]] = None) -> None:
         params["limit"] = int(args["--limit"])
 
     if args["--source"] == "local":
-        params["prefer"] = clients.local.Local(path=args["--local-path"])
+        params["prefer"] = clients.local.Local(path=args["--local-dir"])
     elif args["--source"]:
         params["prefer"] = clients.net.ALIVE[args["--source"]]
 
@@ -241,7 +244,8 @@ def main(argv: Optional[List[str]] = None) -> None:
     for obj in stores:
         posts = obj.list if isinstance(obj, Album) else obj
 
-        if not args["--resource"] and not args["--download"]:
+        if not (args["--resource"] or args["--show-path"] or args["--download"]
+               ):
             args["--resource"] = "info"
 
         if args["--download"]:
@@ -250,6 +254,12 @@ def main(argv: Optional[List[str]] = None) -> None:
             continue
 
         for post in posts:
+            if args["--show-path"]:
+                path = post.get_url(args["--show-path"])
+                if path:
+                    print(path)
+                continue
+
             res_name = args["--resource"]
             res      = getattr(post, res_name) if res_name else post.info
 
