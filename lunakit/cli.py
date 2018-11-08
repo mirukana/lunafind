@@ -83,17 +83,12 @@ Options:
     Posts resource to print on stdout;
     can be `info`, `media`, `artcom` or `notes`.
 
-    If no `--resource`, `--show-key` or `--download` option is specified,
+    If no `--resource` or `--download` option is specified,
     the default behavior is `--resource info`.
-
-  -k KEY, --show-key KEY
-    Comma-separated list of info JSON keys to print for posts,
-    e.g. `dl_url` or `id,tag_string`.
-    If multiple keys are specified, posts will be separated by a blank line.
 
   -d, --download
     Save posts and their resources (media, info, artcom, notes...) to disk.
-    Cannot be used with `--resource` or `--show-key`.
+    Cannot be used with `--resource`.
     Has no effect for posts from `--source local`.
 
   -q, --quiet-skip
@@ -156,6 +151,7 @@ Examples:
 
 import re
 import sys
+import types
 from typing import List, Optional
 
 import docopt
@@ -245,7 +241,7 @@ def main(argv: Optional[List[str]] = None) -> None:
     for obj in stores:
         posts = obj.list if isinstance(obj, Album) else obj
 
-        if not(args["--resource"] or args["--show-key"] or args["--download"]):
+        if not args["--resource"] and not args["--download"]:
             args["--resource"] = "info"
 
         if args["--download"]:
@@ -253,28 +249,17 @@ def main(argv: Optional[List[str]] = None) -> None:
                         warn      = not args["--quiet-skip"])
             continue
 
-
-        newline = bool(args["--show-key"] and "," in args["--show-key"]) or \
-                  bool(args["--resource"])
-
         for post in posts:
-            if args["--show-key"]:
-                for key in args["--show-key"].split(","):
-                    try:
-                        print(post.info[key])
-                    except KeyError:
-                        LOG.warning("Post %d has no %r key.", post.id, key)
+            res_name = args["--resource"]
+            res      = getattr(post, res_name) if res_name else post.info
 
-            if args["--resource"]:
-                res = getattr(post, args["--resource"])
+            if res_name == "media" and isinstance(res, types.GeneratorType):
+                res = b"".join(res)
 
-                if res and isinstance(res, bytes):
-                    print(res, end="", flush=True)
-                elif res:
-                    print(utils.pretty_print_json(res))
-                else:
-                    LOG.warning("Post %d has no %s.",
-                                post.id, args["--resource"])
-
-            if newline:
-                print()
+            if res and isinstance(res, bytes):
+                sys.stdout.buffer.write(res)
+                sys.stdout.flush()
+            elif res:
+                print(utils.jsonify(res, indent=4))
+            else:
+                LOG.warning("Post %d has no %s.", post.id, res_name)

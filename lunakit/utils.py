@@ -9,10 +9,6 @@ from typing import Union
 
 import pendulum as pend
 import simplejson
-# pylint: disable=no-name-in-module
-from pygments import highlight
-from pygments.formatters import Terminal256Formatter
-from pygments.lexers import JsonLexer
 
 from . import TERM
 
@@ -96,17 +92,6 @@ JSONIFY_DEFAULT_PARAMS = {"sort_keys": True, "ensure_ascii": False}
 def jsonify(dict_: dict, **dumps_kwargs) -> str:
     kwargs = {**JSONIFY_DEFAULT_PARAMS, **dumps_kwargs}
     return simplejson.dumps(dict_, **kwargs)
-
-
-def pretty_print_json(json) -> str:
-    if not json:
-        return ""
-
-    obj    = json if not isinstance(json, str) else simplejson.loads(json)
-    pretty = jsonify(obj, indent=4)
-
-    return highlight(pretty,
-                     JsonLexer(), Terminal256Formatter(style="monokai"))
 
 
 def join_comma_and(*strings: str) -> str:
