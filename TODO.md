@@ -2,10 +2,15 @@
 
 ## Minor
 
+- Update CLI examples
 - Make `-k` show keys of the resource printed with `-R`
 - Option to show local `-R` resource path
-- `--order`
 - Don't return a Python-converted thing when using `-k`
+
+- Some way to get missing infos for IndexedInfo
+- ! filtering missing keys like tag counts
+
+- Some way to view auto-filtered posts
 
 - Flag file or dir name modification to prevent
   updates/remember deleted posts and not refetch them/force recaching/etc
@@ -23,6 +28,8 @@
 
 ## Major
 
+- Support multi-booru + local searches
+- Clean up the filtering.py code
 - Tag aliases for filtering
 - Filter: Danbooru hard stuff that needs users/etc info
 - Integrate Decensooru?

@@ -64,14 +64,14 @@ IndexedPost.__getitem__ = _indexedpost_getitem
 
 @dataclass
 class Local(base.Client):
-    name: str               = "local"
-    path: Union[Path, str]  = Path(".")
+    name: str              = "local"
+    path: Union[Path, str] = Path(".")
 
     index: Path = field(init=False, default=None, repr=False)
 
 
     def __post_init__(self) -> None:
-        self.path  = Path(self.path).expanduser()
+        self.path  = Path(self.path or ".").expanduser()
         self.index = self.path / "index.tsv.gz"
 
 
@@ -195,7 +195,7 @@ class Local(base.Client):
 
         ok_i  = max_i = None
 
-        if limit:
+        if limit and limit != -1:
             last  = math.ceil(len(posts) / limit)
             ok_i  = {i
                      for p in self._parse_pages(pages, last)

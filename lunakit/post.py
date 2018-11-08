@@ -66,7 +66,7 @@ class Post:
 
     @cached_property
     def id(self) -> int:
-        return self.info["id"]
+        return int(self.info["id"])
 
     @cached_property
     def url(self) -> str:

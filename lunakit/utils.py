@@ -98,12 +98,12 @@ def jsonify(dict_: dict, **dumps_kwargs) -> str:
     return simplejson.dumps(dict_, **kwargs)
 
 
-def prettify_json(json: str) -> str:
+def pretty_print_json(json) -> str:
     if not json:
         return ""
 
-    pretty = simplejson.dumps(simplejson.loads(json),
-                              indent=4, sort_keys=True, ensure_ascii=False)
+    obj    = json if not isinstance(json, str) else simplejson.loads(json)
+    pretty = jsonify(obj, indent=4)
 
     return highlight(pretty,
                      JsonLexer(), Terminal256Formatter(style="monokai"))
