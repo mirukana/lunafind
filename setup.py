@@ -33,6 +33,7 @@ setup(
         "cached_property",
         "dataclasses;python_version<'3.7'",
         "docopt",
+        "fastnumbers",
         "logzero",
         "pendulum",
         "pybooru",

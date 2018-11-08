@@ -25,7 +25,7 @@
 
 ## Major
 
-- Support multi-booru + local searches
+- Support multi-booru + local mixed searches
 - Clean up the filtering.py code
 - Tag aliases for filtering
 - Filter: Danbooru hard stuff that needs users/etc info

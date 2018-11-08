@@ -8,58 +8,107 @@ import math
 import os
 from pathlib import Path
 from random import randint
-from typing import Generator, Iterable, Optional, Union
+from typing import (Callable, Generator, Iterable, List, Optional, Sequence,
+                    Union)
 
 import simplejson
 from dataclasses import dataclass, field
+
+# pylint: disable=no-name-in-module
+from fastnumbers import fast_int
 
 from . import base
 from .. import LOG
 from ..filtering import filter_all
 from .base import InfoType
 
-POST_FIELDS = (
-    "children_ids",
-    "created_at",
-    "fav_count",
-    "fetched_at",
-    "fetched_from",
-    "file_ext",
-    "file_size",
-    "id",
-    "image_height",
-    "image_width",
-    "is_deleted",
-    "is_flagged",
-    "is_note_locked",
-    "is_pending",
-    "is_rating_locked",
-    "is_status_locked",
-    "last_comment_bumped_at",
-    "last_commented_at",
-    "last_noted_at",
-    "md5",
-    "parent_id",
-    "rating",
-    "score",
-    "source",
-    "tag_string",
-    "tag_string_artist",
-    "tag_string_character",
-    "tag_string_copyright",
-    "tag_string_general",
-    "tag_string_meta",
-    "updated_at",
-    "uploader_name",
-)
 
-def _indexedpost_getitem(self, key):
-    if isinstance(key, str):
-        return getattr(self, key)
-    return tuple(self)[key]
+def str2bool(string: str) -> Union[bool, str, None]:
+    return True  if string == "True"  else \
+           False if string == "False" else \
+           None  if not string        else string
 
-IndexedPost             = collections.namedtuple("IndexedPost", POST_FIELDS)
-IndexedPost.__getitem__ = _indexedpost_getitem
+
+def str2int(string: str) -> Optional[int]:
+    return fast_int(string, None)
+
+
+POST_FIELDS = {
+    "children_ids":           str,
+    "created_at":             str,
+    "fav_count":              str2int,
+    "fetched_at":             str,
+    "fetched_from":           str,
+    "file_ext":               str,
+    "file_size":              str2int,
+    "id":                     str2int,
+    "image_height":           str2int,
+    "image_width":            str2int,
+    "is_deleted":             str2bool,
+    "is_flagged":             str2bool,
+    "is_note_locked":         str2bool,
+    "is_pending":             str2bool,
+    "is_rating_locked":       str2bool,
+    "is_status_locked":       str2bool,
+    "last_comment_bumped_at": str,
+    "last_commented_at":      str,
+    "last_noted_at":          str,
+    "md5":                    str,
+    "parent_id":              str2int,
+    "rating":                 str,
+    "score":                  str2int,
+    "source":                 str,
+    "tag_string":             str,
+    "tag_string_artist":      str,
+    "tag_string_character":   str,
+    "tag_string_copyright":   str,
+    "tag_string_general":     str,
+    "tag_string_meta":        str,
+    "updated_at":             str,
+    "uploader_name":          str,
+
+    # Keys not needed for filtering:
+    "approver_id":          str2int,
+    "bit_flags":            str2int,
+    "down_score":           str2int,
+    "file_url":             str,
+    "has_active_children":  str2bool,
+    "has_children":         str2bool,
+    "has_large":            str2bool,
+    "has_visible_children": str2bool,
+    "is_banned":            str2bool,
+    "is_favorited":         str2bool,
+    # "keeper_data":          str2dict,  Disabled for performance reasons
+    "large_file_url":       str,
+    "pixiv_id":             str2int,
+    "pool_string":          str,
+    "preview_file_url":     str,
+    "tag_count":            str2int,
+    "tag_count_artist":     str2int,
+    "tag_count_character":  str2int,
+    "tag_count_copyright":  str2int,
+    "tag_count_general":    str2int,
+    "tag_count_meta":       str2int,
+    "up_score":             str2int,
+    "uploader_id":          str2int,
+}
+
+_IndexedInfoNT = collections.namedtuple("IndexedInfo", POST_FIELDS.keys())
+
+class IndexedInfo(_IndexedInfoNT):
+    _row_converts: List[Callable] = POST_FIELDS.values()
+
+
+    @classmethod
+    def from_csv(cls, row: Sequence[str]) -> "IndexedInfo":
+        return cls(*(v if isinstance(v, str) else c(v)
+                     for c, v in zip(cls._row_converts, row)))
+
+
+    def __getitem__(self, key):
+        if isinstance(key, str):
+            return getattr(self, key)
+        return tuple(self)[key]
 
 
 @dataclass
@@ -82,7 +131,7 @@ class Local(base.Client):
             writer = csv.DictWriter(
                 file,
                 delimiter    = "\t",
-                fieldnames   = POST_FIELDS,
+                fieldnames   = POST_FIELDS.keys(),
                 extrasaction = "ignore"
             )
 
@@ -101,7 +150,7 @@ class Local(base.Client):
 
 
     def _index_iter(self, post_dirnames: Iterable[str]
-                   ) -> Generator[IndexedPost, None, None]:
+                   ) -> Generator[IndexedInfo, None, None]:
 
         post_dirnames = set(post_dirnames)
         post_dirnames.discard(self.index.name)
@@ -116,17 +165,15 @@ class Local(base.Client):
             reader = csv.reader(file, delimiter="\t")
 
             for i, row in enumerate(reader, 1):
-                row = (True if i == "True" else False if i == "False" else i
-                       for i in row)
-                ip  = IndexedPost(*row)
-                key = f"{ip.fetched_from}-{ip.id}"
+                info = IndexedInfo.from_csv(row)
+                key  = f"{info.fetched_from}-{info.id}"
 
                 try:
                     post_dirnames.remove(key)
                 except KeyError:
                     lines_to_del.append(i)
                 else:
-                    yield ip
+                    yield info
 
         if post_dirnames:
             yield from self._index_add(post_dirnames)
@@ -189,10 +236,7 @@ class Local(base.Client):
         def sort_func(dirname):
             if random:
                 return randint(1, 1_000_000)
-            try:
-                return int(dirname.split("-")[-1])
-            except ValueError:
-                return -1
+            return fast_int(dirname.split("-")[-1], -1)
 
         posts = os.listdir(self.path)
         posts.sort(key=sort_func, reverse=True)

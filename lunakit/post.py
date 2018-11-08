@@ -37,7 +37,7 @@ class Post:
         else:
             raise TypeError("id_or_url: must be int post ID or str URL.")
 
-        if isinstance(info, local.IndexedPost):
+        if isinstance(info, local.IndexedInfo):
             return
 
         if "fetched_from" not in self.info:

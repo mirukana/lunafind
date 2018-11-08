@@ -4,7 +4,7 @@
 "Python API and CLI tools for Danbooru-based sites."
 
 __pkg_name__ = "lunakit"
-__version__  = "0.4.9-2"
+__version__  = "0.5.0"
 __status__   = "Development"
 # __status__ = "Production"
 
