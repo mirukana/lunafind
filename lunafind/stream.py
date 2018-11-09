@@ -5,13 +5,13 @@ import collections
 import re
 import time
 from copy import copy
-from threading import Thread, Lock
+from threading import Lock, Thread
 from typing import List, Optional
 
 from dataclasses import dataclass, field
 
 from . import LOG, config, order
-from .clients import base, net
+from .clients import auto_get, base, net
 from .filtering import filter_all
 from .post import Post
 
@@ -23,7 +23,7 @@ class Stream(collections.Iterator):
     limit:  Optional[int] = None
     random: bool          = False
     raw:    bool          = False
-    prefer: base.Client   = None
+    client: base.Client   = None
 
     partial_tags:   bool = False
     filter_str:     str  = ""
@@ -40,7 +40,7 @@ class Stream(collections.Iterator):
 
 
     def __post_init__(self) -> None:
-        self.prefer     = self.prefer or net.DEFAULT
+        self.client     = auto_get(self.client)
         self.unfinished = []
 
         if re.match(r"^\s*https?://.+", str(self.query)):
@@ -48,7 +48,7 @@ class Stream(collections.Iterator):
             client         = net.client_from_url(query)
             self._info_gen = client.info_url(query)
         else:
-            self._info_gen = self.prefer.info_search(
+            self._info_gen = self.client.info_search(
                 self.query, self.pages, self.limit, self.random, self.raw,
                 partial_tags = True if self.partial_tags else False
             )
@@ -99,7 +99,7 @@ class Stream(collections.Iterator):
                 self._on_iter_done(discarded = stop.value if stop.value else 0)
                 raise
 
-            post = Post(info=info, prefer=self.prefer)
+            post = Post(info=info, client=self.client)
 
             self.posts_seen += 1
             return post

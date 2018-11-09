@@ -15,7 +15,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.exceptions import RequestException
 
-from . import base
+from . import NoClientFoundError, base
 from .. import LOG, config
 
 # Set the maximum number of total requests/threads that can be running at once.
@@ -97,10 +97,6 @@ class NetClient(base.Client, abc.ABC):
         yield {}
 
 
-class NoClientFound(Exception):
-    pass
-
-
 def client_from_url(url: str) -> NetClient:
     "Return a client matching an URL if possible."
     for client in ALIVE.values():
@@ -112,4 +108,4 @@ def client_from_url(url: str) -> NetClient:
         if url.startswith(site):
             return client
 
-    raise NoClientFound(f"No client known to work with site {url!r}.")
+    raise NoClientFoundError(f"No client known to work with site {url!r}. ")

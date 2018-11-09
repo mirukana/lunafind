@@ -260,9 +260,9 @@ def main(argv: Optional[List[str]] = None) -> None:
         params["limit"] = int(args["--limit"])
 
     if args["--source"] == "local":
-        params["prefer"] = clients.local.Local(path=args["--local-dir"])
+        params["client"] = clients.Local(path=args["--local-dir"] or ".")
     elif args["--source"]:
-        params["prefer"] = clients.net.ALIVE[args["--source"]]
+        params["client"] = clients.auto_get(args["--source"])
 
     unesc = lambda s: s[1:] if s.startswith(r"\-") or s.startswith("%-") else s
 

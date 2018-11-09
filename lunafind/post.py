@@ -13,18 +13,18 @@ from cached_property import cached_property
 from fastnumbers import fast_int
 
 from . import LOG, utils
-from .clients import base, local, net
+from .clients import auto_get, base, local, net
 
 
 class Post:
     def __init__(self,
                  id_or_url: Union[None, int, str]   = None,
                  info:      Optional[base.InfoType] = None,
-                 prefer:    Optional[base.Client]   = None
+                 client:    Optional[base.Client]   = None
                 ) -> None:
         assert id_or_url or info
 
-        self.client = prefer or net.DEFAULT
+        self.client = auto_get(client)
 
         if info:
             self.info = info
