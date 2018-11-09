@@ -187,7 +187,7 @@ Examples:
 
 import re
 import sys
-import types
+from types import GeneratorType
 from typing import List, Optional
 
 import docopt
@@ -290,24 +290,27 @@ def main(argv: Optional[List[str]] = None) -> None:
                         warn      = not args["--quiet-skip"])
             continue
 
-        for post in posts:
-            if args["--show-path"]:
-                path = post.get_url(args["--show-path"],
-                                    absolute = args["--absolute-path"])
-                if path:
-                    print(path, flush=True)
-                continue
+        try:
+            for post in posts:
+                if args["--show-path"]:
+                    path = post.get_url(args["--show-path"],
+                                        absolute = args["--absolute-path"])
+                    if path:
+                        print(path, flush=True)
+                    continue
 
-            res_name = args["--resource"]
-            res      = getattr(post, res_name) if res_name else post.info
+                res_name = args["--resource"]
+                res      = getattr(post, res_name) if res_name else post.info
 
-            if res_name == "media" and isinstance(res, types.GeneratorType):
-                res = b"".join(res)
+                if res_name == "media" and isinstance(res, GeneratorType):
+                    res = b"".join(res)
 
-            if res and isinstance(res, bytes):
-                sys.stdout.buffer.write(res)
-                sys.stdout.flush()
-            elif res:
-                print(utils.jsonify(res, indent=4), flush=True)
-            else:
-                LOG.warning("Post %d has no %s.", post.id, res_name)
+                if res and isinstance(res, bytes):
+                    sys.stdout.buffer.write(res)
+                    sys.stdout.flush()
+                elif res:
+                    print(utils.jsonify(res, indent=4), flush=True)
+                else:
+                    LOG.warning("Post %d has no %s.", post.id, res_name)
+        except (KeyboardInterrupt, BrokenPipeError):
+            pass
