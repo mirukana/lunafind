@@ -295,7 +295,7 @@ def main(argv: Optional[List[str]] = None) -> None:
                 path = post.get_url(args["--show-path"],
                                     absolute = args["--absolute-path"])
                 if path:
-                    print(path)
+                    print(path, flush=True)
                 continue
 
             res_name = args["--resource"]
@@ -308,6 +308,6 @@ def main(argv: Optional[List[str]] = None) -> None:
                 sys.stdout.buffer.write(res)
                 sys.stdout.flush()
             elif res:
-                print(utils.jsonify(res, indent=4))
+                print(utils.jsonify(res, indent=4), flush=True)
             else:
                 LOG.warning("Post %d has no %s.", post.id, res_name)
