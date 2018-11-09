@@ -244,7 +244,7 @@ def filter_all(items:         Iterable[Union[InfoType, Post]],
                 if not _filter_info(info, *term_args):
                     yield item
                 else:
-                    return 1
+                    return 0
 
             else:
                 if _filter_info(info, *term_args):

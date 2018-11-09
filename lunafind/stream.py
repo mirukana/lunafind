@@ -5,7 +5,7 @@ import collections
 import re
 import time
 from copy import copy
-from threading import Thread
+from threading import Thread, Lock
 from typing import List, Optional
 
 from dataclasses import dataclass, field
@@ -31,9 +31,12 @@ class Stream(collections.Iterator):
 
     unfinished:     List[Post] = field(init=False, default=None)
     posts_seen:     int        = field(init=False, default=0)
+    downloaded:     int        = field(init=False, default=0)
 
     _info_gen: base.InfoGenType = \
         field(init=False, default=None, repr=False)
+
+    _logged_iter_done: bool = field(init=False, default=False, repr=False)
 
 
     def __post_init__(self) -> None:
@@ -77,13 +80,15 @@ class Stream(collections.Iterator):
 
 
     def _on_iter_done(self, discarded: int) -> None:
-        if self.posts_seen == 1 and discarded == 0:
+        if self._logged_iter_done:
             return
 
-        LOG.info("Found %d total posts%s%s.",
+        LOG.info("Found %d posts%s%s.",
                  self.posts_seen,
                  f", {discarded} filtered" if discarded else "",
                  f" for {self.query!r}"    if self.query    else "")
+
+        self._logged_iter_done = True
 
 
     def __next__(self) -> Post:
@@ -133,9 +138,12 @@ class Stream(collections.Iterator):
         running     = {}
         thread_id   = 0
         max_running = int(config.CFG["GENERAL"]["parallel_requests"])
+        lock        = Lock()
 
         def work(post: Post, thread_id: int) -> None:
             post.write(overwrite=overwrite, warn=warn)
+            with lock:
+                self.downloaded += 1
             del running[thread_id]
 
         try:
