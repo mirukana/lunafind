@@ -11,7 +11,7 @@ from typing import List, Optional
 from dataclasses import dataclass, field
 
 from . import LOG, config, order
-from .clients import base, net, local
+from .clients import base, net
 from .filtering import filter_all
 from .post import Post
 
@@ -45,12 +45,10 @@ class Stream(collections.Iterator):
             client         = net.client_from_url(query)
             self._info_gen = client.info_url(query)
         else:
-            args = [self.query, self.pages, self.limit, self.random, self.raw]
-
-            if self.partial_tags and isinstance(self.prefer, local.Local):
-                args.append(True)
-
-            self._info_gen = self.prefer.info_search(*args)
+            self._info_gen = self.prefer.info_search(
+                self.query, self.pages, self.limit, self.random, self.raw,
+                partial_tags = True if self.partial_tags else False
+            )
 
         auto = config.CFG["GENERAL"]["auto_filter"]
         if not self.filter_str.startswith(auto):

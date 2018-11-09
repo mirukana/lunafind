@@ -35,7 +35,8 @@ class Client(abc.ABC):
                     pages:  PageType      = 1,
                     limit:  Optional[int] = None,
                     random: bool          = False,
-                    raw:    bool          = False) -> InfoGenType:
+                    raw:    bool          = False,
+                    **kwargs) -> InfoGenType:
         yield {}
 
 
@@ -60,7 +61,7 @@ class Client(abc.ABC):
 
 
     @abc.abstractmethod
-    def get_url(self, info: InfoType, resource: str) -> str:
+    def get_url(self, info: InfoType, resource: str, **kwargs) -> str:
         return ""
 
 

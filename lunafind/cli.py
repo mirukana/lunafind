@@ -100,6 +100,10 @@ Options:
     If `RES` is `info`, `media`, `artcom` or `notes`:
     print the URL or file path of that resource.
 
+  -a, --absolute-path
+    Return absolute file/dir paths for `--show-path`, resolving any symlinks.
+    This can be a lot slower than printing normal relative paths.
+
   -D, --download
     Save posts and their resources (media, info, artcom, notes...) to disk.
     Has no effect for posts from `--source local`.
@@ -288,7 +292,8 @@ def main(argv: Optional[List[str]] = None) -> None:
 
         for post in posts:
             if args["--show-path"]:
-                path = post.get_url(args["--show-path"])
+                path = post.get_url(args["--show-path"],
+                                    absolute = args["--absolute-path"])
                 if path:
                     print(path)
                 continue

@@ -311,15 +311,21 @@ class Local(base.Client):
         return len(list(self.info_search(tags)))
 
 
-    def get_url(self, info: base.InfoType, resource: str = "post"
-               ) -> Optional[str]:
+    def get_url(self,
+                info: base.InfoType,
+                resource: str  = "post",
+                absolute: bool = False) -> Optional[str]:
+
         def verify(path: Path) -> Optional[str]:
             if path.exists():
                 return str(path)
             return None
 
         assert resource in ("post", "artcom", "info", "media", "notes")
-        path = self._get_post_path(info).resolve()
+        path = self._get_post_path(info)
+
+        if absolute:
+            path = path.resolve()
 
         if resource == "post":
             return verify(path)

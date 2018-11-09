@@ -55,8 +55,8 @@ class Post:
         return f"{type(self).__name__}(id={self.id}, title='{self.title}')"
 
 
-    def get_url(self, resource: str = "post") -> str:
-        return self.client.get_url(self.info, resource)
+    def get_url(self, resource: str = "post", absolute: bool = False) -> str:
+        return self.client.get_url(self.info, resource, absolute=absolute)
 
 
     @cached_property
