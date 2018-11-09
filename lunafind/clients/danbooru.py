@@ -93,7 +93,8 @@ class Danbooru(net.NetClient):
                     pages:  base.PageType = 1,
                     limit:  Optional[int] = None,
                     random: bool          = False,
-                    raw:    bool          = False) -> base.InfoGenType:
+                    raw:    bool          = False,
+                    **kwargs) -> base.InfoGenType:
 
         params = {"tags": tags}
 
@@ -192,7 +193,8 @@ class Danbooru(net.NetClient):
         return response["counts"]["posts"]
 
 
-    def get_url(self, info: base.InfoType, resource: str = "post") -> str:
+    def get_url(self, info: base.InfoType, resource: str = "post", **kwargs
+               ) -> str:
         assert resource in ("post", "artcom", "info", "media", "notes")
 
         if resource == "media" and info["file_ext"] == "zip":
