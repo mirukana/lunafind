@@ -3,9 +3,10 @@
 
 import collections
 import csv
-import gzip
 import math
+import multiprocessing as mp
 import os
+from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from random import randint
 from typing import (Callable, Generator, Iterable, List, Optional, Sequence,
@@ -121,13 +122,22 @@ class Local(base.Client):
 
     def __post_init__(self) -> None:
         self.path  = Path(self.path or ".").expanduser()
-        self.index = self.path / "index.tsv.gz"
+        self.index = self.path / "index.tsv"
+
+
+    def _get_info(self, post_dirname: str) ->  base.InfoType:
+        try:
+            with open(f"{post_dirname}{os.sep}info.json", "r") as file:
+                return simplejson.load(file)
+        except (FileNotFoundError, NotADirectoryError) as err:
+            if not str(err.filename).startswith(self.index.name):
+                LOG.error(str(err))
 
 
     def _index_add(self, post_dirnames: Iterable[str]) -> base.InfoGenType:
         LOG.info("Indexing %d posts...", len(post_dirnames))
 
-        with gzip.open(self.index, "at+", newline="") as file:
+        with open(self.index, "at+", newline="") as file:
             writer = csv.DictWriter(
                 file,
                 delimiter    = "\t",
@@ -135,16 +145,13 @@ class Local(base.Client):
                 extrasaction = "ignore"
             )
 
-            for post in post_dirnames:
-                try:
-                    info = simplejson.load(
-                        open(f"{post}{os.sep}info.json", "r")
-                    )
-                except (FileNotFoundError, NotADirectoryError) as err:
-                    if not str(err.filename).startswith(self.index.name):
-                        LOG.error(str(err))
-                    continue
+            pool = ThreadPool(mp.cpu_count() * 5)
 
+            results = [pool.apply_async(self._get_info, (p,))
+                       for p in post_dirnames]
+
+            for result in results:
+                info = result.get()
                 writer.writerow(info)
                 yield info
 
@@ -161,7 +168,7 @@ class Local(base.Client):
 
         lines_to_del = []
 
-        with gzip.open(self.index, "rt+", newline="") as file:
+        with open(self.index, "rt", newline="") as file:
             reader = csv.reader(file, delimiter="\t")
 
             for i, row in enumerate(reader, 1):
@@ -187,8 +194,8 @@ class Local(base.Client):
 
         tmp_file = self.index.parent / f".{self.index.name}"
 
-        with gzip.open(self.index, "rt", newline="") as in_file, \
-             gzip.open(tmp_file,   "wt", newline="") as out_file:
+        with open(self.index, "rt", newline="") as in_file, \
+             open(tmp_file,   "wt", newline="") as out_file:
 
             for i, line in enumerate(in_file, 1):
                 if i not in line_nums:
