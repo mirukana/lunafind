@@ -4,15 +4,10 @@
 
 - Update CLI examples
 
-- Some way to get missing infos for IndexedInfo
-- ! filtering missing keys like tag counts
-
-- Some way to view auto-filtered posts
-
 - Flag file or dir name modification to prevent
   updates/remember deleted posts and not refetch them/force recaching/etc
 
-- Fuzzy tag filtering
+- Some way to view auto-filtered posts
 
 - Stop upon reaching pagination limit or too many timeouts
 

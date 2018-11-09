@@ -226,12 +226,14 @@ class Local(base.Client):
         return self._read_json(fake_info, "info.json")
 
 
+    # pylint: disable=arguments-differ
     def info_search(self,
-                    tags:   str           = "",
-                    pages:  base.PageType = 1,
-                    limit:  Optional[int] = None,
-                    random: bool          = False,
-                    raw:    bool          = False) -> base.InfoGenType:
+                    tags:         str           = "",
+                    pages:        base.PageType = 1,
+                    limit:        Optional[int] = None,
+                    random:       bool          = False,
+                    raw:          bool          = False,
+                    partial_tags: bool          = False) -> base.InfoGenType:
 
         def sort_func(dirname):
             if random:
@@ -241,7 +243,7 @@ class Local(base.Client):
         posts = os.listdir(self.path)
         posts.sort(key=sort_func, reverse=True)
 
-        ok_i  = max_i = None
+        ok_i = max_i = None
 
         if limit and limit != -1:
             last  = math.ceil(len(posts) / limit)
@@ -250,7 +252,10 @@ class Local(base.Client):
                      for i in range((p - 1) * limit, (p - 1) * limit + limit)}
             max_i = sorted(ok_i)[-1]
 
-        filter_gen = filter_all(self._index_iter(posts), terms=tags, raw=raw)
+        filter_gen = filter_all(self._index_iter(posts),
+                                terms        = tags,
+                                raw          = raw,
+                                partial_tags = partial_tags)
         del posts
 
         for i, post in enumerate(filter_gen):
@@ -268,7 +273,10 @@ class Local(base.Client):
 
 
     def media(self, info: InfoType) -> base.MediaType:
-        ext = "webm" if info["file_ext"] == "zip" else info["file_ext"]
+        try:
+            ext = "webm" if info["file_ext"] == "zip" else info["file_ext"]
+        except KeyError:
+            return None
         return self._read_res(info, f"media.{ext}", binary=True)
 
 
@@ -280,7 +288,8 @@ class Local(base.Client):
         return len(list(self.info_search(tags)))
 
 
-    def get_url(self, info: base.InfoType, resource: str = "post") -> str:
+    def get_url(self, info: base.InfoType, resource: str = "post"
+               ) -> Optional[str]:
         def verify(path: Path) -> Optional[str]:
             if path.exists():
                 return str(path)
@@ -293,7 +302,11 @@ class Local(base.Client):
             return verify(path)
 
         if resource == "media":
-            ext = "webm" if info["file_ext"] == "zip" else info["file_ext"]
+            try:
+                ext = "webm" if info["file_ext"] == "zip" else info["file_ext"]
+            except KeyError:
+                return None
+
             return verify(path / f"media.{ext}")
 
         return verify(path / f"{resource}.json")

@@ -92,6 +92,14 @@ def _tag_present(info: InfoType, tag: str) -> bool:
     if "*" not in tag:
         return f" {tag} " in f" {info['tag_string']} "
 
+    if tag == "*":
+        return True
+
+    if "*" in tag and "*" not in tag[1:-1]:
+        tag = f"{tag[1:]}"  if tag[0]  == "*" else f" {tag}"
+        tag = f"{tag[:-1]}" if tag[-1] == "*" else f"{tag} "
+        return tag in f" {info['tag_string']} "
+
     # Non-standard: support wildcards in "-tag" or "~tag".
     # "*" in tag → ".*?" regex, escape other regex/special chars
     return re.search(r" %s " % re.escape(tag).replace(r"\*", r".*?"),
@@ -207,6 +215,7 @@ def filter_all(items:         Iterable[Union[InfoType, Post]],
                terms:         str,
                raw:           bool = False,
                stop_on_match: bool = False,
+               partial_tags:  bool = False,
               ) -> Generator[Union[InfoType, Post], None, int]:
 
     def raw_tag(term: str) -> Optional[str]:
@@ -219,6 +228,9 @@ def filter_all(items:         Iterable[Union[InfoType, Post]],
     meta_num  = set(t for t in terms if raw_tag(t) in META_NUM_TAGS)
     meta_str  = set(t for t in terms if raw_tag(t) in META_STR_TAGS_FUNCS)
     tags      = terms - set(meta_num) - set(meta_str)
+
+    if partial_tags:
+        tags = {re.sub(r"^(-|~)?(.+)", r"\1*\2*", t) for t in tags}
 
     term_args = (tags, meta_num, meta_str)
 

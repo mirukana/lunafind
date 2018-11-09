@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 # pylint: disable=no-name-in-module
 from fastnumbers import fast_int as fint
 
-InfoType    = Dict[str, Any]
+InfoType    = Union[Dict[str, Any], "IndexedInfo"]
 InfoGenType = Generator[InfoType, None, None]
 
 IE       = Union[int, type(Ellipsis)]

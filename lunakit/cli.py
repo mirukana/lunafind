@@ -70,6 +70,16 @@ Options:
     Instead of:
       `lunakit "touhou 1girl" -f "wallpaper snow" -d`
 
+  -m, --partial-match
+    For `--filter` tags or `--source local` search queries,
+    make every tag act like they are surrounded by wildcards, e.g.:
+      `lunakit red -m -s local`
+    would return results for tags like `red`, `red_eyes`, `bored`, etc, instead
+    of just `red`.
+
+    This allows, for example, to type only a character's first name and still
+    get expected results.
+
   -o BY, --order BY
     Order posts returned by searches.
     Has to force all results to be fetched at the start and loaded in RAM.
@@ -85,8 +95,7 @@ Options:
     Can be `info`, `media`, `artcom` or `notes`.
 
   -P RES, --show-path RES
-    If `RES` in `post`: print the URL or directory of the post.
-
+    If `RES` is `post`: print the URL or directory of the post.
     If `RES` is `info`, `media`, `artcom` or `notes`:
     print the URL or file path of that resource.
 
@@ -105,7 +114,7 @@ Options:
     Show the configuration file path.
     If the file doesn't exist, a default one is automatically copied.
 
-  --config PATH
+  -C PATH, --config PATH
     Use `PATH` as configuration file instead of the default location.
 
   --help-order-values
@@ -123,9 +132,13 @@ Notes:
     instead of the heavy and unplayable zip files normally provided by the
     Danbooru API.
 
-  Additional info keys
+  Info JSON keys
     The info returned for posts contains `fetched_at` (date) and
     `fetched_from` (booru name) keys not present in the standard API returns.
+
+    Posts returned from `--source local` searches will not have the
+    `keeper_data` and `pixiv_ugoira_frame_data` keys, they are not indexed
+    for performance reasons.
 
 Examples:
   lunakit "blonde 2girls" --limit 200 --pages all --download
@@ -233,8 +246,12 @@ def main(argv: Optional[List[str]] = None) -> None:
 
     unesc = lambda s: s[1:] if s.startswith(r"\-") or s.startswith("%-") else s
 
-    stores = [Stream(unesc(q), **params).filter(unesc(args["--filter"] or ""))
-              for q in args["QUERY"] or [""]]
+    stores = [
+        Stream(unesc(q), **params, partial_tags=args["--partial-match"])
+        .filter(unesc(args["--filter"] or ""),
+                partial_tags = args["--partial-match"])
+        for q in args["QUERY"] or ("",)
+    ]
 
     if args["--order"]:
         stores = [

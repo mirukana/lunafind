@@ -4,8 +4,9 @@
 import traceback
 from typing import Generator, List
 
-from . import LOG, filtering, order
+from . import LOG, order
 from .attridict import AttrIndexedDict
+from .filtering import filter_all
 from .post import Post
 from .stream import Stream
 
@@ -69,15 +70,16 @@ class Album(AttrIndexedDict, attr="id", map_partials=("write",)):
         return self
 
 
-    def filter(self, search: str) -> "Album":
-        return Album(*self.filter_lazy(search))
+    def filter(self, search: str, partial_tags: bool = False) -> "Album":
+        return Album(*self.filter_lazy(search, partial_tags))
 
-    def filter_lazy(self, search: str) -> Generator[Post, None, None]:
-        yield from filtering.filter_all(self.list, search)
+    def filter_lazy(self, search: str, partial_tags: bool = False
+                   ) -> Generator[Post, None, None]:
+        yield from filter_all(self.list, search, partial_tags=partial_tags)
 
     def order(self, by: str) -> "Album":
         return Album(*order.sort(self.list, by))
 
-    __truediv__  = lambda self, search: self.filter(search)       # /
-    __floordiv__ = lambda self, search: self.filter_lazy(search)  # //
-    __mod__      = lambda self, by:     self.order(by)            # %
+    __truediv__  = lambda self, search: self.filter(search)        # /
+    __floordiv__ = lambda self, search: self.filter(search, True)  # //
+    __mod__      = lambda self, by:     self.order(by)             # %

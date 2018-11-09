@@ -11,7 +11,7 @@ from typing import List, Optional
 from dataclasses import dataclass, field
 
 from . import LOG, config, order
-from .clients import base, net
+from .clients import base, net, local
 from .filtering import filter_all
 from .post import Post
 
@@ -25,8 +25,9 @@ class Stream(collections.Iterator):
     raw:    bool          = False
     prefer: base.Client   = None
 
-    filter_str:     str = field(default = "")
-    stop_if_filter: str = field(default = "")
+    partial_tags:   bool = False
+    filter_str:     str  = ""
+    stop_if_filter: str  = ""
 
     unfinished:     List[Post] = field(init=False, default=None)
     posts_seen:     int        = field(init=False, default=0)
@@ -44,9 +45,12 @@ class Stream(collections.Iterator):
             client         = net.client_from_url(query)
             self._info_gen = client.info_url(query)
         else:
-            self._info_gen = self.prefer.info_search(
-                self.query, self.pages, self.limit, self.random, self.raw
-            )
+            args = [self.query, self.pages, self.limit, self.random, self.raw]
+
+            if self.partial_tags and isinstance(self.prefer, local.Local):
+                args.append(True)
+
+            self._info_gen = self.prefer.info_search(*args)
 
         auto = config.CFG["GENERAL"]["auto_filter"]
         if not self.filter_str.startswith(auto):
@@ -58,9 +62,10 @@ class Stream(collections.Iterator):
     def _apply_filters(self) -> None:
         if self.filter_str:
             self._info_gen = filter_all(
-                items = self._info_gen,
-                terms = self.filter_str,
-                raw   = self.raw
+                items        = self._info_gen,
+                terms        = self.filter_str,
+                raw          = self.raw,
+                partial_tags = self.partial_tags
             )
 
         if self.stop_if_filter.strip():
@@ -68,7 +73,8 @@ class Stream(collections.Iterator):
                 items         = self._info_gen,
                 terms         = self.stop_if_filter,
                 raw           = self.raw,
-                stop_on_match = True
+                stop_on_match = True,
+                partial_tags  = self.partial_tags
             )
 
 
@@ -101,15 +107,17 @@ class Stream(collections.Iterator):
 
 
     # pylint: disable=protected-access
-    def filter(self, search: str) -> "Stream":
-        new            = copy(self)
-        new.filter_str = " ".join((search, new.filter_str)).strip()
+    def filter(self, search: str, partial_tags: bool = False) -> "Stream":
+        new              = copy(self)
+        new.filter_str   = " ".join((search, new.filter_str)).strip()
+        new.partial_tags = partial_tags
         new._apply_filters()
         return new
 
-    def stop_if(self, search: str) -> "Stream":
+    def stop_if(self, search: str, partial_tags: bool = False) -> "Stream":
         new                = copy(self)
         new.stop_if_filter = " ".join((search, new.stop_if_filter)).strip()
+        new.partial_tags   = partial_tags
         new._apply_filters()
         return new
 
@@ -117,8 +125,9 @@ class Stream(collections.Iterator):
         from .album import Album  # ævoid circular dependency
         return Album(*order.sort(list(self), by))
 
-    __truediv__  = lambda self, search: self.filter(search)  # /
-    __mod__      = lambda self, by:     self.order(by)       # %
+    __truediv__  = lambda self, search: self.filter(search)        # /
+    __floordiv__ = lambda self, search: self.filter(search, True)  # //
+    __mod__      = lambda self, by:     self.order(by)             # %
 
 
     def write(self, overwrite: bool = False, warn: bool = True) -> "Stream":
