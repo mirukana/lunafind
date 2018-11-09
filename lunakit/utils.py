@@ -122,6 +122,7 @@ def print_colored_help(doc: str, exit_code: int = 0) -> None:
         r"^(\S.+:)$":    "magenta_bold",  #  Sections:
         r"^(  [A-Z]+)$": "blue_bold",     #  ARGUMENT
         r"^(  \S.+)$":   "blue",          #  Two-space indented lines
+        r"^( {5,}-.+)$": "blue",          #  Examples short-options hints
         r"^(\s*-)":      "magenta",       #  - Dash lists
     }
 

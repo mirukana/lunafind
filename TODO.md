@@ -2,8 +2,6 @@
 
 ## Minor
 
-- Update CLI examples
-
 - Flag file or dir name modification to prevent
   updates/remember deleted posts and not refetch them/force recaching/etc
 
