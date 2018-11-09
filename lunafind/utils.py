@@ -1,5 +1,5 @@
 # Copyright 2018 miruka
-# This file is part of lunakit, licensed under LGPLv3.
+# This file is part of lunafind, licensed under LGPLv3.
 
 "Misc useful functions."
 
@@ -105,7 +105,8 @@ def join_comma_and(*strings: str) -> str:
 
 
 def print_colored_help(doc: str, exit_code: int = 0) -> None:
-    doc = doc.splitlines()
+    # ⋅ (U+22C5) is used as a docopt escape character
+    doc = doc.replace("⋅", "").splitlines()
 
     # Usage:
     doc[0] = re.sub(r"(Usage: +)",
@@ -122,7 +123,7 @@ def print_colored_help(doc: str, exit_code: int = 0) -> None:
         r"^(\S.+:)$":    "magenta_bold",  #  Sections:
         r"^(  [A-Z]+)$": "blue_bold",     #  ARGUMENT
         r"^(  \S.+)$":   "blue",          #  Two-space indented lines
-        r"^( {5,}-.+)$": "blue",          #  Examples short-options hints
+        r"^(⋅\s*-.+)$":  "blue",          #  Examples short-options hints
         r"^(\s*-)":      "magenta",       #  - Dash lists
     }
 

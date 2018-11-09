@@ -1,7 +1,7 @@
 # Copyright 2018 miruka
-# This file is part of lunakit, licensed under LGPLv3.
+# This file is part of lunafind, licensed under LGPLv3.
 
-r"""Usage: lunakit [QUERY]... [options]
+r"""Usage: lunafind [QUERY]... [options]
 
 Search, filter and download posts from Danbooru-based sites.
 Local directories containing downloaded posts can also be searched.
@@ -15,7 +15,7 @@ Arguments:
     tag searches with multiple tags must be wrapped in quotes.
 
     If a query starts with a `-`, prefix it with a `%` or `\` to prevent it
-    from being seen as an option, e.g. `lunakit %-rating:e`.
+    from being seen as an option, e.g. `lunafind %-rating:e`.
     For `\`, quoting will always be required to prevent the shell from
     interpreting it.
 
@@ -67,14 +67,14 @@ Options:
 
     For a faster filtering, use tags that have less posts for the booru
     search and others for the filter, for example:
-      `lunakit "snow wallpaper" -f "touhou 1girl" -D`
+      `lunafind "snow wallpaper" -f "touhou 1girl" -D`
     Instead of:
-      `lunakit "touhou 1girl" -f "wallpaper snow" -D`
+      `lunafind "touhou 1girl" -f "wallpaper snow" -D`
 
   -m, --partial-match
     For `--filter` tags or `--source local` search queries,
     make every tag act like they are surrounded by wildcards, e.g.:
-      `lunakit red -m -s local`
+      `lunafind red -m -s local`
     would return results for tags like `red`, `red_eyes`, `bored`, etc, instead
     of just `red`.
 
@@ -88,7 +88,7 @@ Options:
 
     Also remember this works with actually fetched results.
     The equivalent to searching "tag1 tag2 order:score" on Danbooru would be:
-    `lunakit "tag1 tag2" --pages all --order score` (notice `--pages all`).
+    `lunafind "tag1 tag2" --pages all --order score` (notice `--pages all`).
 
 
   -R RES, --resource RES
@@ -142,31 +142,31 @@ Notes:
     for performance reasons.
 
 Examples:
-  lunakit "blonde 2girls" --limit 200 --pages all --download
-                          -l          -p          -D
+  lunafind "blonde 2girls" --limit 200 --pages all --download
+  ⋅                        -l          -p          -D
     Download all pages of posts containing tags `blonde` and `2girls`.
     See the `--limit` option description to know why `200` is used here.
 
-  lunakit "blonde 2girls" --source local --show-path media
-                          -s             -P
+  lunafind "blonde 2girls" --source local --show-path media
+  ⋅                       -s             -P
     Print image/webm path of all posts with the tags `blonde` and `2girls`
     downloaded in the current directory.
 
-  lunakit --show-path post
-          -P
+  lunafind --show-path post
+  ⋅       -P
     Print URL of the latest posts on the home page.
 
-  lunakit translated --resource notes
-                     -R
+  lunafind translated --resource notes
+  ⋅                  -R
     Print notes JSON for latest posts with the tag `translated`.
 
-  lunakit --random --limit 100 | jq .file_url
-          -r       -l
+  lunafind --random --limit 100 | jq .file_url
+  ⋅       -r       -l
     Print image/webm URL for 100 random posts,
     using `jq` to display the `file_url` key of each info JSON.
 
-  lunakit wallpaper --pages all --filter "%-no_human ratio:16:9 width:>=1920"
-                    -p          -f
+  lunafind wallpaper --pages all --filter "%-no_human ratio:16:9 width:>=1920"
+  ⋅                 -p          -f
     Retrieve all posts with the `wallpaper` tags,
     filter them to only leave those without the `no_human` tag, with a ratio
     of 16:9 and a width equal or superior to 1920, print info.
@@ -175,8 +175,8 @@ Examples:
     be mistaken for an option. `\` can also be used, but will most likely
     always require quoting due to the shell.
 
-  lunakit "~scenery ~landscape" "~outdoor ~nature" --pages 1-10 --download
-                                                   -p           -D
+  lunafind "~scenery ~landscape" "~outdoor ~nature" --pages 1-10 --download
+  ⋅                                                -p           -D
     Do two separate searches (Danbooru 2 tag limit) for "scenery or landscape"
     and "outdoor or nature", pages 1 to 10, combine the results and
     download everything."""

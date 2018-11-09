@@ -1,5 +1,5 @@
 # Copyright 2018 miruka
-# This file is part of lunakit, licensed under LGPLv3.
+# This file is part of lunafind, licensed under LGPLv3.
 
 import collections
 import csv
@@ -35,14 +35,17 @@ def str2int(string: str) -> Optional[int]:
 
 
 POST_FIELDS = {
+    # Starting keys to sort rows if needed
+    "id":           str2int,
+    "fetched_from": str,
+    "fetched_at":   str,
+
+    # Other keys useful for filtering
     "children_ids":           str,
     "created_at":             str,
     "fav_count":              str2int,
-    "fetched_at":             str,
-    "fetched_from":           str,
     "file_ext":               str,
     "file_size":              str2int,
-    "id":                     str2int,
     "image_height":           str2int,
     "image_width":            str2int,
     "is_deleted":             str2bool,
@@ -79,7 +82,6 @@ POST_FIELDS = {
     "has_visible_children": str2bool,
     "is_banned":            str2bool,
     "is_favorited":         str2bool,
-    # "keeper_data":          str2dict,  Disabled for performance reasons
     "large_file_url":       str,
     "pixiv_id":             str2int,
     "pool_string":          str,
@@ -92,6 +94,10 @@ POST_FIELDS = {
     "tag_count_meta":       str2int,
     "up_score":             str2int,
     "uploader_id":          str2int,
+
+    # Disabled for performance reasons
+    # "keeper_data":             str2dict,
+    # "pixiv_ugoira_frame_data": str2dict,
 }
 
 _IndexedInfoNT = collections.namedtuple("IndexedInfo", POST_FIELDS.keys())
@@ -135,9 +141,14 @@ class Local(base.Client):
 
 
     def _index_add(self, post_dirnames: Iterable[str]) -> base.InfoGenType:
+        # post_dirnames MUST be sorted by id, from highest to lowest.
+
         LOG.info("Indexing %d posts...", len(post_dirnames))
 
-        with open(self.index, "at+", newline="") as file:
+        if not self.index.exists():
+            self.index.write_text("")
+
+        with open(self.index, "rt+", newline="") as file:
             writer = csv.DictWriter(
                 file,
                 delimiter    = "\t",
@@ -145,28 +156,37 @@ class Local(base.Client):
                 extrasaction = "ignore"
             )
 
-            pool = ThreadPool(mp.cpu_count() * 5)
+            pool  = ThreadPool(mp.cpu_count() * 5)
+            tasks = [pool.apply_async(self._get_info, (p,))
+                     for p in post_dirnames]
 
-            results = [pool.apply_async(self._get_info, (p,))
-                       for p in post_dirnames]
+            for task in tasks:
+                info = task.get()
+                try:
+                    writer.writerow(info)
+                    yield info
+                except AttributeError:  # no info returned
+                    pass
 
-            for result in results:
-                info = result.get()
-                writer.writerow(info)
-                yield info
 
-
-    def _index_iter(self, post_dirnames: Iterable[str]
+    def _index_iter(self, post_dirnames: List[str], random: bool = False
                    ) -> Generator[IndexedInfo, None, None]:
 
-        post_dirnames = set(post_dirnames)
-        post_dirnames.discard(self.index.name)
+        def sort_func(dirname):
+            if random:
+                return randint(1, 1_000_000)
+            return fast_int(dirname.split("-")[-1], -1)
+
 
         if not self.index.exists():
+            post_dirnames.sort(key=sort_func, reverse=True)
             yield from self._index_add(post_dirnames)
             return
 
-        lines_to_del = []
+        lines_to_del     = []
+        unfound_dirnames = set(post_dirnames)
+        unfound_dirnames.discard(self.index.name)
+        del post_dirnames
 
         with open(self.index, "rt", newline="") as file:
             reader = csv.reader(file, delimiter="\t")
@@ -176,17 +196,19 @@ class Local(base.Client):
                 key  = f"{info.fetched_from}-{info.id}"
 
                 try:
-                    post_dirnames.remove(key)
+                    unfound_dirnames.remove(key)
                 except KeyError:
                     lines_to_del.append(i)
                 else:
                     yield info
 
-        if post_dirnames:
-            yield from self._index_add(post_dirnames)
-
         if lines_to_del:
             self._index_del(*lines_to_del)
+
+        if unfound_dirnames:
+            yield from self._index_add(
+                sorted(unfound_dirnames, key=sort_func, reverse=True)
+            )
 
 
     def _index_del(self, *line_nums: int) -> None:
@@ -242,13 +264,7 @@ class Local(base.Client):
                     raw:          bool          = False,
                     partial_tags: bool          = False) -> base.InfoGenType:
 
-        def sort_func(dirname):
-            if random:
-                return randint(1, 1_000_000)
-            return fast_int(dirname.split("-")[-1], -1)
-
         posts = os.listdir(self.path)
-        posts.sort(key=sort_func, reverse=True)
 
         ok_i = max_i = None
 
@@ -256,7 +272,7 @@ class Local(base.Client):
             last  = math.ceil(len(posts) / limit)
             ok_i  = {i
                      for p in self._parse_pages(pages, last)
-                     for i in range((p - 1) * limit, (p - 1) * limit + limit)}
+                     for i in range((p-1) * limit, (p-1) * limit + limit + 1)}
             max_i = sorted(ok_i)[-1]
 
         filter_gen = filter_all(self._index_iter(posts),

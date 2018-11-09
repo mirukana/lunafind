@@ -5,7 +5,7 @@
 
 from setuptools import setup, find_packages
 
-from lunakit import __about__
+from lunafind import __about__
 
 
 def get_readme():

@@ -1,5 +1,5 @@
 # Copyright 2018 miruka
-# This file is part of lunakit, licensed under LGPLv3.
+# This file is part of lunafind, licensed under LGPLv3.
 
 import re
 import shutil
@@ -13,8 +13,9 @@ from pkg_resources import resource_filename
 from . import __about__
 
 DEFAULT_FILE = resource_filename(__about__.__name__, "data/default_config.ini")
-FILE         = "%s/config.ini" % user_config_dir(__about__.__pkg_name__)
-CFG          = ConfigParser(interpolation=ExtendedInterpolation())
+FILE         = "%s/%s.ini" % (user_config_dir(__about__.__project_name__),
+                              __about__.__pkg_name__)
+CFG = ConfigParser(interpolation=ExtendedInterpolation())
 
 
 def reload(path: Optional[str] = None) -> None:

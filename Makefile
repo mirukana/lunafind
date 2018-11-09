@@ -1,7 +1,7 @@
 # Copyright 2018 miruka
 # This file is part of lunakit, licensed under LGPLv3.
 
-PKG_DIR = lunakit
+PKG_DIR = lunafind
 
 PYTHON = python3
 PIP    = pip3
