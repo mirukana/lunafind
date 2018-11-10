@@ -1,7 +1,7 @@
 # Copyright 2018 miruka
-# This file is part of lunakit, licensed under LGPLv3.
+# This file is part of lunafind, licensed under LGPLv3.
 
-"lunakit setuptools file"
+"lunafind setuptools file"
 
 from setuptools import setup, find_packages
 
@@ -56,7 +56,7 @@ setup(
     keywords = "booru danbooru api client image ugoira anime cli terminal " \
                "scrap tag search filter order download",
 
-    url = "https://github.com/mirukan/lunakit",
+    url = "https://github.com/mirukan/lunafind",
 
     classifiers=[
         "Development Status :: 3 - Alpha",

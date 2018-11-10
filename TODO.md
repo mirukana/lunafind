@@ -1,4 +1,4 @@
-# lunakit TODO and idea list
+# lunafind TODO and idea list
 
 ## Minor
 
