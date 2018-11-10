@@ -4,7 +4,11 @@
 r"""Usage: lunafind [QUERY]... [options]
 
 Search, filter and download posts from Danbooru-based sites.
-Local directories containing downloaded posts can also be searched.
+Local directories containing downloaded posts can also be indexed and searched.
+
+Part of the lunakit tools.
+See also `lunasync` to easily download and keep in sync particular tags,
+similar to Danbooru subscriptions: `https://github.com/mirukan/lunasync`
 
 Arguments:
   QUERY
@@ -152,25 +156,25 @@ Examples:
     See the `--limit` option description to know why `200` is used here.
 
   lunafind "blonde 2girls" --source local --show-path media
-  ⋅                       -s             -P
+  ⋅                        -s             -P
     Print image/webm path of all posts with the tags `blonde` and `2girls`
     downloaded in the current directory.
 
   lunafind --show-path post
-  ⋅       -P
+  ⋅        -P
     Print URL of the latest posts on the home page.
 
   lunafind translated --resource notes
-  ⋅                  -R
+  ⋅                   -R
     Print notes JSON for latest posts with the tag `translated`.
 
   lunafind --random --limit 100 | jq .file_url
-  ⋅       -r       -l
+  ⋅        -r       -l
     Print image/webm URL for 100 random posts,
     using `jq` to display the `file_url` key of each info JSON.
 
   lunafind wallpaper --pages all --filter "%-no_human ratio:16:9 width:>=1920"
-  ⋅                 -p          -f
+  ⋅                  -p          -f
     Retrieve all posts with the `wallpaper` tags,
     filter them to only leave those without the `no_human` tag, with a ratio
     of 16:9 and a width equal or superior to 1920, print info.
@@ -180,7 +184,7 @@ Examples:
     always require quoting due to the shell.
 
   lunafind "~scenery ~landscape" "~outdoor ~nature" --pages 1-10 --download
-  ⋅                                                -p           -D
+  ⋅                                                 -p           -D
     Do two separate searches (Danbooru 2 tag limit) for "scenery or landscape"
     and "outdoor or nature", pages 1 to 10, combine the results and
     download everything."""
