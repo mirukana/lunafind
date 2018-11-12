@@ -133,7 +133,8 @@ class Local(base.Client):
 
     def _get_info(self, post_dirname: str) ->  base.InfoType:
         try:
-            with open(f"{post_dirname}{os.sep}info.json", "r") as file:
+            path = self.path / post_dirname / "info.json"
+            with open(path, "r") as file:
                 return simplejson.loads(file.read())
         except (FileNotFoundError, NotADirectoryError) as err:
             if not str(err.filename).startswith(self.index.name):
