@@ -269,11 +269,11 @@ class Local(base.Client):
 
         ok_i = max_i = None
 
-        if limit and limit != -1:
+        if limit and limit not in (-1, math.inf):
             last  = math.ceil(len(posts) / limit)
             ok_i  = {i
                      for p in self._parse_pages(pages, last)
-                     for i in range((p-1) * limit, (p-1) * limit + limit + 1)}
+                     for i in range((p-1) * limit, (p-1) * limit + limit)}
             max_i = sorted(ok_i)[-1]
 
         posts = filter_all(self._index_iter(posts),
