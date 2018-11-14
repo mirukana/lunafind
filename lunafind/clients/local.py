@@ -8,7 +8,6 @@ import multiprocessing as mp
 import os
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from random import randint
 from typing import (Callable, Generator, Iterable, List, Optional, Sequence,
                     Union)
 
@@ -19,7 +18,7 @@ from dataclasses import dataclass, field
 from fastnumbers import fast_int
 
 from . import base
-from .. import LOG
+from .. import LOG, order
 from ..filtering import filter_all
 from .base import InfoType
 
@@ -170,17 +169,13 @@ class Local(base.Client):
                     pass
 
 
-    def _index_iter(self, post_dirnames: List[str], random: bool = False
+    def _index_iter(self, post_dirnames: List[str]
                    ) -> Generator[IndexedInfo, None, None]:
 
-        def sort_func(dirname):
-            if random:
-                return randint(1, 1_000_000)
-            return fast_int(dirname.split("-")[-1], -1)
-
+        sort_func = lambda dirname: fast_int(dirname.split("-")[-1], -1)
 
         if not self.index.exists():
-            post_dirnames.sort(key=sort_func, reverse=True)
+            post_dirnames.sort(key=sort_func, reverse = True)
             yield from self._index_add(post_dirnames)
             return
 
@@ -193,7 +188,12 @@ class Local(base.Client):
             reader = csv.reader(file, delimiter="\t")
 
             for i, row in enumerate(reader, 1):
-                info = IndexedInfo.from_csv(row)
+                try:
+                    info = IndexedInfo.from_csv(row)
+                except TypeError:
+                    LOG.error("Corrupted post in index on line %d", i)
+                    continue
+
                 key  = f"{info.fetched_from}-{info.id}"
 
                 try:
@@ -276,13 +276,14 @@ class Local(base.Client):
                      for i in range((p-1) * limit, (p-1) * limit + limit + 1)}
             max_i = sorted(ok_i)[-1]
 
-        filter_gen = filter_all(self._index_iter(posts),
-                                terms        = tags,
-                                raw          = raw,
-                                partial_tags = partial_tags)
-        del posts
+        posts = filter_all(self._index_iter(posts),
+                           terms=tags, raw=raw, partial_tags=partial_tags)
 
-        for i, post in enumerate(filter_gen):
+        if random:
+            LOG.warning("Requested random results, this can take some time...")
+            posts = iter(order.sort(list(posts), by="random"))
+
+        for i, post in enumerate(posts):
             if max_i and i > max_i:
                 break
 
