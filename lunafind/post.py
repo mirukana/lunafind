@@ -88,11 +88,15 @@ class Post:
         return self.client.notes(self.info)
 
 
-    def write(self, overwrite: bool = False, warn: bool = True) -> None:
+    def write(self,
+              base_dir:  Union[str, Path] = Path("."),
+              overwrite: bool             = False,
+              warn:      bool             = True) -> None:
+
         if isinstance(self.client, local.Local):
             return
 
-        post_dir = Path("{fetched_from}-{id}".format(**self.info))
+        post_dir = Path(base_dir) / "{fetched_from}-{id}".format(**self.info)
         post_dir.mkdir(parents=True, exist_ok=True)
 
         for res in ("info", "artcom", "notes", "media"):

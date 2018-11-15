@@ -5,8 +5,9 @@ import collections
 import re
 import time
 from copy import copy
+from pathlib import Path
 from threading import Lock, Thread
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from dataclasses import dataclass, field
 
@@ -133,7 +134,11 @@ class Stream(collections.Iterator):
     __mod__      = lambda self, by:     self.order(by)             # %
 
 
-    def write(self, overwrite: bool = False, warn: bool = True) -> "Stream":
+    def write(self,
+              base_dir:  Union[str, Path] = Path("."),
+              overwrite: bool             = False,
+              warn:      bool             = True) -> "Stream":
+
         post        = None
         running     = {}
         thread_id   = 0
@@ -141,7 +146,7 @@ class Stream(collections.Iterator):
         lock        = Lock()
 
         def work(post: Post, thread_id: int) -> None:
-            post.write(overwrite=overwrite, warn=warn)
+            post.write(base_dir=base_dir, overwrite=overwrite, warn=warn)
             with lock:
                 self.downloaded += 1
             del running[thread_id]

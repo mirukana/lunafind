@@ -2,11 +2,9 @@
 
 ## Minor
 
-- `--local-dir` affect where to download too
+- Stop upon reaching pagination limit or too many timeouts
 
 - Some way to view auto-filtered posts
-
-- Stop upon reaching pagination limit or too many timeouts
 
 - Implement all set operators for Album
 - Order: artcomm and custom
@@ -33,6 +31,6 @@
 
 ## Other tools
 
-- bash/zsh completitions
+- bash/zsh completions
 - Tag aliases and relations (post creation/edit, local search/filtering)
 - Create Post from a non-booru image, help with IQDB and illustration2vec

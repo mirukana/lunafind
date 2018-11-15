@@ -60,6 +60,7 @@ Options:
 
   -d DIR, --local-dir DIR
     Path to the directory containing the posts for `--source local`.
+    Also affects where post dirs will be created when using `--download`.
     If unspecified, the current directory (`.`) is used.
 
 
@@ -111,6 +112,8 @@ Options:
   -D, --download
     Save posts and their resources (media, info, artcom, notes...) to disk.
     Has no effect for posts from `--source local`.
+    Posts are downloaded in the current directory by default, see
+    `--local-dir` to indicate another path.
 
   -Q, --quiet-skip
     Do not warn when skipping download of already existing files.
@@ -168,10 +171,10 @@ Examples:
   ⋅                   -R
     Print notes JSON for latest posts with the tag `translated`.
 
-  lunafind --random --limit 100 | jq .file_url
+  lunafind --random --limit 100 | jq .id
   ⋅        -r       -l
-    Print image/webm URL for 100 random posts,
-    using `jq` to display the `file_url` key of each info JSON.
+    Print the ID of 100 random posts,
+    using `jq` to display the `id` key of each info JSON.
 
   lunafind wallpaper --pages all --filter "%-no_human ratio:16:9 width:>=1920"
   ⋅                  -p          -f
@@ -185,9 +188,9 @@ Examples:
 
   lunafind "~scenery ~landscape" "~outdoor ~nature" --pages 1-10 --download
   ⋅                                                 -p           -D
-    Do two separate searches (Danbooru 2 tag limit) for "scenery or landscape"
-    and "outdoor or nature", pages 1 to 10, combine the results and
-    download everything."""
+    Do two separate searches (because of Danbooru two tag limit) for
+    "scenery OR landscape" and "outdoor OR nature", pages 1 to 10,
+    combine the results and download everything."""
 
 import re
 import sys
@@ -282,6 +285,10 @@ def main(argv: Optional[List[str]] = None) -> None:
             sum([Album(s) for s in stores], Album()).order(args["--order"])
         ]
 
+
+    if args["--download"] and args["--source"] == "local":
+        LOG.warning("--download (-D) does nothing with local posts.")
+
     for obj in stores:
         posts = obj.list if isinstance(obj, Album) else obj
 
@@ -290,7 +297,8 @@ def main(argv: Optional[List[str]] = None) -> None:
             args["--resource"] = "info"
 
         if args["--download"]:
-            posts.write(overwrite = args["--overwrite"],
+            posts.write(base_dir  = args["--local-dir"] or ".",
+                        overwrite = args["--overwrite"],
                         warn      = not args["--quiet-skip"])
             continue
 
