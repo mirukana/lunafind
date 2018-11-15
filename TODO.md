@@ -2,42 +2,37 @@
 
 ## Minor
 
-- Flag file or dir name modification to prevent
-  updates/remember deleted posts and not refetch them/force recaching/etc
+- `--local-dir` affect where to download too
 
 - Some way to view auto-filtered posts
 
 - Stop upon reaching pagination limit or too many timeouts
 
-- Intelligent post update based on `updated_at` and `fetched_at` keys,
-  Allow updating + writing local post using remote booru
-
-- Max limit client attr (also use in lunasync)
-- Implement all set operators for attridict
+- Implement all set operators for Album
 - Order: artcomm and custom
 
 ## Major
 
 - Support multi-booru + local mixed searches
 - Clean up the filtering.py code
-- Tag aliases for filtering
-- Filter: Danbooru hard stuff that needs users/etc info
 - Integrate Decensooru?
 
+### Post editing
+
+- Program to edit tags and other infos
+- Intelligent post update based on `updated_at` and `fetched_at` keys,
 - Transparently store user resource modifications in separate (patch?) files
+- Prevent updates/remember deleted posts/force recaching modified posts/etc
+- Publish tag edits and other modifications upstream?
 
 ## Etc
 
-- Document filter and info differences from Danbooru
+- Document filter/order
 - Docstrings, documentation
 - Tests
 
-## Programs
+## Other tools
 
 - bash/zsh completitions
-- zplug/emerge-like monitor for downloads
-
-- Tag subs management with already fetched list
-- Tag aliases and relations
-- Create Post from a non-booru image using IQDB
-- Find posts missing media that aren't marked as broken
+- Tag aliases and relations (post creation/edit, local search/filtering)
+- Create Post from a non-booru image, help with IQDB and illustration2vec
