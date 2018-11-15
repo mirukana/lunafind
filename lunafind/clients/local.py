@@ -8,10 +8,10 @@ import multiprocessing as mp
 import os
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import (Callable, Generator, Iterable, List, Optional, Sequence,
-                    Union)
+from typing import Callable, Generator, List, Optional, Sequence, Union
 
 import simplejson
+from atomicfile import AtomicFile
 from dataclasses import dataclass, field
 
 # pylint: disable=no-name-in-module
@@ -33,7 +33,7 @@ def str2int(string: str) -> Optional[int]:
     return fast_int(string, None)
 
 
-POST_FIELDS = {
+POST_FIELDS = collections.OrderedDict({
     # Starting keys to sort rows if needed
     "id":           str2int,
     "fetched_from": str,
@@ -97,11 +97,12 @@ POST_FIELDS = {
     # Disabled for performance reasons
     # "keeper_data":             str2dict,
     # "pixiv_ugoira_frame_data": str2dict,
-}
+})
 
-_IndexedInfoNT = collections.namedtuple("IndexedInfo", POST_FIELDS.keys())
 
-class IndexedInfo(_IndexedInfoNT):
+_INDEXED_INFO_NT = collections.namedtuple("IndexedInfo", POST_FIELDS.keys())
+
+class IndexedInfo(_INDEXED_INFO_NT):
     _row_converts: List[Callable] = POST_FIELDS.values()
 
 
@@ -131,26 +132,30 @@ class Local(base.Client):
 
 
     def _get_info(self, post_dirname: str) ->  base.InfoType:
-        try:
-            path = self.path / post_dirname / "info.json"
-            with open(path, "r") as file:
-                return simplejson.loads(file.read())
-        except (FileNotFoundError, NotADirectoryError) as err:
-            if not str(err.filename).startswith(self.index.name):
-                LOG.error(str(err))
+        path = self.path / post_dirname / "info.json"
+        with open(path, "r") as file:
+            return simplejson.loads(file.read())
 
 
-    def _index_add(self, post_dirnames: Iterable[str]) -> base.InfoGenType:
-        # post_dirnames MUST be sorted by id, from highest to lowest.
-
+    def _index_add(self, post_dirnames: List[str]) -> base.InfoGenType:
         LOG.info("Indexing %d posts...", len(post_dirnames))
+
+        post_dirnames.sort(key     = lambda d: fast_int(d.split("-")[-1], -1),
+                           reverse = True)
 
         if not self.index.exists():
             self.index.write_text("")
 
-        with open(self.index, "rt+", newline="") as file:
-            writer = csv.DictWriter(
-                file,
+        with open      (self.index, "r", newline="") as in_file, \
+             AtomicFile(self.index, "w")             as out_file:
+
+            # Not just using csv.DictReader for performance reasons
+            id_idx = list(POST_FIELDS.keys()).index("id")
+            reader = csv.reader(in_file, delimiter="\t")
+
+            src_row_writer = csv.writer(out_file, delimiter="\t")
+            new_info_writer = csv.DictWriter(
+                out_file,
                 delimiter    = "\t",
                 fieldnames   = POST_FIELDS.keys(),
                 extrasaction = "ignore"
@@ -160,22 +165,64 @@ class Local(base.Client):
             tasks = [pool.apply_async(self._get_info, (p,))
                      for p in post_dirnames]
 
-            for task in tasks:
-                info = task.get()
+            def info_gen():
+                for task in tasks:
+                    try:
+                        yield task.get()
+                    except (FileNotFoundError, NotADirectoryError) as err:
+                        if str(err.filename) != self.index.name:
+                            LOG.error(str(err))
+
+            info_gen = info_gen()
+            try:
+                new_info = next(info_gen)
+            except StopIteration:
+                return
+
+            no_more_to_add = False
+
+            for source_row in reader:
                 try:
-                    writer.writerow(info)
-                    yield info
-                except AttributeError:  # no info returned
-                    pass
+                    src_id = fast_int(source_row[id_idx],raise_on_invalid=True)
+                except ValueError:
+                    LOG.error("Removing invalid row in index: %r", source_row)
+                    continue
+
+                while not no_more_to_add and new_info["id"] > src_id:
+                    new_info_writer.writerow(new_info)
+                    yield new_info
+
+                    try:
+                        new_info = next(info_gen)
+                    except StopIteration:
+                        no_more_to_add = True
+
+                src_row_writer.writerow(source_row)
+
+            if not no_more_to_add:
+                new_info_writer.writerow(new_info)
+                yield new_info
+
+            for remaining_info in info_gen:
+                new_info_writer.writerow(remaining_info)
+                yield remaining_info
+
+
+    def _index_del(self, *line_nums: int) -> None:
+        LOG.info("Deleting from index %d post dirs...", len(line_nums))
+
+        with open      (self.index, "r", newline="") as in_file, \
+             AtomicFile(self.index, "w")             as out_file:
+
+            for i, line in enumerate(in_file, 1):
+                if i not in line_nums:
+                    out_file.write(line)
 
 
     def _index_iter(self, post_dirnames: List[str]
                    ) -> Generator[IndexedInfo, None, None]:
 
-        sort_func = lambda dirname: fast_int(dirname.split("-")[-1], -1)
-
         if not self.index.exists():
-            post_dirnames.sort(key=sort_func, reverse = True)
             yield from self._index_add(post_dirnames)
             return
 
@@ -184,14 +231,16 @@ class Local(base.Client):
         unfound_dirnames.discard(self.index.name)
         del post_dirnames
 
-        with open(self.index, "rt", newline="") as file:
+        with open(self.index, "r", newline="") as file:
             reader = csv.reader(file, delimiter="\t")
 
             for i, row in enumerate(reader, 1):
                 try:
                     info = IndexedInfo.from_csv(row)
                 except TypeError:
-                    LOG.error("Corrupted post in index on line %d", i)
+                    LOG.error("Corrupted post in index on line %d, "
+                              "will try to repair: %r", i, row)
+                    lines_to_del.append(i)
                     continue
 
                 key  = f"{info.fetched_from}-{info.id}"
@@ -207,24 +256,7 @@ class Local(base.Client):
             self._index_del(*lines_to_del)
 
         if unfound_dirnames:
-            yield from self._index_add(
-                sorted(unfound_dirnames, key=sort_func, reverse=True)
-            )
-
-
-    def _index_del(self, *line_nums: int) -> None:
-        LOG.info("%d post dirs gone, deleting from index...", len(line_nums))
-
-        tmp_file = self.index.parent / f".{self.index.name}"
-
-        with open(self.index, "rt", newline="") as in_file, \
-             open(tmp_file,   "wt", newline="") as out_file:
-
-            for i, line in enumerate(in_file, 1):
-                if i not in line_nums:
-                    out_file.write(line)
-
-        tmp_file.rename(self.index)
+            yield from self._index_add(list(unfound_dirnames))
 
 
     def _get_post_path(self, info: InfoType) -> Path:
