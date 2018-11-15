@@ -23,7 +23,8 @@ class Danbooru(net.NetClient):
     username:  str = ""
     api_key:   str = ""
 
-    default_limit: int = field(default=20, repr=False)
+    default_limit: int = field(default=20,  repr=False)
+    max_limit:     int = field(default=200, repr=False)
 
     url_templates: Dict[str, str] = field(default_factory=dict, repr=False)
 
@@ -41,7 +42,8 @@ class Danbooru(net.NetClient):
         net.ALIVE[self.name] = self
 
 
-    def _api(self, endpoint_url: str, **params) -> Union[None, Any]:
+    def _api(self, endpoint_url: str, _catch_errs: bool = True, **params
+            ) -> Union[None, Any]:
         response = self.http(
             "get",
             f"{self.site_url}/{endpoint_url}",
@@ -49,6 +51,10 @@ class Danbooru(net.NetClient):
             auth   = ((self.username, self.api_key)
                       if self.username and self.api_key else None)
         )
+
+        if not _catch_errs:
+            return response.json()
+
         try:
             return response.json()
         except AttributeError:
@@ -92,6 +98,9 @@ class Danbooru(net.NetClient):
 
         if limit:
             params["limit"] = limit
+            if limit > self.max_limit:
+                LOG.warning("Max limit for %s is %d, got %d.",
+                            self.name, self.max_limit, limit)
 
         # Do not pass "random=false", Danbooru sees it as true.
         if random is True:
@@ -107,6 +116,7 @@ class Danbooru(net.NetClient):
             LOG.warning("No posts for search %r.", tags)
             return
 
+        fails = 0
         for page in self._parse_pages(pages, last_page):
             if page < 1:
                 continue
@@ -122,7 +132,20 @@ class Danbooru(net.NetClient):
                 " [raw]"    if "raw"    in params else ""
             )
 
-            yield from self._api("posts.json", **params)
+            try:
+                yield from self._api("posts.json", **params, _catch_errs=False)
+            except AttributeError:
+                fails += 1
+            except ValueError as err:
+                LOG.error(str(err))
+                fails += 1
+            else:
+                fails = 0
+
+            if fails >= 5:
+                LOG.error("Giving up after 5 consecutive page fetch fails, "
+                          "pagination limit probably reached.")
+                return
 
 
     def info_url(self, url: str) -> base.InfoGenType:

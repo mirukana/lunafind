@@ -2,11 +2,7 @@
 
 ## Minor
 
-- Stop upon reaching pagination limit or too many timeouts
-
 - Some way to view auto-filtered posts
-
-- Implement all set operators for Album
 - Order: artcomm and custom
 
 ## Major

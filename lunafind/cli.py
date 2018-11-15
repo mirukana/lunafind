@@ -38,6 +38,8 @@ Options:
 
     Using `--limit 200` allows more total posts to be fetched,
     20K vs 80K with some big tags. Timeouts start to appear near pages 400-500.
+    After 5 fatal timeouts (which are each retried a few times), the search
+    will give up and return what was found until then.
 
     The default for local directories is infinite (`-1`), so the `--pages`
     option will have no special effect unless a limit is set.
