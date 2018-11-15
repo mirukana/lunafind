@@ -84,10 +84,12 @@ class Stream(collections.Iterator):
         if self._logged_iter_done:
             return
 
-        LOG.info("Found %d posts%s%s.",
-                 self.posts_seen,
-                 f", {discarded} filtered" if discarded else "",
-                 f" for {self.query!r}"    if self.query    else "")
+        log = LOG.info if self.posts_seen else LOG.warning
+
+        log("Found %d posts%s%s.",
+            self.posts_seen,
+            f", {discarded} filtered" if discarded else "",
+            f" for {self.query!r}"    if self.query    else "")
 
         self._logged_iter_done = True
 

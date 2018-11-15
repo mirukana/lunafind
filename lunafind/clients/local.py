@@ -288,6 +288,10 @@ class Local(base.Client):
         return self._read_json(fake_info, "info.json")
 
 
+    def info_md5(self, md5: str) -> base.InfoGenType:
+        yield from self.info_search(f"md5:{md5}")
+
+
     # pylint: disable=arguments-differ
     def info_search(self,
                     tags:         str           = "",

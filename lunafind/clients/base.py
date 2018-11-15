@@ -30,6 +30,11 @@ class Client(abc.ABC):
 
 
     @abc.abstractmethod
+    def info_md5(self, md5: str) -> InfoGenType:
+        yield {}
+
+
+    @abc.abstractmethod
     def info_search(self,
                     tags:   str           = "",
                     pages:  PageType      = 1,

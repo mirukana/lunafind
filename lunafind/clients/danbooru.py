@@ -3,17 +3,11 @@
 
 import math
 import re
-from typing import Dict, Optional
+from typing import Any, Dict, Optional, Union
 from urllib.parse import parse_qs, urlparse
 
 import pendulum as pend
-import pybooru
 from dataclasses import dataclass, field
-from pybooru.exceptions import PybooruError, PybooruHTTPError
-from pybooru.resources import HTTP_STATUS_CODE as BOORU_CODES
-
-from requests.adapters import HTTPAdapter
-from requests.exceptions import RequestException
 
 # pylint: disable=no-name-in-module
 from fastnumbers import fast_int
@@ -33,59 +27,43 @@ class Danbooru(net.NetClient):
 
     url_templates: Dict[str, str] = field(default_factory=dict, repr=False)
 
-    _pybooru: pybooru.Danbooru = field(init=False, default=None, repr=False)
-
 
     def __post_init__(self) -> None:
         super().__post_init__()
 
         self.url_templates = {
-            "post":         "/posts/{id}",
-            "artcom":       "/artist_commentaries.json?search[post_id]={id}",
-            "info":         "/posts/{id}.json",
-            "notes":        "/notes.json?search[post_id]={id}",
+            "post":   "/posts/{id}",
+            "artcom": "/artist_commentaries.json?search[post_id]={id}",
+            "info":   "/posts/{id}.json",
+            "notes":  "/notes.json?search[post_id]={id}",
         }
-
-        self._pybooru = \
-            pybooru.Danbooru("", self.site_url, self.username, self.api_key)
-
-        for scheme in ("http://", "https://"):
-            # pybooru.client is a requests session
-            self._pybooru.client.mount(scheme,
-                                       HTTPAdapter(max_retries=net.RETRY))
 
         net.ALIVE[self.name] = self
 
 
-    def _api(self, pybooru_method: str, *args, catch_errs: bool = True,
-             **kwargs):
+    def _api(self, endpoint_url: str, **params) -> Union[None, Any]:
+        response = self.http(
+            "get",
+            f"{self.site_url}/{endpoint_url}",
+            params = params,
+            auth   = ((self.username, self.api_key)
+                      if self.username and self.api_key else None)
+        )
         try:
-            method = getattr(self._pybooru, pybooru_method)
-
-            with net.MAX_PARALLEL_REQUESTS_SEMAPHORE:
-                return method(*args, **kwargs)
-
-        except PybooruHTTPError as err:
-            if not catch_errs:
-                raise
-
-            code      = err.args[1]
-            long_desc = BOORU_CODES[code][1]
-
-            LOG.error("[%d] %s", code, long_desc)
-
-        except (PybooruError, RequestException) as err:
-            if not catch_errs:
-                raise
-
+            return response.json()
+        except AttributeError:
+            return []
+        except ValueError as err:
             LOG.error(str(err))
-
-        # Returning [] instead of None to not crash because of `yield from`s.
-        return []
+            return []
 
 
-    def info_id(self, post_id: int) -> base.InfoType:
-        return self._api("post_show", post_id=post_id, catch_errs=False)
+    def info_id(self, post_id: int) -> Optional[base.InfoType]:
+        return self._api(f"posts/{post_id}.json")
+
+
+    def info_md5(self, md5: str) -> base.InfoGenType:
+        yield from self._api(f"posts.json", md5=md5)
 
 
     def info_search(self,
@@ -96,17 +74,26 @@ class Danbooru(net.NetClient):
                     raw:    bool          = False,
                     **kwargs) -> base.InfoGenType:
 
-        params = {"tags": tags}
-
         # No need for other params if search is just an ID or MD5.
-        if re.match(r"^(id|md5):[a-fA-F\d]+$", tags):
-            LOG.info("Fetching post %s", tags.split(":")[1])
-            yield from self._api("post_list", **params)
+        if re.match(r"^id:\d+$", tags):
+            post_id = fast_int(tags.split(":")[1], raise_on_invalid=True)
+            LOG.info("Fetching post %d", post_id)
+            info = self.info_id(post_id)
+            if info:
+                yield info
             return
+
+        if re.match(r"^md5:[a-fA-F\d]+$", tags):
+            LOG.info("Fetching post with MD5 %r", tags.split(":")[1])
+            yield from self.info_md5(tags.split(":")[1])
+            return
+
+        params = {"tags": tags}
 
         if limit:
             params["limit"] = limit
 
+        # Do not pass "random=false", Danbooru sees it as true.
         if random is True:
             params["random"] = "true"
 
@@ -135,7 +122,7 @@ class Danbooru(net.NetClient):
                 " [raw]"    if "raw"    in params else ""
             )
 
-            yield from self._api("post_list", **params)
+            yield from self._api("posts.json", **params)
 
 
     def info_url(self, url: str) -> base.InfoGenType:
@@ -164,7 +151,8 @@ class Danbooru(net.NetClient):
             pend.parse(info["created_at"]) > pend.yesterday():
             return []
 
-        return self._api("artist_commentary_list", post_id=info["id"])
+        return self._api("artist_commentaries.json",
+                         **{"search[post_id]": info["id"]})
 
 
     def media(self, info: base.InfoType) -> base.MediaType:
@@ -185,12 +173,11 @@ class Danbooru(net.NetClient):
         if not bool(info["last_noted_at"]):
             return []
 
-        return self._api("note_list", post_id=info["id"])
+        return self._api("notes.json", **{"search[post_id]": info["id"]})
 
 
     def count_posts(self, tags: str = "") -> int:
-        response = self._api("count_posts", tags)
-        return response["counts"]["posts"]
+        return self._api("counts/posts.json", tags=tags)["counts"]["posts"]
 
 
     def get_url(self, info: base.InfoType, resource: str = "post", **kwargs

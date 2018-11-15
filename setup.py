@@ -36,7 +36,6 @@ setup(
         "fastnumbers",
         "logzero",
         "pendulum",
-        "pybooru",
         "requests",
         "setuptools",
         "simplejson",

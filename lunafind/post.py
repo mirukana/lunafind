@@ -16,6 +16,10 @@ from . import LOG, utils
 from .clients import auto_get, base, local, net
 
 
+class GotNoPostInfoError(Exception):
+    pass
+
+
 class Post:
     def __init__(self,
                  id_or_url: Union[None, int, str]   = None,
@@ -39,6 +43,9 @@ class Post:
 
         else:
             raise TypeError("id_or_url: must be int post ID or str URL.")
+
+        if not self.info:
+            raise GotNoPostInfoError(f"Got no info for post {id_or_url!r}.")
 
         if isinstance(info, local.IndexedInfo):
             return

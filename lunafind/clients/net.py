@@ -9,11 +9,9 @@ from typing import Dict, Optional
 
 import urllib3
 from dataclasses import dataclass, field
-from pybooru.resources import HTTP_STATUS_CODE as BOORU_CODES
 
 import requests
 from requests.adapters import HTTPAdapter
-from requests.exceptions import RequestException
 
 from . import NoClientFoundError, base
 from .. import LOG, config
@@ -25,21 +23,10 @@ MAX_PARALLEL_REQUESTS_SEMAPHORE = threading.BoundedSemaphore(
     int(config.CFG["GENERAL"]["parallel_requests"])
 )
 
-# Missing in Pybooru. Usually Cloudflare saying the target site is down.
-BOORU_CODES[502] = (
-    "Bad Gateway",
-    "Invalid response from the server to the gateway."
-)
-
-BOORU_CODE_GROUPS = {
-    "OK":    (200, 201, 202, 204),
-    "Retry": (420, 421, 429, 500, 502, 503),
-    "Fatal": (400, 401, 403, 404, 410, 422, 423, 424)
-}
-
 RETRY = urllib3.util.Retry(
     total                      = 4,
-    status_forcelist           = BOORU_CODE_GROUPS["Retry"],
+    redirect                   = 8,
+    status_forcelist           = [420, 421, 429, 500, 502, 503],
     backoff_factor             = 1.5,
     raise_on_redirect          = False,
     raise_on_status            = False,
@@ -67,29 +54,25 @@ class NetClient(base.Client, abc.ABC):
             self._session.mount(scheme, HTTPAdapter(max_retries=RETRY))
 
 
-    def http(self, http_method: str, url: str, **request_method_kwargs):
+    def http(self, http_method: str, url: str, **request_kwargs
+            ) -> Optional[requests.models.Response]:
         try:
             with MAX_PARALLEL_REQUESTS_SEMAPHORE:
-                result = self._session.request(
-                    http_method, url, timeout=6.5, **request_method_kwargs
+                response = self._session.request(
+                    http_method, url, timeout=6.5, **request_kwargs
                 )
-        except RequestException as err:
+                response.raise_for_status()
+
+        except requests.exceptions.RequestException as err:
             LOG.error(str(err))
+            return None
 
-        code      = result.status_code
-        long_desc = BOORU_CODES[code][1]
-
-        if code in BOORU_CODE_GROUPS["OK"]:
-            return result
-
-        LOG.error("[%d] %s", code, long_desc)
-
-        return None
+        return response
 
 
     @abc.abstractmethod
-    def info_id(self, post_id: int) -> base.InfoType:
-        return {}
+    def info_id(self, post_id: int) -> Optional[base.InfoType]:
+        return None
 
 
     @abc.abstractmethod
