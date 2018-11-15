@@ -9,6 +9,7 @@ from urllib.parse import parse_qs, urlparse
 import pendulum as pend
 from dataclasses import dataclass, field
 
+from pydecensooru import decensor, decensor_iter
 # pylint: disable=no-name-in-module
 from fastnumbers import fast_int
 
@@ -65,11 +66,12 @@ class Danbooru(net.NetClient):
 
 
     def info_id(self, post_id: int) -> Optional[base.InfoType]:
-        return self._api(f"posts/{post_id}.json")
+        return decensor(self._api(f"posts/{post_id}.json"), self.site_url)
 
 
     def info_md5(self, md5: str) -> base.InfoGenType:
-        yield from self._api(f"posts.json", md5=md5)
+        yield from decensor_iter(self._api(f"posts.json", md5=md5),
+                                 self.site_url)
 
 
     def info_search(self,
@@ -133,7 +135,10 @@ class Danbooru(net.NetClient):
             )
 
             try:
-                yield from self._api("posts.json", **params, _catch_errs=False)
+                yield from decensor_iter(
+                    self._api("posts.json", **params, _catch_errs=False),
+                    self.site_url
+                )
             except AttributeError:
                 fails += 1
             except ValueError as err:
@@ -204,14 +209,19 @@ class Danbooru(net.NetClient):
 
 
     def get_url(self, info: base.InfoType, resource: str = "post", **kwargs
-               ) -> str:
+               ) -> Optional[str]:
         assert resource in ("post", "artcom", "info", "media", "notes")
 
+        if resource == "media" and "file_ext" not in info:
+            LOG.warning("No decensor data found for post %d, "
+                        "can't report media URL.", info["id"])
+            return None
+
         if resource == "media" and info["file_ext"] == "zip":
-            return info.get("large_file_url")
+            return info["large_file_url"]
 
         if resource == "media":
-            return info.get("file_url")
+            return info["file_url"]
 
         return "%s%s" % (self.site_url,
                          self.url_templates[resource].format(**info))

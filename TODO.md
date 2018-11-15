@@ -9,7 +9,6 @@
 
 - Support multi-booru + local mixed searches
 - Clean up the filtering.py code
-- Integrate Decensooru?
 
 ### Post editing
 

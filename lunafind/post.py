@@ -108,7 +108,8 @@ class Post:
 
         for res in ("info", "artcom", "notes", "media"):
             if res == "media" and "file_ext" not in self.info:
-                LOG.warning("No media available for post %d.", self.info["id"])
+                LOG.warning("No decensor data found for post %d, "
+                            "can't download media.", self.info["id"])
                 continue
 
             ext = "json" if res != "media" else self.info["file_ext"]
