@@ -7,6 +7,10 @@ from typing import Generator, Iterable, Optional, Set, Union
 
 import pendulum as pend
 
+import whratio
+# pylint: disable=no-name-in-module
+from fastnumbers import fast_float, fast_int
+
 from . import LOG, utils
 from .clients.base import InfoType
 from .post import Post
@@ -17,34 +21,43 @@ def parse_date(value) -> pend.DateTime:
     return pend.parse(value, tz="local")
 
 
+def safe_int(value) -> int:
+    return fast_int(value, 0)
+
+
 META_NUM_TAGS = {
-    "width":    ["image_width",         int],
-    "height":   ["image_height",        int],
-    "mpixels":  ["mpixels",             float],  # millions of pixels
-    "score":    ["score",               int],
-    "favcount": ["fav_count",           int],
-    "id":       ["id",                  int],
-    "pixiv":    ["pixiv_id",            int],
-    "tagcount": ["tag_count",           int],
-    "gentags":  ["tag_count_general",   int],
-    "arttags":  ["tag_count_artist",    int],
-    "chartags": ["tag_count_character", int],
-    "copytags": ["tag_count_copyright", int],
-    "metatags": ["tag_count_meta",      int],
+    "width":    ["image_width",         safe_int],
+    "height":   ["image_height",        safe_int],
+    "score":    ["score",               safe_int],
+    "favcount": ["fav_count",           safe_int],
+    "id":       ["id",                  safe_int],
+    "pixiv":    ["pixiv_id",            safe_int],
+    "tagcount": ["tag_count",           safe_int],
+    "gentags":  ["tag_count_general",   safe_int],
+    "arttags":  ["tag_count_artist",    safe_int],
+    "chartags": ["tag_count_character", safe_int],
+    "copytags": ["tag_count_copyright", safe_int],
+    "metatags": ["tag_count_meta",      safe_int],
     "date":     ["created_at",          parse_date],
-    # Non-standard addition: supports int:int *and* float ratio.
-    "ratio":    ["ratio_float", utils.ratio2float],
+
+    "mpixels": [lambda i: (safe_int(i["image_width"]) *
+                           safe_int(i["image_height"])) / 1_000_000,
+                fast_float],
+
+    # Non-standard addition: support both float and int:int user ratios.
+    "ratio":    [lambda i: whratio.as_float(fast_int(i["image_width"],  1),
+                                            fast_int(i["image_height"], 1)),
+                 utils.ratio2float],
+
     # Non-standard addition: supports microseconds and more units aliases.
     "age": ["created_at",  utils.age2date, "reverse_cmp"],
     # none, any, or the post number the post should be a child of.
-    "parent": ["parent_id", int],
+    "parent": ["parent_id", fast_int],
     # none, any, or (non-standard) a number of possessed children.
-    "child": ["children_num", int],
+    "child": [lambda i: len((i["children_ids"] or "").split()), safe_int],
     # Non-standard addition: supports units other than b/KB/MB
     "filesize": ["file_size", utils.human2bytes, "eq_fuzzy_20"],
 
-    # Non-standard tags:
-    "dlsize":   ["dl_size",    utils.human2bytes],
     "fetch":    ["fetched_at", parse_date],
     "fetchage": ["fetched_at", utils.age2date, "reverse_cmp"],
 }
@@ -65,24 +78,16 @@ def _source_match(info: InfoType, value: str, key: str = "source") -> bool:
                     info[key], re.IGNORECASE)
 
 
-def _broken_match(info: InfoType, value: str) -> bool:
-    assert value in ("any", "none")
-    return info["is_broken"] if value == "any" else not info["is_broken"]
-
-
 META_STR_TAGS_FUNCS = {
     "md5":      lambda info, v: info["md5"]          == v,
     "filetype": lambda info, v: info.get("file_ext") == v,
-    "dltype":   lambda info, v: info.get("dl_ext")   == v,  # non-standard
     "rating":   lambda info, v: info["rating"][0]    == v[0],
     "locked":   lambda info, v: info[f"is_{v}_locked"],
     "status":   lambda info, v: v in ("any", "all") or info[f"is_{v}"],
     "source":   _source_match,
 
     # Non-standard tags:
-    "broken":  _broken_match,
-    "booru":   lambda info, v: _source_match(info, v, key="booru"),
-    "boorurl": lambda info, v: _source_match(info, v, key="booru_url"),
+    "from": lambda info, v: info["fetched_from"] == v,
 }
 
 
@@ -108,8 +113,13 @@ def _tag_present(info: InfoType, tag: str) -> bool:
 
 
 def _meta_num_match(info: InfoType, tag: str, value: str) -> bool:
-    convert     = META_NUM_TAGS[tag][1]
-    info_v      = convert(info[META_NUM_TAGS[tag][0]])
+    convert = META_NUM_TAGS[tag][1]
+
+    info_v = META_NUM_TAGS[tag][0]
+    info_v = convert(
+        info_v(info) if callable(META_NUM_TAGS[tag][0]) else info[info_v]
+    )
+
     eq_fuzzy_20 = "eq_fuzzy_20" in META_NUM_TAGS[tag]
     reverse_cmp = "reverse_cmp" in META_NUM_TAGS[tag]
 

@@ -2,14 +2,6 @@
 
 ## Minor
 
-- Fix filter, deleted keys:
-      "title", "booru", "booru_url", "post_url", "children_num", "mpixels",
-      "ratio_int", "ratio_float", "is_broken", "is_ugoira"
-      "dl_url", "dl_ext", "dl_size"
-
-- Fix index corruption
-- Fix limit 1 reporting two posts
-
 - Flag file or dir name modification to prevent
   updates/remember deleted posts and not refetch them/force recaching/etc
 
