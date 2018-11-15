@@ -38,6 +38,7 @@ class Stream(collections.Iterator):
         field(init=False, default=None, repr=False)
 
     _logged_iter_done: bool = field(init=False, default=False, repr=False)
+    _applied_filters:  bool = field(init=False, default=False, repr=False)
 
 
     def __post_init__(self) -> None:
@@ -57,8 +58,6 @@ class Stream(collections.Iterator):
         auto = config.CFG["GENERAL"]["auto_filter"]
         if not self.filter_str.startswith(auto):
             self.filter_str = " ".join((self.filter_str, auto)).strip()
-
-        self._apply_filters()
 
 
     def _apply_filters(self) -> None:
@@ -88,18 +87,23 @@ class Stream(collections.Iterator):
 
         log("Found %d posts%s%s.",
             self.posts_seen,
-            f", {discarded} filtered" if discarded else "",
-            f" for {self.query!r}"    if self.query    else "")
+            f", {discarded} filtered" if discarded  else "",
+            f" for {self.query!r}"    if self.query else "")
 
         self._logged_iter_done = True
 
 
     def __next__(self) -> Post:
+        # Don't do this at .__post_init__ to let .filter setup stuff before
+        if not self._applied_filters:
+            self._apply_filters()
+            self._applied_filters = True
+
         while True:
             try:
                 info = next(self._info_gen)
             except StopIteration as stop:
-                self._on_iter_done(discarded = stop.value if stop.value else 0)
+                self._on_iter_done(discarded=stop.value or 0)
                 raise
 
             post = Post(info=info, client=self.client)
@@ -117,14 +121,12 @@ class Stream(collections.Iterator):
         new              = copy(self)
         new.filter_str   = " ".join((search, new.filter_str)).strip()
         new.partial_tags = partial_tags
-        new._apply_filters()
         return new
 
     def stop_if(self, search: str, partial_tags: bool = False) -> "Stream":
         new                = copy(self)
         new.stop_if_filter = " ".join((search, new.stop_if_filter)).strip()
         new.partial_tags   = partial_tags
-        new._apply_filters()
         return new
 
     def order(self, by: str) -> "Album":

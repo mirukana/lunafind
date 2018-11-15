@@ -5,7 +5,7 @@
 
 __project_name__ = "lunakit"
 __pkg_name__     = "lunafind"
-__version__      = "0.5.1"
+__version__      = "0.5.2"
 __status__       = "Development"
 # __status__     = "Production"
 
