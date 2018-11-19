@@ -2,7 +2,6 @@
 
 ## Minor
 
-- Fix order.py keys
 - Some way to view auto-filtered posts
 - Order: artcomm and custom
 
@@ -11,7 +10,7 @@
 - Support multi-booru + local mixed searches
 - Clean up the filtering.py code
 
-### Post editing
+## Post editing
 
 - Program to edit tags and other infos
 - Intelligent post update based on `updated_at` and `fetched_at` keys,
