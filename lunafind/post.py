@@ -13,7 +13,7 @@ from cached_property import cached_property
 from fastnumbers import fast_int
 
 from . import LOG, utils
-from .clients import auto_get, base, local, net
+from .clients import auto, base, local
 
 
 class GotNoPostInfoError(Exception):
@@ -28,7 +28,7 @@ class Post:
                 ) -> None:
         assert id_or_url or info
 
-        self.client = auto_get(client)
+        self.client = auto.get(client)
 
         if info:
             self.info = info
@@ -36,10 +36,10 @@ class Post:
         elif isinstance(id_or_url, int):
             self.info = self.client.info_id(id_or_url)
 
-        elif isinstance(id_or_url, str):
+        elif isinstance(id_or_url, (str, Path)):
             id_or_url   = id_or_url.strip()
-            self.client = net.client_from_url(id_or_url)
-            self.info   = next(self.client.info_url(id_or_url))
+            self.client = auto.get(id_or_url)
+            self.info   = next(self.client.info_location(id_or_url))
 
         else:
             raise TypeError("id_or_url: must be int post ID or str URL.")
@@ -62,8 +62,9 @@ class Post:
         return f"{type(self).__name__}(id={self.id}, title='{self.title}')"
 
 
-    def get_url(self, resource: str = "post", absolute: bool = False) -> str:
-        return self.client.get_url(self.info, resource, absolute=absolute)
+    def get_location(self, resource: str = "post", absolute: bool = False
+                    ) -> str:
+        return self.client.get_location(self.info, resource, absolute=absolute)
 
 
     @cached_property

@@ -118,6 +118,10 @@ class IndexedInfo(_INDEXED_INFO_NT):
         return tuple(self)[key]
 
 
+    def __contains__(self, key: str):
+        return hasattr(self, key)
+
+
 @dataclass
 class Local(base.Client):
     name: str              = "local"
@@ -283,9 +287,20 @@ class Local(base.Client):
         return simplejson.loads(res)
 
 
-    def info_booru_id(self, booru: str, post_id: int) -> InfoType:
-        fake_info = {"fetched_from": booru, "id": post_id}
-        return self._read_json(fake_info, "info.json")
+    def info_id(self, post_id: str) -> Optional[base.InfoType]:
+        try:
+            _, _ = post_id.split("-")
+            fast_int(post_id, raise_on_invalid=True)
+        except (AttributeError, ValueError):
+            raise ValueError("post_id for local clients must be in the form "
+                             "'<booru>-<id>', e.g. 'danbooru-1'.")
+
+
+        path = self.path / post_id / "info.json"
+        try:
+            return simplejson.loads(path.read_text())
+        except FileNotFoundError:
+            return None
 
 
     def info_md5(self, md5: str) -> base.InfoGenType:
@@ -316,7 +331,6 @@ class Local(base.Client):
                            terms=tags, raw=raw, partial_tags=partial_tags)
 
         if random:
-            LOG.warning("Requested random results, this can take some time...")
             posts = iter(order.sort(list(posts), by="random"))
 
         for i, post in enumerate(posts):
@@ -327,6 +341,34 @@ class Local(base.Client):
                 continue
 
             yield post
+
+
+    def info_location(self, location: Union[str, Path]) -> base.InfoGenType:
+        path = Path(location).expanduser()
+        read = lambda info_path: simplejson.loads(info_path.read_text())
+
+        if path.name == "info.json":
+            yield read(path)
+            return
+
+        if path.name in ("artcom.json", "notes.json") or path.stem == "media":
+            yield read(path.parent / "info.json")
+            return
+
+        try:
+            yield read(path / "info.json")
+            return
+        except FileNotFoundError:
+            pass
+
+        if path.resolve() == self.path.resolve():
+            yield from self.info_search()
+            return
+
+        raise ValueError(
+            f"'{path!s}': location (path) must be a post dir, "
+            f"file inside a post dir or the dir containing all the posts."
+        )
 
 
     def artcom(self, info: InfoType) -> base.ArtcomType:
@@ -349,10 +391,10 @@ class Local(base.Client):
         return len(list(self.info_search(tags)))
 
 
-    def get_url(self,
-                info: base.InfoType,
-                resource: str  = "post",
-                absolute: bool = False) -> Optional[str]:
+    def get_location(self,
+                     info:     base.InfoType,
+                     resource: str  = "post",
+                     absolute: bool = False) -> Optional[str]:
 
         def verify(path: Path) -> Optional[str]:
             if path.exists():

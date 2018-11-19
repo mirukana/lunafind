@@ -66,7 +66,8 @@ class Danbooru(net.NetClient):
 
 
     def info_id(self, post_id: int) -> Optional[base.InfoType]:
-        return decensor(self._api(f"posts/{post_id}.json"), self.site_url)
+        info = self._api(f"posts/{post_id}.json")
+        return decensor(info, self.site_url) if info else None
 
 
     def info_md5(self, md5: str) -> base.InfoGenType:
@@ -153,16 +154,16 @@ class Danbooru(net.NetClient):
                 return
 
 
-    def info_url(self, url: str) -> base.InfoGenType:
+    def info_location(self, location: str) -> base.InfoGenType:
         try:
-            post_id = re.search(r"/posts/(\d+)\??.*$", url).group(1)
+            post_id = re.search(r"/posts/(\d+)\??.*$", location).group(1)
         except AttributeError:  # Not a direct post URL
             pass
         else:
             yield self.info_id(post_id)
             return
 
-        parsed = parse_qs(urlparse(url).query)
+        parsed = parse_qs(urlparse(location).query)
 
         yield from self.info_search(
             tags   = parsed.get("tags",      [""]   )[-1],
@@ -208,8 +209,8 @@ class Danbooru(net.NetClient):
         return self._api("counts/posts.json", tags=tags)["counts"]["posts"]
 
 
-    def get_url(self, info: base.InfoType, resource: str = "post", **kwargs
-               ) -> Optional[str]:
+    def get_location(self, info: base.InfoType, resource: str = "post", **_
+                    ) -> Optional[str]:
         assert resource in ("post", "artcom", "info", "media", "notes")
 
         if resource == "media" and "file_ext" not in info:

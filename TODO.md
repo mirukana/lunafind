@@ -2,6 +2,7 @@
 
 ## Minor
 
+- Fix order.py keys
 - Some way to view auto-filtered posts
 - Order: artcomm and custom
 

@@ -2,7 +2,6 @@
 # This file is part of lunafind, licensed under LGPLv3.
 
 import collections
-import re
 import time
 from copy import copy
 from pathlib import Path
@@ -12,19 +11,20 @@ from typing import List, Optional, Union
 from dataclasses import dataclass, field
 
 from . import LOG, config, order
-from .clients import auto_get, base, net
+from .clients import auto, base
 from .filtering import filter_all
 from .post import Post
 
 
 @dataclass
 class Stream(collections.Iterator):
-    query:  str           = ""
-    pages:  base.PageType = 1
-    limit:  Optional[int] = None
-    random: bool          = False
-    raw:    bool          = False
-    client: base.Client   = None
+    query:    Union[str, Path] = ""
+    pages:    base.PageType    = 1
+    limit:    Optional[int]    = None
+    random:   bool             = False
+    raw:      bool             = False
+    client:   base.Client      = None
+    location: bool             = False
 
     partial_tags:   bool = False
     filter_str:     str  = ""
@@ -42,22 +42,20 @@ class Stream(collections.Iterator):
 
 
     def __post_init__(self) -> None:
-        self.client     = auto_get(self.client)
+        self.client     = auto.get(self.client)
         self.unfinished = []
 
-        if re.match(r"^\s*https?://.+", str(self.query)):
-            query          = str(self.query).strip()
-            client         = net.client_from_url(query)
-            self._info_gen = client.info_url(query)
+        if self.location or isinstance(self.query, Path):
+            self._info_gen = self.client.info_location(self.query)
         else:
             self._info_gen = self.client.info_search(
                 self.query, self.pages, self.limit, self.random, self.raw,
                 partial_tags = True if self.partial_tags else False
             )
 
-        auto = config.CFG["GENERAL"]["auto_filter"]
-        if not self.filter_str.startswith(auto):
-            self.filter_str = " ".join((self.filter_str, auto)).strip()
+        auto_filter = config.CFG["GENERAL"]["auto_filter"]
+        if not self.filter_str.startswith(auto_filter):
+            self.filter_str = " ".join((self.filter_str, auto_filter)).strip()
 
 
     def _apply_filters(self) -> None:

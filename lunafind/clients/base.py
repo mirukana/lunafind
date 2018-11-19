@@ -3,6 +3,7 @@
 
 import abc
 import math
+from pathlib import Path
 from typing import Any, Dict, Generator, Iterable, List, Optional, Tuple, Union
 
 import pendulum as pend
@@ -46,6 +47,11 @@ class Client(abc.ABC):
 
 
     @abc.abstractmethod
+    def info_location(self, location: Union[str, Path]) -> InfoGenType:
+        yield {}
+
+
+    @abc.abstractmethod
     def artcom(self, info: InfoType) -> ArtcomType:
         return []
 
@@ -66,7 +72,7 @@ class Client(abc.ABC):
 
 
     @abc.abstractmethod
-    def get_url(self, info: InfoType, resource: str, **kwargs) -> str:
+    def get_location(self, info: InfoType, resource: str, **kwargs) -> str:
         return ""
 
 
