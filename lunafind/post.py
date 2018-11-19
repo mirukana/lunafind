@@ -96,10 +96,10 @@ class Post:
         return self.client.notes(self.info)
 
 
-    def write(self,
-              base_dir:  Union[str, Path] = Path("."),
-              overwrite: bool             = False,
-              warn:      bool             = True) -> None:
+    def download(self,
+                 base_dir:  Union[str, Path] = Path("."),
+                 overwrite: bool             = False,
+                 warn:      bool             = True) -> None:
 
         if isinstance(self.client, local.Local):
             return

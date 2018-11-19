@@ -136,10 +136,10 @@ class Stream(collections.Iterator):
     __mod__      = lambda self, by:     self.order(by)             # %
 
 
-    def write(self,
-              base_dir:  Union[str, Path] = Path("."),
-              overwrite: bool             = False,
-              warn:      bool             = True) -> "Stream":
+    def download(self,
+                 base_dir:  Union[str, Path] = Path("."),
+                 overwrite: bool             = False,
+                 warn:      bool             = True) -> "Stream":
 
         post        = None
         running     = {}
@@ -148,7 +148,7 @@ class Stream(collections.Iterator):
         lock        = Lock()
 
         def work(post: Post, thread_id: int) -> None:
-            post.write(base_dir=base_dir, overwrite=overwrite, warn=warn)
+            post.download(base_dir=base_dir, overwrite=overwrite, warn=warn)
             with lock:
                 self.downloaded += 1
             del running[thread_id]

@@ -315,9 +315,9 @@ def main(argv: Optional[List[str]] = None) -> None:
         posts = obj.list if isinstance(obj, Album) else obj
 
         if args["--download"]:
-            posts.write(base_dir  = args["--download"],
-                        overwrite = args["--overwrite"],
-                        warn      = not args["--quiet-skip"])
+            posts.download(base_dir  = args["--download"],
+                           overwrite = args["--overwrite"],
+                           warn      = not args["--quiet-skip"])
             continue
 
         try:
