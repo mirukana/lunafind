@@ -9,11 +9,10 @@ from typing import Union
 
 import pendulum as pend
 import simplejson
+from colorama import Fore, Back, Style
 
 # pylint: disable=no-name-in-module
 from fastnumbers import fast_float, fast_int
-
-from . import TERM
 
 SIZE_UNITS = "BKMGTPEZY"
 
@@ -109,29 +108,37 @@ def print_colored_help(doc: str, exit_code: int = 0) -> None:
     doc = doc.replace("⋅", " ").splitlines()
 
     # Usage:
-    doc[0] = re.sub(r"(Usage: +)",
-                    f"%s{TERM.blue}" % TERM.magenta_bold(r"\1"), doc[0])
+    doc[0] = re.sub(
+        rf"(Usage: +)",
+        rf"{Fore.MAGENTA}{Style.BRIGHT}\1{Style.RESET_ALL}{Fore.BLUE}",
+        doc[0]
+    )
     # [things]
-    doc[0] = re.sub(r"\[(\S+)\]",
-                    f"[%s{TERM.blue}]" % TERM.bold(rf"\1"), doc[0])
+    doc[0] = re.sub(rf"\[(\S+)\]",
+                    rf"[{Style.BRIGHT}\1{Style.RESET_ALL}{Fore.BLUE}]",
+                    doc[0])
 
-    doc[0] = f"{doc[0]}{TERM.normal}"
+    doc[0] = f"{doc[0]}{Fore.RESET}"
     doc    = "\n".join(doc)
 
     styles = {
-        r"`(.+?)`":      "green",         # `things`
-        r"^(\S.+:)$":    "magenta_bold",  #  Sections:
-        r"^(  [A-Z]+)$": "blue_bold",     #  ARGUMENT
-        r"^(  \S.+)$":   "blue",          #  Two-space indented lines
-        r"^( {5,}-.+)$": "blue",          #  Examples short-options hints
-        r"^(\s*-)":      "magenta",       #  - Dash lists
+        r"`(.+?)`":      ("GREEN",   "", ""),        # `things`
+        r"^(\S.+:)$":    ("MAGENTA", "", "BRIGHT"),  #  Sections:
+        r"^(  [A-Z]+)$": ("BLUE",    "", "BRIGHT"),  #  ARGUMENT
+        r"^(  \S.+)$":   ("BLUE",    "", ""),        #  Two-space indented line
+        r"^( {5,}-.+)$": ("BLUE",    "", ""),        #  Examples short-options
+        r"^(\s*-)":      ("MAGENTA", "", ""),        #  - Dash lists
     }
 
-    for reg, style in styles.items():
-        doc = re.sub(reg, getattr(TERM, style)(r"\1"), doc, flags=re.MULTILINE)
+    for regex, (fg, bg, style) in styles.items():
+        fg    = getattr(Fore,  fg, "")
+        bg    = getattr(Back,  bg, "")
+        style = getattr(Style, style, "")
+        doc   = re.sub(regex, rf"{fg}{bg}{style}\1{Style.RESET_ALL}", doc,
+                       flags = re.MULTILINE)
 
     doc = re.sub(r"(-{1,2}[a-zA-Z\d]+ +)([A-Z]+)",
-                 r"\1%s%s%s" % (TERM.blue_bold(r"\2"), TERM.normal, TERM.blue),
+                 rf"\1{Fore.BLUE}{Style.BRIGHT}\2{Style.RESET_ALL}{Fore.BLUE}",
                  doc)
 
     print(doc)

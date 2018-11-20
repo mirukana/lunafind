@@ -2,17 +2,18 @@
 # This file is part of lunafind, licensed under LGPLv3.
 
 import logzero
-import blessed
+import colorama
 
-TERM = blessed.Terminal()
+colorama.init()
 
 LOG = logzero.setup_logger(
     formatter = logzero.LogFormatter(
         datefmt = "%H:%M:%S",
         fmt     = ("%(color)s%(levelname)1.1s %(asctime)s | "
                    "%(message)s%(end_color)s"),
-        colors  = {10: TERM.cyan, 20: TERM.green, 30: TERM.yellow,
-                   40: TERM.red, 50: TERM.magenta}
+        colors  = {10: colorama.Fore.CYAN,   20: colorama.Fore.GREEN,
+                   30: colorama.Fore.YELLOW, 40: colorama.Fore.RED,
+                   50: colorama.Fore.MAGENTA}
     )
 )
 

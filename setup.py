@@ -29,8 +29,8 @@ setup(
     install_requires = [
         "appdirs",
         "atomicfile",
-        "blessed",
         "cached_property",
+        "colorama",
         "dataclasses;python_version<'3.7'",
         "docopt",
         "fastnumbers",
@@ -39,6 +39,7 @@ setup(
         "pydecensooru",
         "requests",
         "setuptools",
+        # Needed because simplejson converts namedtuples to dicts unlike json
         "simplejson",
         "urllib3",
         "whratio",

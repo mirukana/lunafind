@@ -223,8 +223,9 @@ from types import GeneratorType
 from typing import List, Optional
 
 import docopt
+from colorama import Fore
 
-from . import LOG, TERM, Album, Stream, __about__, config, order, utils
+from . import LOG, Album, Stream, __about__, config, order, utils
 
 OPTIONS = [string for match in re.findall(r"(-.)(?:\s|,)|(--.+?)\s", __doc__)
            for string in match if string]
@@ -235,10 +236,11 @@ def print_order_values() -> None:
     by_maxlen = len(max(dicts.keys(), key=len))
 
     for di in (order.ORDER_NUM, order.ORDER_DATE):
-        print(f"{'Value':{by_maxlen}}   Default sort")
+        print(f"{Fore.MAGENTA}{'Value':{by_maxlen}}  Default sort{Fore.RESET}")
 
         for by, (asc_or_desc, _) in di.items():
-            print(f"{by:{by_maxlen}}  {asc_or_desc}ending")
+            print(f"{Fore.BLUE}{by:{by_maxlen}}{Fore.RESET}  "
+                  f"{asc_or_desc}ending")
 
         print()
 
@@ -246,7 +248,7 @@ def print_order_values() -> None:
           "prefixing the value with 'asc_' or 'desc_', e.g. 'asc_score'.\n")
 
     for by in order.ORDER_FUNCS:
-        print(by)
+        print(f"{Fore.BLUE}{by}{Fore.RESET}")
 
     sys.exit(0)
 
@@ -259,10 +261,8 @@ def main(argv: Optional[List[str]] = None) -> None:
             __doc__, help=False, argv=argv, version=__about__.__version__
         )
     except docopt.DocoptExit:
-        if len(sys.argv) > 1:
-            print(TERM.red("Invalid command syntax, check help:\n"))
-
-        utils.print_colored_help(__doc__, exit_code=10)
+        LOG.error(f"Invalid command syntax or bad option, check --help.")
+        sys.exit(10)
 
     if args["--config"]:
         config.FILE = args["--config"]
