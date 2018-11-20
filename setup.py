@@ -3,9 +3,7 @@
 
 "lunafind setuptools file"
 
-import os
-
-from setuptools import find_packages, setup
+from setuptools import setup, find_packages
 
 from lunafind import __about__
 
@@ -48,7 +46,7 @@ setup(
     ],
 
     include_package_data = True,
-    package_data         = {__about__.__pkg_name__: [f"data{os.sep}*"]},
+    package_data         = {__about__.__pkg_name__: ["data/*"]},
     packages             = find_packages(),
     entry_points    = {
         "console_scripts": [
