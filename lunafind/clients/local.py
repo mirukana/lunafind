@@ -108,8 +108,7 @@ class IndexedInfo(_INDEXED_INFO_NT):
 
     @classmethod
     def from_csv(cls, row: Sequence[str]) -> "IndexedInfo":
-        return cls(*(v if isinstance(v, str) else c(v)
-                     for c, v in zip(cls._row_converts, row)))
+        return cls(*(c(v) for c, v in zip(cls._row_converts, row)))
 
 
     def __getitem__(self, key):
