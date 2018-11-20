@@ -36,13 +36,13 @@ setup(
         "fastnumbers",
         "logzero",
         "pendulum",
-        "pydecensooru",
+        "pydecensooru>=0.1.0",
         "requests",
         "setuptools",
         # Needed because simplejson converts namedtuples to dicts unlike json
         "simplejson",
         "urllib3",
-        "whratio",
+        "whratio>=3.1.1",
     ],
 
     include_package_data = True,
