@@ -13,7 +13,7 @@ back from the command line without setting up any service or database.
 Suitable for daily terminal usage, usable for scripts and as a library
 for Python 3.6+.
 
-See also [lunasync](https://github.com/mirukan/lunasyc) to automatically
+See also [lunasync](https://github.com/mirukan/lunasync) to automatically
 download and keep in sync particular tags using **lunafind**,
 similar to Danbooru tag subscriptions or saved searches.
 
@@ -29,7 +29,7 @@ similar to Danbooru tag subscriptions or saved searches.
 - Search downloaded posts by tags as if they were on a booru, without the
   hassle of setting up one
 - Instant results from local searches in most cases after indexing
-- Fast multithreaded downloads, 8 downloads in parallel by default
+- Fast multithreaded downloads; 8 downloads in parallel by default
 - Supports operating on post media (image, ugoira WebM, etc), info, notes,
   artist commentaries:
   - Getting the URLs or file/folder paths
@@ -78,7 +78,7 @@ No real documentation yet. Three main classes are provided:
 
 - `Album`: works like a dictionary of `Post`, where keys are the post IDs.
            Has magic methods and operators to facilitate working with them.
-           Can be filtered, ordered and downloaded, and more.
+           Can be filtered, ordered, downloaded, and more.
 
 - `Stream`: an efficiant lazy iterator yielding posts.
             Can be filtered and multithread-downloaded.
