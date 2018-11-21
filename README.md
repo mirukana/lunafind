@@ -97,7 +97,8 @@ Reproducing the command line examples in the section above:
 ## Installation
 
 Requires Python 3.6+ and pip (for automatic easy install).  
-Tested on GNU/Linux only right now, but should work on other common OS.  
+Tested on GNU/Linux and Windows 7, probably works on OSX and other POSIX
+systems.  
 As root:
 
 ```sh
