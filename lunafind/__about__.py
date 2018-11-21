@@ -6,7 +6,7 @@ them back from the command line without setting up any service or database."""
 
 __project_name__ = "lunakit"
 __pkg_name__     = "lunafind"
-__version__      = "0.5.5"
+__version__      = "0.5.4-1"
 __status__       = "Development"
 # __status__     = "Production"
 
