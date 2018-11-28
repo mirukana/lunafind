@@ -60,4 +60,4 @@ def get(value: Union[str, base.Client, None]) -> base.Client:
              f"directory '{path!s}'" if path != Path(".") else "current dir")
 
     from . import local
-    return local.Local(path)
+    return local.Local(path=path)
