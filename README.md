@@ -42,14 +42,20 @@ The first time a local post search is done, an index file to speed up future
 searches will be automatically created and updated when new post directories
 exist or are removed.
 
-Tests with ~165 000 posts in the same directory,
-a CPU with average single-core performance
-(AMD FX-8300 - there is no benefit yet from multiple cores),
-generic 7200 RPM hard disk, BTRFS file system, Void Linux 4.18.14 x86\_64:  
-- It takes about 2m30s - 3m to index everything from scratch.  
+Test with ~165 000 posts  
+AMD FX-8300 (8 cores, 3.3GHz), TOSHIBA DT01ACA2 7200 RPM HDD,
+BTRFS file system, Void Linux 4.18.14 x86\_64:  
+- It takes about 2m30s - 3m to index everything from scratch
 - After this, search results start coming instantly unless `--random` or
   `--order` is used.  
-- Searches finish completely in 8-20s.
+- Searches finish completely in 8-20s
+
+Test with ~60 000 posts  
+Celeron B815 (2 cores, 1.60GHz), 5200 RPM HDD, BTRFS file system,
+Void Linux 4.18.20 x86\_64:
+- About 4mn to index everything from scratch
+- Results come instantly
+- Searches finishes in ~20s
 
 ## Command line usage
 
