@@ -51,7 +51,7 @@ BTRFS file system, Void Linux 4.18.14 x86\_64:
 - Searches finish completely in 8-20s
 
 Test with ~60 000 posts  
-Celeron B815 (2 cores, 1.60GHz), 5200 RPM HDD, BTRFS file system,
+Celeron B815 (2 cores, 1.60GHz), 5400 RPM HDD, BTRFS file system,
 Void Linux 4.18.20 x86\_64:
 - About 4mn to index everything from scratch
 - Results come instantly
