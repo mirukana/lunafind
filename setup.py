@@ -36,7 +36,6 @@ setup(
         "fastnumbers",
         "logzero",
         "pendulum",
-        "pydecensooru>=0.1.0",
         "requests",
         "setuptools",
         # Needed because simplejson converts namedtuples to dicts unlike json

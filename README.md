@@ -21,8 +21,6 @@ similar to Danbooru tag subscriptions or saved searches.
 
 - Operate on tag searches, URLs or file paths
 - Combine results from multiple searches
-- Banned/hidden posts are automatically
-  [decensored](https://github.com/mirukan/pydecensooru) when possible
 - Specify custom page ranges, or just get everything
 - Filter and order booru results to work around the two tags search limit
 - Optional partial/fuzzy tag matching for filter and local searches

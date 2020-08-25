@@ -9,7 +9,6 @@ from urllib.parse import parse_qs, urlparse
 import pendulum as pend
 from dataclasses import dataclass, field
 
-from pydecensooru import decensor, decensor_iter
 # pylint: disable=no-name-in-module
 from fastnumbers import fast_int
 
@@ -67,12 +66,13 @@ class Danbooru(net.NetClient):
 
     def info_id(self, post_id: int) -> Optional[base.InfoType]:
         info = self._api(f"posts/{post_id}.json")
-        return decensor(info, self.site_url) if info else None
+        return None if info and "id" not in info else info
 
 
     def info_md5(self, md5: str) -> base.InfoGenType:
-        yield from decensor_iter(self._api(f"posts.json", md5=md5),
-                                 self.site_url)
+        for info in self._api(f"posts.json", md5=md5):
+            if "id" in info:
+                yield info
 
 
     def info_search(self,
@@ -136,10 +136,10 @@ class Danbooru(net.NetClient):
             )
 
             try:
-                yield from decensor_iter(
-                    self._api("posts.json", **params, _catch_errs=False),
-                    self.site_url
-                )
+                search = self._api("posts.json", **params, _catch_errs=False)
+                for info in search:
+                    if "id" in info:
+                        yield info
             except AttributeError:
                 fails += 1
             except ValueError as err:
