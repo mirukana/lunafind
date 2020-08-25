@@ -3,6 +3,7 @@ build
 dist
 *.egg-info
 *.pyc
+.mypy_cache
 
 .pylintrc
 
