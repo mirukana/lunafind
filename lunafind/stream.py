@@ -17,7 +17,7 @@ from .post import Post
 
 
 @dataclass
-class Stream(collections.Iterator):
+class Stream(collections.abc.Iterator):
     query:    Union[str, Path] = ""
     pages:    base.PageType    = 1
     limit:    Optional[int]    = None
